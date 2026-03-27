@@ -5,24 +5,4 @@
   <Folder Name="/tests/">
     <Project Path="tests/SafeWebCore.Tests/SafeWebCore.Tests.csproj" />
   </Folder>
-  <Folder Name="/docs/">
-    <File Path="docs/README.md" />
-  </Folder>
-  <Folder Name="/.github/">
-    <Folder Name="/.github/ISSUE_TEMPLATE/">
-      <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
-      <File Path=".github/ISSUE_TEMPLATE/feature_request.yml" />
-      <File Path=".github/ISSUE_TEMPLATE/config.yml" />
-    </Folder>
-    <Folder Name="/.github/PULL_REQUEST_TEMPLATE/">
-      <File Path=".github/PULL_REQUEST_TEMPLATE/pull_request_template.md" />
-    </Folder>
-  </Folder>
-  <File Path="README.md" />
-  <File Path="LICENSE" />
-  <File Path="CONTRIBUTING.md" />
-  <File Path="CHANGELOG.md" />
-  <File Path=".gitignore" />
-  <File Path=".editorconfig" />
-  <File Path="Directory.Build.props" />
 </Solution>

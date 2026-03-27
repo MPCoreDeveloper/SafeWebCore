@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "SafeWebCore.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:62164;http://localhost:62165"
+    }
+  }
+}
