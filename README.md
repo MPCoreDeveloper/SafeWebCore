@@ -1,26 +1,70 @@
+# SafeWebCore
 
-# Posseth.SafeWebCore
-
-Posseth.SafeWebCore is a secure web framework that provides a set of tools and utilities to build robust and secure web applications. It focuses on protecting against common web vulnerabilities and follows best practices for web security.
+A .NET 10 library for building secure web applications with sensible defaults.
 
 ## Features
 
-- HTTP security headers configuration to enhance the security of web applications.
+- Content Security Policy (CSP) middleware
+- Security header management
+- Zero-configuration secure defaults
 
+## Getting Started
 
-## Installation
+### Prerequisites
 
-To install Posseth.SafeWebCore, simply run the following command:
-## Usage
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
 
-To use Posseth.SafeWebCore in your web application, follow these steps:
+### Installation
 
+```bash
+dotnet add package SafeWebCore
+```
 
+### Usage
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.UseSafeWebCore();
+
+app.Run();
+```
+
+## Building
+
+```bash
+dotnet build
+```
+
+## Testing
+
+```bash
+dotnet test
+```
+
+## Project Structure
+
+```
+src/
+  SafeWebCore/          # Main library
+tests/
+  SafeWebCore.Tests/    # Unit tests (xUnit)
+docs/                            # Documentation
+.github/                         # GitHub templates and workflows
+.editorconfig                    # Code style settings
+Directory.Build.props            # Shared MSBuild properties
+SafeWebCore.slnx        # Solution file
+```
 
 ## Contributing
 
-Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/MPCoreDeveloper/posseth-safewebcore).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
