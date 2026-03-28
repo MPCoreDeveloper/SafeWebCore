@@ -365,3 +365,58 @@ SafeWebCore correctly handles deprecated directives:
 | `block-all-mixed-content` | `[Obsolete]` — modern browsers block mixed content by default | `upgrade-insecure-requests` |
 
 Both deprecated directives are excluded from `CspBuilder` but remain available on `CspOptions` with `[Obsolete]` attributes and compiler warnings.
+
+---
+
+## Validate Your CSP
+
+After deploying your application, always validate your Content Security Policy using these tools:
+
+### [securityheaders.com](https://securityheaders.com/)
+
+Scans **all** response headers and grades your site **A+** through **F**. It checks:
+- Content-Security-Policy presence and quality
+- Strict-Transport-Security (HSTS)
+- X-Frame-Options / frame-ancestors
+- Permissions-Policy
+- Referrer-Policy
+- X-Content-Type-Options
+- Cross-Origin policies (COEP, COOP, CORP)
+
+> 💡 With SafeWebCore's Strict A+ preset you should score **A+** immediately.
+
+**How to use:**
+1. Deploy your application to a public URL (or use a tunnel like ngrok for local testing)
+2. Visit [securityheaders.com](https://securityheaders.com/)
+3. Enter your URL and click **Scan**
+4. Review the grade and any missing headers
+
+### [Google CSP Evaluator](https://csp-evaluator.withgoogle.com/)
+
+Google's dedicated CSP analyzer checks your policy for common misconfigurations:
+
+| Check | SafeWebCore Default |
+|-------|-------------------|
+| Missing `object-src` | ✅ Set to `'none'` |
+| `'unsafe-inline'` without nonce/hash | ✅ Uses nonce-only |
+| Missing `'strict-dynamic'` | ✅ Enabled by default |
+| Missing `base-uri` | ✅ Set to `'none'` |
+| Overly permissive wildcards (`*`) | ✅ No wildcards in defaults |
+| Missing `script-src` | ✅ Nonce + strict-dynamic |
+
+**How to use:**
+1. Open your site in the browser and copy the `Content-Security-Policy` header value from DevTools (Network tab → Response Headers)
+2. Visit [csp-evaluator.withgoogle.com](https://csp-evaluator.withgoogle.com/)
+3. Paste the header value and click **Check CSP**
+4. Review the findings — green means safe, yellow/red means attention needed
+
+### Browser DevTools
+
+Your browser also reports CSP violations in real-time:
+
+1. Open **DevTools** (F12)
+2. **Network tab** → Click any request → **Response Headers** to see the full CSP header
+3. **Console tab** → Any CSP violations will appear as errors with the blocked resource and violated directive
+4. Use this during development to catch issues before deployment
+
+> ⚠️ **Important:** Always test in production (or staging) with the real CSP header. Development servers may not have all headers enabled.

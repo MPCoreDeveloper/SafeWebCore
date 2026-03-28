@@ -249,6 +249,31 @@ dotnet-coverage collect -f cobertura -o coverage.cobertura.xml dotnet test
 
 ---
 
+## ✅ Validate Your Security Headers
+
+After deploying your application, verify your headers with these tools:
+
+### 1. [securityheaders.com](https://securityheaders.com/)
+
+Scans **all** response headers and grades your site **A+** through **F**. Validates HSTS, CSP, X-Frame-Options, Permissions-Policy, Referrer-Policy, and more.
+
+> With SafeWebCore's Strict A+ preset you should score **A+** immediately.
+
+### 2. [Google CSP Evaluator](https://csp-evaluator.withgoogle.com/)
+
+Paste your `Content-Security-Policy` header value to check for common CSP misconfigurations:
+- ❌ Missing `object-src 'none'`
+- ❌ `'unsafe-inline'` without a nonce or hash
+- ❌ Missing `'strict-dynamic'` for trust propagation
+- ❌ Overly permissive wildcards (`*`, `https:`)
+- ✅ Nonce-based policy with `'strict-dynamic'` (SafeWebCore default)
+
+### 3. Browser DevTools
+
+Open **DevTools → Network tab → Response Headers** to inspect headers on every request. Any CSP violations will also appear in the **Console** tab.
+
+---
+
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

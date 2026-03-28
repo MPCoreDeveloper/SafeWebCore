@@ -121,6 +121,19 @@ content-security-policy: default-src 'none'; script-src 'nonce-abc123...' 'stric
 3. Enter your URL and scan
 4. You should see an **A+** rating
 
+This tool grades **all** security headers (HSTS, CSP, X-Frame-Options, Permissions-Policy, etc.) from A+ through F.
+
+### Option D: Google CSP Evaluator
+
+1. Copy the `Content-Security-Policy` header value from DevTools or `curl` output
+2. Visit [csp-evaluator.withgoogle.com](https://csp-evaluator.withgoogle.com/)
+3. Paste the header value and click **Check CSP**
+4. All checks should be green with SafeWebCore's defaults
+
+Google's CSP Evaluator checks for common misconfigurations like missing `object-src`, `'unsafe-inline'` without nonce, and missing `'strict-dynamic'`.
+
+> 💡 **Tip:** Always validate with both tools after any CSP changes. See the [CSP Configuration Guide](csp-configuration.md#validate-your-csp) for detailed usage instructions.
+
 ## Next Steps
 
 | Topic | Link |

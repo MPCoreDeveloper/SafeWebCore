@@ -54,6 +54,16 @@ namespace SafeWebCore.Builder;
 /// <c>.ScriptSrc("'sha256-abc123...' 'strict-dynamic'")</c>. This is a CSP Level 3 feature for
 /// allowing specific inline scripts/styles by their SHA-256, SHA-384, or SHA-512 digest.
 /// </para>
+/// <para>
+/// <b>Validate your policy:</b> After deploying, test your CSP headers using these tools:
+/// </para>
+/// <list type="bullet">
+///   <item><description><see href="https://securityheaders.com/">securityheaders.com</see> — Scans all response
+///   headers and grades your site A+ through F. Validates HSTS, CSP, Permissions-Policy, and more.</description></item>
+///   <item><description><see href="https://csp-evaluator.withgoogle.com/">Google CSP Evaluator</see> — Analyzes your
+///   Content-Security-Policy for common misconfigurations (e.g. missing <c>object-src</c>, <c>'unsafe-inline'</c>
+///   without nonce, missing <c>'strict-dynamic'</c>).</description></item>
+/// </list>
 /// </remarks>
 public sealed class CspBuilder
 {

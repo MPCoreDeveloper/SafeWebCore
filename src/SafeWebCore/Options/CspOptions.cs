@@ -33,6 +33,16 @@ namespace SafeWebCore.Options;
 /// Use <see cref="SafeWebCore.Builder.CspBuilder"/> for a fluent API, or C# <c>with</c> expressions
 /// to modify individual directives from a preset.
 /// </para>
+/// <para>
+/// <b>Validate your policy after deployment:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description><see href="https://securityheaders.com/">securityheaders.com</see> — Grades all security
+///   headers (A+ through F), including CSP, HSTS, Permissions-Policy, and X-Frame-Options.</description></item>
+///   <item><description><see href="https://csp-evaluator.withgoogle.com/">Google CSP Evaluator</see> — Analyzes your
+///   CSP for misconfigurations such as missing <c>object-src</c>, <c>'unsafe-inline'</c> without nonce, or
+///   missing <c>'strict-dynamic'</c>.</description></item>
+/// </list>
 /// </remarks>
 public record CspOptions
 {

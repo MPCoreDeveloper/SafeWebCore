@@ -134,6 +134,13 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 🔌 **Extensible** — custom `IHeaderPolicy` implementations
 - 📊 **CSP violation reporting** — built-in `/csp-report` endpoint using Reporting API v1
 
+## Validate Your Headers
+
+After deploying, test your security headers with:
+
+- **[securityheaders.com](https://securityheaders.com/)** — Grades all response headers A+ through F. With the Strict A+ preset you should score **A+** immediately.
+- **[Google CSP Evaluator](https://csp-evaluator.withgoogle.com/)** — Paste your `Content-Security-Policy` value to check for misconfigurations (missing `object-src`, `'unsafe-inline'` without nonce, missing `'strict-dynamic'`, etc.).
+
 ## Documentation
 
 Full documentation: [github.com/MPCoreDeveloper/SafeWebCore/docs](https://github.com/MPCoreDeveloper/SafeWebCore/tree/master/docs)
