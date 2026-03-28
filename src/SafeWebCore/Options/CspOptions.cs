@@ -1,13 +1,39 @@
 namespace SafeWebCore.Options;
 
 /// <summary>
-/// Options for configuring Content Security Policy (CSP) directives.
+/// Immutable configuration record for Content Security Policy (CSP) directives.
 /// Defaults target an A+ score on securityheaders.com and Google CSP Evaluator.
 /// <para>
-/// CSP Level 3 + 2026 extensions: Trusted Types, fenced-frame-src, script-src-elem/attr,
-/// style-src-elem/attr, worker-src, manifest-src.
+/// <b>Full CSP Level 3</b> (W3C Recommendation) compliance with forward-looking
+/// <b>CSP Level 4</b> support.
 /// </para>
 /// </summary>
+/// <remarks>
+/// <para><b>CSP Level 3 directives:</b></para>
+/// <list type="bullet">
+///   <item><description><b>Fetch:</b> <c>default-src</c>, <c>script-src</c>, <c>style-src</c>, <c>img-src</c>, <c>font-src</c>,
+///   <c>connect-src</c>, <c>media-src</c>, <c>object-src</c>, <c>child-src</c>, <c>frame-src</c>,
+///   <c>worker-src</c>, <c>manifest-src</c></description></item>
+///   <item><description><b>Granular (L3):</b> <c>script-src-elem</c>, <c>script-src-attr</c>, <c>style-src-elem</c>, <c>style-src-attr</c></description></item>
+///   <item><description><b>Document:</b> <c>base-uri</c>, <c>sandbox</c></description></item>
+///   <item><description><b>Navigation:</b> <c>form-action</c>, <c>frame-ancestors</c></description></item>
+///   <item><description><b>Reporting:</b> <c>report-to</c> (L3, replacing <c>report-uri</c>)</description></item>
+///   <item><description><b>Transport:</b> <c>upgrade-insecure-requests</c></description></item>
+///   <item><description><b>Nonce/hash:</b> <c>'nonce-{nonce}'</c>, <c>'sha256-...'</c>, <c>'sha384-...'</c>, <c>'sha512-...'</c></description></item>
+///   <item><description><b>Trust propagation:</b> <c>'strict-dynamic'</c></description></item>
+/// </list>
+/// <para><b>CSP Level 4 (emerging) directives:</b></para>
+/// <list type="bullet">
+///   <item><description><b>Trusted Types:</b> <c>require-trusted-types-for</c>, <c>trusted-types</c></description></item>
+///   <item><description><b>Privacy Sandbox:</b> <c>fenced-frame-src</c></description></item>
+/// </list>
+/// <para><b>Deprecated directives</b> (<c>report-uri</c>, <c>block-all-mixed-content</c>) are retained
+/// with <c>[Obsolete]</c> attributes for backward compatibility.</para>
+/// <para>
+/// Use <see cref="SafeWebCore.Builder.CspBuilder"/> for a fluent API, or C# <c>with</c> expressions
+/// to modify individual directives from a preset.
+/// </para>
+/// </remarks>
 public record CspOptions
 {
     // ── Fetch directives ───────────────────────────────────────────────────
@@ -50,6 +76,9 @@ public record CspOptions
 
     /// <summary>Restricts nested browsing contexts (<c>&lt;frame&gt;</c>, <c>&lt;iframe&gt;</c>). Empty = inherits from default-src.</summary>
     public string ChildSrc { get; init; } = "";
+
+    /// <summary>Restricts <c>&lt;frame&gt;</c> and <c>&lt;iframe&gt;</c> sources (CSP Level 3, split from child-src). Empty = falls back to child-src → default-src.</summary>
+    public string FrameSrc { get; init; } = "";
 
     /// <summary>Restricts <c>Worker</c>, <c>SharedWorker</c>, <c>ServiceWorker</c> sources. Empty = inherits from child-src → default-src.</summary>
     public string WorkerSrc { get; init; } = "";
@@ -129,6 +158,7 @@ public record CspOptions
         AppendDirective(directives, "media-src", MediaSrc);
         AppendDirective(directives, "object-src", ObjectSrc);
         AppendDirective(directives, "child-src", ChildSrc);
+        AppendDirective(directives, "frame-src", FrameSrc);
         AppendDirective(directives, "worker-src", WorkerSrc);
         AppendDirective(directives, "manifest-src", ManifestSrc);
         AppendDirective(directives, "fenced-frame-src", FencedFrameSrc);

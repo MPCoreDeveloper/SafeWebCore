@@ -16,6 +16,8 @@ public static class ServiceCollectionExtensions
     /// This is the fastest way to achieve an A+ rating on securityheaders.com.
     /// <para>
     /// Optionally pass a <paramref name="customize"/> action to relax specific settings.
+    /// CSP directives accept multiple origins separated by spaces, e.g.
+    /// <c>"'self' https://cdn1.example.com https://cdn2.example.com"</c>.
     /// </para>
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -26,9 +28,18 @@ public static class ServiceCollectionExtensions
     /// // Strict A+ with no changes:
     /// builder.Services.AddNetSecureHeadersStrictAPlus();
     ///
-    /// // Strict A+ but allow images from a CDN:
+    /// // Allow images from multiple CDNs:
     /// builder.Services.AddNetSecureHeadersStrictAPlus(opts =&gt;
-    ///     opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn.example.com" });
+    ///     opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn1.example.com https://cdn2.example.com" });
+    ///
+    /// // Relax multiple directives at once:
+    /// builder.Services.AddNetSecureHeadersStrictAPlus(opts =&gt;
+    ///     opts.Csp = opts.Csp with
+    ///     {
+    ///         ImgSrc = "'self' https://img.cdn.com https://avatars.cdn.com data:",
+    ///         ConnectSrc = "'self' https://api.example.com wss://ws.example.com",
+    ///         FontSrc = "'self' https://fonts.gstatic.com https://cdn.example.com"
+    ///     });
     /// </code>
     /// </example>
     public static IServiceCollection AddNetSecureHeadersStrictAPlus(

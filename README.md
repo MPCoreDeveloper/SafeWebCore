@@ -1,8 +1,12 @@
 # 🛡️ SafeWebCore
 
+[![NuGet](https://img.shields.io/nuget/v/SafeWebCore.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/SafeWebCore.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![securityheaders.com](https://img.shields.io/badge/securityheaders.com-A%2B-brightgreen)](https://securityheaders.com)
+[![CSP](https://img.shields.io/badge/CSP-Level%203%20%2B%20Level%204-blue?logo=w3c)](https://www.w3.org/TR/CSP3/)
+[![Sponsor](https://img.shields.io/badge/Sponsor-❤-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/MPCoreDeveloper)
 
 **SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
@@ -11,13 +15,23 @@
 ## ✨ Features
 
 - 🔒 **A+ in one line** — `AddNetSecureHeadersStrictAPlus()` configures the strictest security headers instantly
+- 🛠️ **Fully custom** — `AddNetSecureHeaders(opts => { ... })` gives you complete control over every header
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for `script-src` and `style-src`
-- 📋 **CSP Level 3** — Trusted Types, `strict-dynamic`, `script-src-elem/attr`, `style-src-elem/attr`, `worker-src`, `fenced-frame-src`
-- 🎯 **Fluent CSP Builder** — type-safe, chainable API for building Content Security Policy
+- 📋 **Full CSP Level 3** (W3C Recommendation) — all directives including `worker-src`, `manifest-src`, `frame-src`, `script-src-elem/attr`, `style-src-elem/attr`, `report-to`, nonce/hash support, `strict-dynamic`
+- 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
+- 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation for every directive
 - ⚡ **Zero-allocation nonce generation** — `stackalloc` + `RandomNumberGenerator` on the hot path
 - 🛑 **Server header removal** — hides server technology from attackers
 - 🔌 **Extensible** — add custom `IHeaderPolicy` implementations for any header
-- 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint
+- 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint using Reporting API v1
+
+### CSP Compliance
+
+| Standard | Status | Coverage |
+|----------|--------|----------|
+| **CSP Level 3** (W3C Recommendation) | ✅ Full | All 22 directives, nonce/hash, `strict-dynamic`, `report-to` |
+| **CSP Level 4** (Emerging) | ✅ Ready | Trusted Types, `fenced-frame-src` (Privacy Sandbox) |
+| Deprecated directives | ✅ Handled | `report-uri`, `block-all-mixed-content` marked `[Obsolete]` |
 
 ---
 
@@ -66,21 +80,28 @@ That's it! Your application now returns these headers on every response:
 
 ### 3. Strict A+ with customization
 
-The preset is intentionally strict. Relax only what your app needs:
+The preset is intentionally strict. Relax only what your app needs.
+CSP directives are **space-separated** — add multiple origins in a single string:
 
 ```csharp
 builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 {
-    // Allow images from your CDN
-    opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn.example.com" };
+    // Multiple CDNs — just separate with spaces
+    opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn1.example.com https://cdn2.example.com data:" };
 
-    // Allow API calls to your backend
-    opts.Csp = opts.Csp with { ConnectSrc = "'self' https://api.example.com" };
+    // Multiple directives at once using 'with { ... }'
+    opts.Csp = opts.Csp with
+    {
+        ConnectSrc = "'self' https://api.example.com wss://ws.example.com",
+        FontSrc = "'self' https://fonts.gstatic.com https://cdn.example.com"
+    };
 
-    // Use strict-origin-when-cross-origin instead of no-referrer
+    // Non-CSP headers are simple string properties
     opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
 });
 ```
+
+> 💡 **Tip:** Each CSP directive is one string with space-separated sources. Use a single `with { ... }` block to change multiple directives at once.
 
 ### 4. Full manual configuration
 

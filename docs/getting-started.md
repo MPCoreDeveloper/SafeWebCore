@@ -32,6 +32,54 @@ app.MapGet("/", () => "Secure!");                     // 3. Your endpoints
 app.Run();
 ```
 
+## Fully Custom Setup
+
+Prefer full control? Use `AddNetSecureHeaders` and configure every header yourself:
+
+```csharp
+using SafeWebCore.Builder;
+using SafeWebCore.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.EnableHsts = true;
+    opts.HstsValue = "max-age=31536000; includeSubDomains";
+
+    opts.EnableXFrameOptions = true;
+    opts.XFrameOptionsValue = "SAMEORIGIN";
+
+    opts.EnableXContentTypeOptions = true;
+    opts.EnableReferrerPolicy = true;
+    opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+
+    opts.EnablePermissionsPolicy = true;
+    opts.PermissionsPolicyValue = "camera=(), microphone=(), geolocation=()";
+
+    opts.RemoveServerHeader = true;
+
+    // CSP — use the fluent builder
+    opts.Csp = new CspBuilder()
+        .DefaultSrc("'none'")
+        .ScriptSrc("'nonce-{nonce}' 'strict-dynamic' https:")
+        .StyleSrc("'nonce-{nonce}'")
+        .ImgSrc("'self' https: data:")
+        .ConnectSrc("'self'")
+        .FrameAncestors("'none'")
+        .BaseUri("'none'")
+        .FormAction("'self'")
+        .UpgradeInsecureRequests()
+        .Build();
+});
+
+var app = builder.Build();
+app.UseNetSecureHeaders();
+app.Run();
+```
+
+Both methods are defined in `SafeWebCore.Extensions.ServiceCollectionExtensions`.
+
 ## Verifying Your Headers
 
 ### Option A: Browser DevTools

@@ -206,6 +206,19 @@ public sealed class CspBuilderTests
     }
 
     [Fact]
+    public void FrameSrcSetIncluded()
+    {
+        // Arrange
+        var builder = new CspBuilder().FrameSrc("https://www.youtube.com");
+
+        // Act
+        var result = builder.Build().Build();
+
+        // Assert
+        Assert.Contains("frame-src https://www.youtube.com", result);
+    }
+
+    [Fact]
     public void EmptyOptionalDirectivesNotIncluded()
     {
         // Arrange — defaults leave optional directives empty
@@ -223,6 +236,7 @@ public sealed class CspBuilderTests
         Assert.DoesNotContain("connect-src", result);
         Assert.DoesNotContain("media-src", result);
         Assert.DoesNotContain("child-src", result);
+        Assert.DoesNotContain("frame-src", result);
         Assert.DoesNotContain("worker-src", result);
         Assert.DoesNotContain("manifest-src", result);
         Assert.DoesNotContain("fenced-frame-src", result);

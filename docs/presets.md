@@ -86,14 +86,42 @@ upgrade-insecure-requests
 
 ## Customizing the Preset
 
-The `AddNetSecureHeadersStrictAPlus` method accepts an optional `Action<NetSecureHeadersOptions>` that runs **after** the preset is applied. This lets you relax specific settings:
+The `AddNetSecureHeadersStrictAPlus` method accepts an optional `Action<NetSecureHeadersOptions>` that runs **after** the preset is applied. This lets you relax specific settings.
+
+### How CSP origins work
+
+CSP directives use **space-separated** sources in a single string. To allow multiple origins, just add them with spaces:
+
+```csharp
+// One origin
+opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn.example.com" };
+
+// Two CDNs + data URIs
+opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn1.example.com https://cdn2.example.com data:" };
+
+// Multiple directives at once — use a single 'with { ... }' block
+opts.Csp = opts.Csp with
+{
+    ImgSrc = "'self' https://img.cdn.com https://avatars.cdn.com",
+    ConnectSrc = "'self' https://api.example.com wss://ws.example.com",
+    FontSrc = "'self' https://fonts.gstatic.com https://cdn.example.com"
+};
+```
+
+> 💡 `CspOptions` is a C# `record` — the `with` expression creates a copy with only the specified properties changed. All other directives keep their strict defaults.
+
+---
 
 ### Allow external images
 
 ```csharp
 builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 {
+    // Single CDN
     opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn.example.com data:" };
+
+    // Or multiple CDNs — just add more origins
+    opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn1.example.com https://cdn2.example.com data:" };
 });
 ```
 

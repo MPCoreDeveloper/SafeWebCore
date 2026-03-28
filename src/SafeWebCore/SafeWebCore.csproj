@@ -4,10 +4,47 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- NuGet Package Metadata -->
+  <PropertyGroup>
+    <PackageId>SafeWebCore</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>MPCoreDeveloper</Authors>
+    <Company>Posseth Software</Company>
+    <Product>SafeWebCore</Product>
+    <Description>Lightweight, high-performance ASP.NET Core middleware that adds security headers targeting an A+ rating on securityheaders.com. Includes nonce-based CSP, Strict-Transport-Security, Permissions-Policy, Cross-Origin isolation, Trusted Types, and more — all configurable with a single line of code.</Description>
+    <PackageTags>security;headers;csp;content-security-policy;hsts;xss;middleware;aspnetcore;nonce;strict-dynamic;trusted-types;permissions-policy;securityheaders</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>Initial release — Strict A+ preset, nonce-based CSP, fluent CspBuilder, CSP violation reporting, zero-allocation nonce generation.</PackageReleaseNotes>
+    <Copyright>Copyright (c) 2025 MPCoreDeveloper</Copyright>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <!-- SourceLink for deterministic builds -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- Files included in the NuGet package -->
+  <ItemGroup>
+    <None Include="..\..\PACKAGE.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
 
   <ItemGroup>

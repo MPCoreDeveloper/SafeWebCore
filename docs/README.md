@@ -22,6 +22,7 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 | I want to... | Go to |
 |---------------|-------|
 | Get A+ in one line | [Getting Started](getting-started.md) |
+| Configure everything custom | [Getting Started](getting-started.md#fully-custom-setup) |
 | Understand what each header does | [Security Headers](security-headers.md) |
 | Configure CSP with nonces | [CSP Configuration](csp-configuration.md) |
 | Customize the strict preset | [Presets](presets.md) |
