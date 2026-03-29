@@ -209,6 +209,10 @@ This is useful for:
 - Building custom presets based on the strict A+ baseline
 - Inspecting the exact values at startup
 
+### Building custom presets *(v1.1.0+)*
+
+Internally, `AddNetSecureHeadersStrictAPlus` uses an `ApplyPreset` helper to copy all preset values. You can inspect `SecurePresets.StrictAPlus()` as a baseline and override properties using the customize callback — without needing to create a full custom configuration.
+
 ---
 
 ## When to NOT Use Strict A+

@@ -1,6 +1,5 @@
 using SafeWebCore.Options;
 using SafeWebCore.Presets;
-using Xunit;
 
 namespace SafeWebCore.Tests;
 

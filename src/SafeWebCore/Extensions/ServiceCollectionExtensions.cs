@@ -50,33 +50,7 @@ public static class ServiceCollectionExtensions
 
         return AddNetSecureHeaders(services, opts =>
         {
-            var preset = SecurePresets.StrictAPlus();
-
-            // Copy all preset values into the options instance
-            opts.EnableHsts = preset.EnableHsts;
-            opts.HstsValue = preset.HstsValue;
-            opts.EnableXFrameOptions = preset.EnableXFrameOptions;
-            opts.XFrameOptionsValue = preset.XFrameOptionsValue;
-            opts.EnableXContentTypeOptions = preset.EnableXContentTypeOptions;
-            opts.XContentTypeOptionsValue = preset.XContentTypeOptionsValue;
-            opts.EnableReferrerPolicy = preset.EnableReferrerPolicy;
-            opts.ReferrerPolicyValue = preset.ReferrerPolicyValue;
-            opts.EnablePermissionsPolicy = preset.EnablePermissionsPolicy;
-            opts.PermissionsPolicyValue = preset.PermissionsPolicyValue;
-            opts.EnableCoep = preset.EnableCoep;
-            opts.CoepValue = preset.CoepValue;
-            opts.EnableCoop = preset.EnableCoop;
-            opts.CoopValue = preset.CoopValue;
-            opts.EnableCorp = preset.EnableCorp;
-            opts.CorpValue = preset.CorpValue;
-            opts.EnableXDnsPrefetchControl = preset.EnableXDnsPrefetchControl;
-            opts.XDnsPrefetchControlValue = preset.XDnsPrefetchControlValue;
-            opts.EnableXPermittedCrossDomainPolicies = preset.EnableXPermittedCrossDomainPolicies;
-            opts.XPermittedCrossDomainPoliciesValue = preset.XPermittedCrossDomainPoliciesValue;
-            opts.RemoveServerHeader = preset.RemoveServerHeader;
-            opts.EnableCsp = preset.EnableCsp;
-            opts.Csp = preset.Csp;
-            opts.CustomPolicies = preset.CustomPolicies;
+            opts.ApplyPreset(SecurePresets.StrictAPlus());
 
             // Allow the caller to override specific values
             customize?.Invoke(opts);

@@ -102,4 +102,37 @@ public sealed class NetSecureHeadersOptions
 
     /// <summary>Custom header policies applied after the built-in headers.</summary>
     public List<IHeaderPolicy> CustomPolicies { get; set; } = [];
+
+    /// <summary>
+    /// Copies all property values from the specified preset into this instance.
+    /// Used internally by preset-based configuration methods to avoid repetitive property assignments.
+    /// </summary>
+    /// <param name="preset">The source options to copy values from.</param>
+    internal void ApplyPreset(NetSecureHeadersOptions preset)
+    {
+        EnableHsts = preset.EnableHsts;
+        HstsValue = preset.HstsValue;
+        EnableXFrameOptions = preset.EnableXFrameOptions;
+        XFrameOptionsValue = preset.XFrameOptionsValue;
+        EnableXContentTypeOptions = preset.EnableXContentTypeOptions;
+        XContentTypeOptionsValue = preset.XContentTypeOptionsValue;
+        EnableReferrerPolicy = preset.EnableReferrerPolicy;
+        ReferrerPolicyValue = preset.ReferrerPolicyValue;
+        EnablePermissionsPolicy = preset.EnablePermissionsPolicy;
+        PermissionsPolicyValue = preset.PermissionsPolicyValue;
+        EnableCoep = preset.EnableCoep;
+        CoepValue = preset.CoepValue;
+        EnableCoop = preset.EnableCoop;
+        CoopValue = preset.CoopValue;
+        EnableCorp = preset.EnableCorp;
+        CorpValue = preset.CorpValue;
+        EnableXDnsPrefetchControl = preset.EnableXDnsPrefetchControl;
+        XDnsPrefetchControlValue = preset.XDnsPrefetchControlValue;
+        EnableXPermittedCrossDomainPolicies = preset.EnableXPermittedCrossDomainPolicies;
+        XPermittedCrossDomainPoliciesValue = preset.XPermittedCrossDomainPoliciesValue;
+        RemoveServerHeader = preset.RemoveServerHeader;
+        EnableCsp = preset.EnableCsp;
+        Csp = preset.Csp;
+        CustomPolicies = preset.CustomPolicies;
+    }
 }

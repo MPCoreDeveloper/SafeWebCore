@@ -1,5 +1,4 @@
 using SafeWebCore.Builder;
-using Xunit;
 
 namespace SafeWebCore.Tests;
 

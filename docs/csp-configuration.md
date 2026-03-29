@@ -75,7 +75,6 @@ These control where resources can be loaded from.
 | Directive | Purpose | Strict A+ Value |
 |-----------|---------|-----------------|
 | `upgrade-insecure-requests` | Auto-upgrade HTTP → HTTPS | ✅ Enabled |
-| `block-all-mixed-content` | Block mixed content _(deprecated)_ | ❌ Disabled |
 
 ---
 
@@ -198,13 +197,36 @@ public class HomeController : Controller
 
 ### Direct access from HttpContext
 
+The recommended way to get the nonce is via the `GetCspNonce()` extension method *(v1.1.0+)*:
+
 ```csharp
-// In middleware, minimal API handlers, etc.
+using SafeWebCore.Extensions;
+
+// In middleware, minimal API handlers, Razor Pages, etc.
 app.MapGet("/api/nonce", (HttpContext ctx) =>
 {
-    var nonce = ctx.Items[NetSecureHeaders.CspNonceKey] as string;
+    var nonce = ctx.GetCspNonce();
     return Results.Ok(new { nonce });
 });
+```
+
+Or use `HttpContext.Items` directly:
+
+```csharp
+var nonce = ctx.Items[NetSecureHeaders.CspNonceKey] as string;
+```
+
+### Zero-allocation nonce access *(v1.1.0+)*
+
+For high-throughput scenarios, `NonceService.TryWriteNonce` writes the nonce directly into a `Span<char>` with zero heap allocation:
+
+```csharp
+Span<char> buffer = stackalloc char[NonceService.NonceLength];
+if (nonceService.TryWriteNonce(buffer, out int written))
+{
+    ReadOnlySpan<char> nonce = buffer[..written];
+    // Use nonce directly — no string allocation
+}
 ```
 
 ---
@@ -308,7 +330,6 @@ SafeWebCore implements the **complete CSP Level 3** W3C Recommendation and inclu
 | **Nonce-based** | `'nonce-{nonce}'` per-request cryptographic nonces | ✅ |
 | **Hash-based** | `'sha256-...'`, `'sha384-...'`, `'sha512-...'` allowlisting | ✅ |
 | **Trust propagation** | `'strict-dynamic'` — trusted scripts can load further dependencies | ✅ |
-| **Deprecated (L3)** | `report-uri` → `[Obsolete]`, `block-all-mixed-content` → `[Obsolete]` | ✅ Handled |
 
 #### Key CSP Level 3 improvements implemented
 
@@ -316,7 +337,7 @@ SafeWebCore implements the **complete CSP Level 3** W3C Recommendation and inclu
 - **`worker-src`** — Dedicated directive for controlling Worker, SharedWorker, and ServiceWorker sources.
 - **`manifest-src`** — Controls web app manifest loading.
 - **Granular script/style directives** — `script-src-elem`, `script-src-attr`, `style-src-elem`, `style-src-attr` provide fine-grained control beyond the base `script-src`/`style-src`.
-- **`report-to`** — Replaces the deprecated `report-uri` directive with the modern Reporting API v1.
+- **`report-to`** — Modern Reporting API v1 for CSP violation reporting.
 - **Nonce + hash + `strict-dynamic`** — The recommended approach per Google and the W3C. SafeWebCore generates a unique cryptographic nonce per request using `stackalloc` + `RandomNumberGenerator` (zero heap allocations).
 
 ### CSP Level 4 (Emerging) — ✅ Ready
@@ -354,17 +375,6 @@ opts.Csp = new CspBuilder()
 ```
 
 Supported algorithms: `sha256`, `sha384`, `sha512`.
-
-### Deprecated Directives
-
-SafeWebCore correctly handles deprecated directives:
-
-| Directive | Status | Replacement |
-|-----------|--------|-------------|
-| `report-uri` | `[Obsolete]` — still emitted when set for backward compatibility | `report-to` (Reporting API v1) |
-| `block-all-mixed-content` | `[Obsolete]` — modern browsers block mixed content by default | `upgrade-insecure-requests` |
-
-Both deprecated directives are excluded from `CspBuilder` but remain available on `CspOptions` with `[Obsolete]` attributes and compiler warnings.
 
 ---
 

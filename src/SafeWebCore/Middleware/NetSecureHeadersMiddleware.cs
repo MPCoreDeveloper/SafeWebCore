@@ -17,6 +17,9 @@ public sealed class NetSecureHeadersMiddleware(
 {
     private readonly NetSecureHeadersOptions _options = options.Value;
 
+    // PERF: Pre-build the CSP template once — avoids StringBuilder work on every request
+    private readonly string? _cspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
+
     /// <summary>
     /// Invokes the middleware to add security headers to the response.
     /// </summary>
@@ -82,9 +85,9 @@ public sealed class NetSecureHeadersMiddleware(
         if (_options.EnableXPermittedCrossDomainPolicies)
             headers.Append(HeaderNames.XPermittedCrossDomainPolicies, _options.XPermittedCrossDomainPoliciesValue);
 
-        if (_options.EnableCsp)
+        if (_cspTemplate is not null)
         {
-            var cspValue = _options.Csp.Build().Replace("{nonce}", nonce, StringComparison.Ordinal);
+            var cspValue = _cspTemplate.Replace("{nonce}", nonce, StringComparison.Ordinal);
             headers.Append(HeaderNames.ContentSecurityPolicy, cspValue);
         }
 

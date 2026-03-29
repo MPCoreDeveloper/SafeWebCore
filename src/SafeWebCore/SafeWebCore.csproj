@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -22,7 +22,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>Initial release — Strict A+ preset, nonce-based CSP, fluent CspBuilder, CSP violation reporting, zero-allocation nonce generation.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.1.0 — Performance optimizations: pre-built CSP template (eliminates per-request Build()), StringBuilder-based CSP header generation, zero-alloc TryWriteNonce(Span) overload. New APIs: HttpContext.GetCspNonce() extension, NonceService.NonceLength constant. Improved CancellationToken propagation in CSP reporting. Modernized C# patterns throughout.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2025 MPCoreDeveloper</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>

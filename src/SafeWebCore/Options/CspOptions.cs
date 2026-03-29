@@ -1,5 +1,7 @@
 namespace SafeWebCore.Options;
 
+using System.Text;
+
 /// <summary>
 /// Immutable configuration record for Content Security Policy (CSP) directives.
 /// Defaults target an A+ score on securityheaders.com and Google CSP Evaluator.
@@ -151,62 +153,71 @@ public record CspOptions
     /// <returns>A semicolon-separated CSP policy string ready for the Content-Security-Policy header.</returns>
     public string Build()
     {
-        // Pre-size for typical A+ policy (~20 directives)
-        List<string> directives = new(20);
+        // PERF: StringBuilder avoids List<string> + intermediate $"{name} {value}" allocations
+        var sb = new StringBuilder(512);
 
         // Fetch directives
-        AppendDirective(directives, "default-src", DefaultSrc);
-        AppendDirective(directives, "script-src", ScriptSrc);
-        AppendDirective(directives, "script-src-elem", ScriptSrcElem);
-        AppendDirective(directives, "script-src-attr", ScriptSrcAttr);
-        AppendDirective(directives, "style-src", StyleSrc);
-        AppendDirective(directives, "style-src-elem", StyleSrcElem);
-        AppendDirective(directives, "style-src-attr", StyleSrcAttr);
-        AppendDirective(directives, "img-src", ImgSrc);
-        AppendDirective(directives, "font-src", FontSrc);
-        AppendDirective(directives, "connect-src", ConnectSrc);
-        AppendDirective(directives, "media-src", MediaSrc);
-        AppendDirective(directives, "object-src", ObjectSrc);
-        AppendDirective(directives, "child-src", ChildSrc);
-        AppendDirective(directives, "frame-src", FrameSrc);
-        AppendDirective(directives, "worker-src", WorkerSrc);
-        AppendDirective(directives, "manifest-src", ManifestSrc);
-        AppendDirective(directives, "fenced-frame-src", FencedFrameSrc);
+        AppendDirective(sb, "default-src", DefaultSrc);
+        AppendDirective(sb, "script-src", ScriptSrc);
+        AppendDirective(sb, "script-src-elem", ScriptSrcElem);
+        AppendDirective(sb, "script-src-attr", ScriptSrcAttr);
+        AppendDirective(sb, "style-src", StyleSrc);
+        AppendDirective(sb, "style-src-elem", StyleSrcElem);
+        AppendDirective(sb, "style-src-attr", StyleSrcAttr);
+        AppendDirective(sb, "img-src", ImgSrc);
+        AppendDirective(sb, "font-src", FontSrc);
+        AppendDirective(sb, "connect-src", ConnectSrc);
+        AppendDirective(sb, "media-src", MediaSrc);
+        AppendDirective(sb, "object-src", ObjectSrc);
+        AppendDirective(sb, "child-src", ChildSrc);
+        AppendDirective(sb, "frame-src", FrameSrc);
+        AppendDirective(sb, "worker-src", WorkerSrc);
+        AppendDirective(sb, "manifest-src", ManifestSrc);
+        AppendDirective(sb, "fenced-frame-src", FencedFrameSrc);
 
         // Document directives
-        AppendDirective(directives, "base-uri", BaseUri);
-        AppendDirective(directives, "sandbox", Sandbox);
+        AppendDirective(sb, "base-uri", BaseUri);
+        AppendDirective(sb, "sandbox", Sandbox);
 
         // Navigation directives
-        AppendDirective(directives, "form-action", FormAction);
-        AppendDirective(directives, "frame-ancestors", FrameAncestors);
+        AppendDirective(sb, "form-action", FormAction);
+        AppendDirective(sb, "frame-ancestors", FrameAncestors);
 
         // Trusted Types
-        AppendDirective(directives, "require-trusted-types-for", RequireTrustedTypesFor);
-        AppendDirective(directives, "trusted-types", TrustedTypes);
+        AppendDirective(sb, "require-trusted-types-for", RequireTrustedTypesFor);
+        AppendDirective(sb, "trusted-types", TrustedTypes);
 
         // Transport
         if (EnableUpgradeInsecureRequests)
-            directives.Add("upgrade-insecure-requests");
+            AppendBooleanDirective(sb, "upgrade-insecure-requests");
 
 #pragma warning disable CS0618 // Obsolete member access is intentional — we still emit the directive when enabled
         if (EnableBlockAllMixedContent)
-            directives.Add("block-all-mixed-content");
+            AppendBooleanDirective(sb, "block-all-mixed-content");
 #pragma warning restore CS0618
 
         // Reporting
-        AppendDirective(directives, "report-to", ReportTo);
+        AppendDirective(sb, "report-to", ReportTo);
 
 #pragma warning disable CS0618
-        AppendDirective(directives, "report-uri", ReportUri);
+        AppendDirective(sb, "report-uri", ReportUri);
 #pragma warning restore CS0618
 
-        return string.Join("; ", directives);
+        return sb.ToString();
     }
 
-    private static void AppendDirective(List<string> directives, string name, string value)
+    private static void AppendDirective(StringBuilder sb, string name, string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
-            directives.Add($"{name} {value}");
+        {
+            if (sb.Length > 0) sb.Append("; ");
+            sb.Append(name).Append(' ').Append(value);
+        }
+    }
+
+    private static void AppendBooleanDirective(StringBuilder sb, string name)
+    {
+        if (sb.Length > 0) sb.Append("; ");
+        sb.Append(name);
     }
 }

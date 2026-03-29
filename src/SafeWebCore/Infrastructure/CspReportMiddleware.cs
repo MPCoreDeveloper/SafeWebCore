@@ -22,7 +22,7 @@ public sealed partial class CspReportMiddleware(ILogger<CspReportMiddleware> log
         if (context.Request.Path == "/csp-report" && context.Request.Method == "POST")
         {
             using var reader = new StreamReader(context.Request.Body);
-            var report = await reader.ReadToEndAsync();
+            var report = await reader.ReadToEndAsync(context.RequestAborted);
 
             LogCspViolation(logger, report);
 

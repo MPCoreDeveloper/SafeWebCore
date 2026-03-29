@@ -20,7 +20,8 @@
 - 📋 **Full CSP Level 3** (W3C Recommendation) — all directives including `worker-src`, `manifest-src`, `frame-src`, `script-src-elem/attr`, `style-src-elem/attr`, `report-to`, nonce/hash support, `strict-dynamic`
 - 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
 - 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation for every directive
-- ⚡ **Zero-allocation nonce generation** — `stackalloc` + `RandomNumberGenerator` on the hot path
+- ⚡ **Zero-allocation nonce generation** — `stackalloc` + `RandomNumberGenerator` on the hot path, plus `TryWriteNonce(Span<char>)` for fully heap-free scenarios
+- 🔍 **`HttpContext.GetCspNonce()`** — discoverable extension method to retrieve the per-request nonce
 - 🛑 **Server header removal** — hides server technology from attackers
 - 🔌 **Extensible** — add custom `IHeaderPolicy` implementations for any header
 - 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint using Reporting API v1
@@ -31,7 +32,24 @@
 |----------|--------|----------|
 | **CSP Level 3** (W3C Recommendation) | ✅ Full | All 22 directives, nonce/hash, `strict-dynamic`, `report-to` |
 | **CSP Level 4** (Emerging) | ✅ Ready | Trusted Types, `fenced-frame-src` (Privacy Sandbox) |
-| Deprecated directives | ✅ Handled | `report-uri`, `block-all-mixed-content` marked `[Obsolete]` |
+
+---
+
+## 🆕 What's New in v1.1.0
+
+v1.1.0 is a **performance and developer-experience** release — fully backwards compatible with v1.0.0.
+
+| Improvement | Detail |
+|-------------|--------|
+| **Pre-built CSP template** | CSP header string is computed once at startup, not per-request |
+| **`StringBuilder`-based `Build()`** | Eliminates ~20 intermediate string allocations in CSP header generation |
+| **`HttpContext.GetCspNonce()`** | New extension method — no more magic string lookups |
+| **`NonceService.TryWriteNonce(Span<char>)`** | Zero-allocation nonce generation for high-throughput paths |
+| **`NonceService.NonceLength`** | Public constant (44) for pre-allocating nonce buffers |
+| **CancellationToken in CSP reporting** | Report reads now respect client disconnects |
+| **Modern C# patterns** | Pattern matching, cleaner preset application, reduced boilerplate |
+
+See the full [CHANGELOG](CHANGELOG.md) for details.
 
 ---
 
@@ -164,6 +182,15 @@ public class HomeController : Controller
 <style nonce="@ViewData["CspNonce"]">
     body { font-family: sans-serif; }
 </style>
+```
+
+### Direct access via `GetCspNonce()` extension *(v1.1.0+)*
+
+```csharp
+using SafeWebCore.Extensions;
+
+// In Minimal APIs, middleware, Razor Pages, etc.
+var nonce = HttpContext.GetCspNonce();
 ```
 
 ### Direct access via `HttpContext.Items`

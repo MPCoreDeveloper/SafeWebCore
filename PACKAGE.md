@@ -130,7 +130,9 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 📋 **Full CSP Level 3** (W3C Recommendation) — all 22 directives, nonce/hash support, `strict-dynamic`, `report-to`, `worker-src`, `frame-src`, `manifest-src`, `script-src-elem/attr`, `style-src-elem/attr`
 - 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
 - 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation
-- ⚡ **Zero-allocation nonce generation** — `stackalloc` + `RandomNumberGenerator`
+- ⚡ **Zero-allocation nonce generation** — `stackalloc` + `RandomNumberGenerator`, plus `TryWriteNonce(Span<char>)` for fully heap-free scenarios *(v1.1.0)*
+- 🔍 **`HttpContext.GetCspNonce()`** — discoverable extension method to retrieve the per-request nonce *(v1.1.0)*
+- 🚀 **Pre-built CSP template** — CSP header string computed once at startup, not per-request *(v1.1.0)*
 - 🔌 **Extensible** — custom `IHeaderPolicy` implementations
 - 📊 **CSP violation reporting** — built-in `/csp-report` endpoint using Reporting API v1
 

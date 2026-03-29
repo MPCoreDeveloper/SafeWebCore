@@ -1,17 +1,12 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using SafeWebCore.Extensions;
-using Xunit;
 
 namespace SafeWebCore.Tests;
 
 /// <summary>
 /// Integration tests for NetSecureHeadersMiddleware using a custom test server.
 /// </summary>
-public class NetSecureHeadersMiddlewareTests : IAsyncDisposable
+public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
 {
     private readonly IHost _host;
     private readonly HttpClient _client;

@@ -1,12 +1,11 @@
 using SafeWebCore;
-using Xunit;
 
 namespace SafeWebCore.Tests;
 
 /// <summary>
 /// Tests for NonceService.
 /// </summary>
-public class NonceServiceTests
+public sealed class NonceServiceTests
 {
     [Fact]
     public void GenerateNonceReturnsNonEmptyString()
@@ -65,14 +64,7 @@ public class NonceServiceTests
 
     private static bool IsValidBase64(string value)
     {
-        try
-        {
-            Convert.FromBase64String(value);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        Span<byte> buffer = stackalloc byte[value.Length];
+        return Convert.TryFromBase64String(value, buffer, out _);
     }
 }

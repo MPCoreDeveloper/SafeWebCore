@@ -17,13 +17,10 @@ public sealed class CspNonceAttribute : ActionFilterAttribute
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (context.Result is ViewResult viewResult)
+        if (context.Result is ViewResult viewResult
+            && context.HttpContext.Items[NetSecureHeaders.CspNonceKey] is string { Length: > 0 } nonce)
         {
-            var nonce = context.HttpContext.Items[NetSecureHeaders.CspNonceKey] as string;
-            if (!string.IsNullOrEmpty(nonce))
-            {
-                viewResult.ViewData["CspNonce"] = nonce;
-            }
+            viewResult.ViewData["CspNonce"] = nonce;
         }
 
         base.OnActionExecuted(context);

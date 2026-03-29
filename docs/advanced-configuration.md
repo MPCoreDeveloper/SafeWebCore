@@ -151,9 +151,11 @@ app.Run();
 ### In Minimal APIs
 
 ```csharp
+using SafeWebCore.Extensions;
+
 app.MapGet("/", (HttpContext ctx) =>
 {
-    var nonce = ctx.Items[NetSecureHeaders.CspNonceKey] as string;
+    var nonce = ctx.GetCspNonce();
     return Results.Content($"""
         <html>
         <body>
@@ -183,13 +185,15 @@ public class DashboardController : Controller
 ### In Razor Pages
 
 ```csharp
+using SafeWebCore.Extensions;
+
 public class IndexModel : PageModel
 {
     public string? CspNonce { get; private set; }
 
     public void OnGet()
     {
-        CspNonce = HttpContext.Items[NetSecureHeaders.CspNonceKey] as string;
+        CspNonce = HttpContext.GetCspNonce();
     }
 }
 ```
@@ -273,7 +277,7 @@ public class SecurityHeadersTests : IAsyncDisposable
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| Inline scripts blocked | Missing nonce attribute | Add `nonce="@ViewData["CspNonce"]"` to `<script>` tags |
+| Inline scripts blocked | Missing nonce attribute | Add `nonce="@ViewData["CspNonce"]"` to `<script>` tags, or use `HttpContext.GetCspNonce()` |
 | Styles not loading | Missing nonce on `<style>` | Add nonce to `<style>` and `<link>` elements |
 | Google Fonts blocked | `font-src` too restrictive | Add `https://fonts.gstatic.com` to `font-src` |
 | API calls failing | `connect-src` doesn't include API origin | Add your API URL to `connect-src` |
