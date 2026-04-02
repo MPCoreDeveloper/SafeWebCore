@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -22,8 +22,43 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>v1.1.0 — Performance optimizations: pre-built CSP template (eliminates per-request Build()), StringBuilder-based CSP header generation, zero-alloc TryWriteNonce(Span) overload. New APIs: HttpContext.GetCspNonce() extension, NonceService.NonceLength constant. Improved CancellationToken propagation in CSP reporting. Modernized C# patterns throughout.</PackageReleaseNotes>
-    <Copyright>Copyright (c) 2025 MPCoreDeveloper</Copyright>
+    <PackageReleaseNotes>
+## v1.2.0 — Security Rollout and Developer Experience
+
+**Major Features:**
+- CSP Report-Only mode for safe policy rollout before enforcement
+- Path-based policy selection (different headers per route prefix, longest-prefix matching)
+- Startup validation with actionable errors for invalid configurations
+- Razor TagHelpers for automatic nonce injection on &lt;script&gt; and &lt;style&gt;
+- Typed builders for Referrer-Policy, Permissions-Policy, and Cross-Origin policies
+- CSP violation reporting with ICspReportSink abstraction (custom handling, logging, telemetry)
+- Endpoint metadata overrides ([SkipNetSecureHeaders], [CspMode]) for targeted exceptions
+- Optional additional headers: Origin-Agent-Cluster, X-Robots-Tag, Clear-Site-Data
+- Five app-profile presets: StrictAPlus, Api, Mvc, Blazor, SpaReverseProxy
+
+**Performance Optimizations (v1.1.0+):**
+- Pre-built CSP template (computed once at startup, not per-request)
+- StringBuilder-based CSP header generation (eliminates ~20 intermediate string allocations)
+- Zero-allocation nonce generation: TryWriteNonce(Span&lt;char&gt;) for heap-free scenarios
+- NonceService.NonceLength constant (44) for buffer pre-allocation
+
+**New APIs:**
+- HttpContext.GetCspNonce() extension method for discoverable nonce access
+- NonceService.TryWriteNonce(Span&lt;char&gt;, out int written) for zero-alloc scenarios
+- CspBuilder.Build() returns immutable CspOptions record
+- Improved CancellationToken propagation in CSP reporting pipeline
+
+**Improvements:**
+- Modernized C# patterns (primary constructors, collection expressions, file-scoped namespaces)
+- Comprehensive documentation for all features and presets
+- Full CSP Level 3 (W3C Recommendation) support
+- CSP Level 4 ready (Trusted Types, fenced-frame-src)
+
+**Breaking Changes:** None — fully backward compatible with v1.0.0+
+
+See docs/ for complete guides and examples/ for runnable sample projects.
+    </PackageReleaseNotes>
+    <Copyright>Copyright (c) 2026 MPCoreDeveloper</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
