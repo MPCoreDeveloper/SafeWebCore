@@ -34,27 +34,11 @@ public static class SecurePresets
     /// </list>
     /// </summary>
     /// <returns>A fully configured <see cref="NetSecureHeadersOptions"/> with the strictest A+ settings.</returns>
-    public static NetSecureHeadersOptions StrictAPlus() => new()
+    public static NetSecureHeadersOptions StrictAPlus()
     {
-        // ── Transport security ─────────────────────────────────────────
-        EnableHsts = true,
-        HstsValue = "max-age=63072000; includeSubDomains; preload", // 2 years
-
-        // ── Framing protection ─────────────────────────────────────────
-        EnableXFrameOptions = true,
-        XFrameOptionsValue = "DENY",
-
-        // ── MIME-type sniffing ─────────────────────────────────────────
-        EnableXContentTypeOptions = true,
-        XContentTypeOptionsValue = "nosniff",
-
-        // ── Referrer — strictest: never send referrer ──────────────────
-        EnableReferrerPolicy = true,
-        ReferrerPolicyValue = "no-referrer",
-
-        // ── Permissions — deny ALL browser features ────────────────────
-        EnablePermissionsPolicy = true,
-        PermissionsPolicyValue = string.Join(", ", [
+        // All browser features denied for maximum security
+        string[] deniedPermissions =
+        [
             "accelerometer=()",
             "ambient-light-sensor=()",
             "autoplay=()",
@@ -84,62 +68,85 @@ public static class SecurePresets
             "usb=()",
             "web-share=()",
             "xr-spatial-tracking=()"
-        ]),
+        ];
 
-        // ── Cross-Origin isolation ─────────────────────────────────────
-        EnableCoep = true,
-        CoepValue = "require-corp",
-
-        EnableCoop = true,
-        CoopValue = "same-origin",
-
-        EnableCorp = true,
-        CorpValue = "same-origin",
-
-        // ── DNS prefetch control ───────────────────────────────────────
-        EnableXDnsPrefetchControl = true,
-        XDnsPrefetchControlValue = "off",
-
-        // ── Cross-domain policies ──────────────────────────────────────
-        EnableXPermittedCrossDomainPolicies = true,
-        XPermittedCrossDomainPoliciesValue = "none",
-
-        // ── Server identity ────────────────────────────────────────────
-        RemoveServerHeader = true,
-
-        // ── Content Security Policy — maximum lockdown ─────────────────
-        EnableCsp = true,
-        Csp = new CspOptions
+        return new NetSecureHeadersOptions
         {
-            DefaultSrc = "'none'",
-            ScriptSrc = "'nonce-{nonce}' 'strict-dynamic'",
-            ScriptSrcElem = "",
-            ScriptSrcAttr = "",
-            StyleSrc = "'nonce-{nonce}'",
-            StyleSrcElem = "",
-            StyleSrcAttr = "",
-            ImgSrc = "'self'",
-            FontSrc = "'self'",
-            ConnectSrc = "'self'",
-            MediaSrc = "",       // inherits 'none' from default-src
-            ObjectSrc = "'none'",
-            ChildSrc = "'none'",
-            WorkerSrc = "'self'",
-            ManifestSrc = "'self'",
-            FencedFrameSrc = "",
-            BaseUri = "'none'",
-            Sandbox = "",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
-            RequireTrustedTypesFor = "'script'",
-            TrustedTypes = "'none'",
-            ReportTo = "",
-            EnableUpgradeInsecureRequests = true,
-        },
+            // ── Transport security ─────────────────────────────────────────
+            EnableHsts = true,
+            HstsValue = "max-age=63072000; includeSubDomains; preload", // 2 years
 
-        // ── No custom policies by default ──────────────────────────────
-        CustomPolicies = []
-    };
+            // ── Framing protection ─────────────────────────────────────────
+            EnableXFrameOptions = true,
+            XFrameOptionsValue = "DENY",
+
+            // ── MIME-type sniffing ─────────────────────────────────────────
+            EnableXContentTypeOptions = true,
+            XContentTypeOptionsValue = "nosniff",
+
+            // ── Referrer — strictest: never send referrer ──────────────────
+            EnableReferrerPolicy = true,
+            ReferrerPolicyValue = "no-referrer",
+
+            // ── Permissions — deny ALL browser features ────────────────────
+            EnablePermissionsPolicy = true,
+            PermissionsPolicyValue = string.Join(", ", deniedPermissions),
+
+            // ── Cross-Origin isolation ─────────────────────────────────────
+            EnableCoep = true,
+            CoepValue = "require-corp",
+
+            EnableCoop = true,
+            CoopValue = "same-origin",
+
+            EnableCorp = true,
+            CorpValue = "same-origin",
+
+            // ── DNS prefetch control ───────────────────────────────────────
+            EnableXDnsPrefetchControl = true,
+            XDnsPrefetchControlValue = "off",
+
+            // ── Cross-domain policies ──────────────────────────────────────
+            EnableXPermittedCrossDomainPolicies = true,
+            XPermittedCrossDomainPoliciesValue = "none",
+
+            // ── Server identity ────────────────────────────────────────────
+            RemoveServerHeader = true,
+
+            // ── Content Security Policy — maximum lockdown ─────────────────
+            EnableCsp = true,
+            Csp = new CspOptions
+            {
+                DefaultSrc = "'none'",
+                ScriptSrc = "'nonce-{nonce}' 'strict-dynamic'",
+                ScriptSrcElem = "",
+                ScriptSrcAttr = "",
+                StyleSrc = "'nonce-{nonce}'",
+                StyleSrcElem = "",
+                StyleSrcAttr = "",
+                ImgSrc = "'self'",
+                FontSrc = "'self'",
+                ConnectSrc = "'self'",
+                MediaSrc = "",       // inherits 'none' from default-src
+                ObjectSrc = "'none'",
+                ChildSrc = "'none'",
+                WorkerSrc = "'self'",
+                ManifestSrc = "'self'",
+                FencedFrameSrc = "",
+                BaseUri = "'none'",
+                Sandbox = "",
+                FormAction = "'self'",
+                FrameAncestors = "'none'",
+                RequireTrustedTypesFor = "'script'",
+                TrustedTypes = "'none'",
+                ReportTo = "",
+                EnableUpgradeInsecureRequests = true,
+            },
+
+            // ── No custom policies by default ──────────────────────────────
+            CustomPolicies = []
+        };
+    }
 
     /// <summary>
     /// Returns a profile-oriented preset for API-only applications.
