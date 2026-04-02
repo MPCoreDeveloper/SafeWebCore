@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h1>🛡️ SafeWebCore – MVC Example</h1>
+
+<p>This page demonstrates nonce injection via both TagHelpers and <code>ViewData["CspNonce"]</code>.</p>
+
+<h2>Option A – TagHelper (automatic nonce injection)</h2>
+<p>
+    The <code>@@addTagHelper *, SafeWebCore</code> line in <code>_ViewImports.cshtml</code>
+    registers the nonce TagHelpers. They automatically add <code>nonce="…"</code>
+    to any <code>&lt;script&gt;</code> or <code>&lt;style&gt;</code> tag when a nonce is present.
+</p>
+
+<!--
+    No nonce attribute needed here — the CspStyleNonceTagHelper injects it automatically.
+-->
+<style>
+    .demo-box {
+        border: 2px solid #0078d4;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+</style>
+
+<div class="demo-box">
+    <strong>Nonce (from ViewData):</strong> <code>@ViewData["CspNonce"]</code>
+</div>
+
+<h2>Option B – Explicit nonce via ViewData</h2>
+<p>
+    Access the nonce directly from <code>ViewData["CspNonce"]</code> when you need it inline,
+    for example in an event handler attribute.
+</p>
+
+<!--
+    Explicit nonce set via ViewData — useful if you need the nonce value in Razor expressions.
+-->
+<script nonce="@ViewData["CspNonce"]">
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Explicit nonce from ViewData:', '@ViewData["CspNonce"]');
+    });
+</script>
+
+<!--
+    TagHelper injects nonce automatically — no nonce attribute in markup.
+-->
+<script>
+    console.log('Auto-injected nonce from TagHelper.');
+</script>

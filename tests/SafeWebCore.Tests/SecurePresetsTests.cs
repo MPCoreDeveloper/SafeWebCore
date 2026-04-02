@@ -188,4 +188,77 @@ public sealed class SecurePresetsTests
         Assert.DoesNotContain("'unsafe-inline'", csp);
         Assert.DoesNotContain("'unsafe-eval'", csp);
     }
+
+    // ── Preset-specific tests ───────────────────────────────────────────────
+
+    [Fact]
+    public void ApiPresetDisablesCspByDefault()
+    {
+        // Arrange
+        var options = SecurePresets.Api();
+
+        // Assert
+        Assert.False(options.EnableCsp);
+    }
+
+    [Fact]
+    public void MvcPresetUsesBalancedReferrerPolicy()
+    {
+        // Arrange
+        var options = SecurePresets.Mvc();
+
+        // Assert
+        Assert.Equal("strict-origin-when-cross-origin", options.ReferrerPolicyValue);
+    }
+
+    [Fact]
+    public void MvcPresetAllowsHttpsImages()
+    {
+        // Arrange
+        var options = SecurePresets.Mvc();
+
+        // Assert
+        Assert.Contains("https:", options.Csp.ImgSrc);
+    }
+
+    [Fact]
+    public void BlazorPresetAllowsBlobWorkers()
+    {
+        // Arrange
+        var options = SecurePresets.Blazor();
+
+        // Assert
+        Assert.Contains("blob:", options.Csp.WorkerSrc);
+    }
+
+    [Fact]
+    public void BlazorPresetAllowsWebSocketConnections()
+    {
+        // Arrange
+        var options = SecurePresets.Blazor();
+
+        // Assert
+        Assert.Contains("wss:", options.Csp.ConnectSrc);
+    }
+
+    [Fact]
+    public void SpaReverseProxyPresetAllowsHttpsAndWebSocketConnections()
+    {
+        // Arrange
+        var options = SecurePresets.SpaReverseProxy();
+
+        // Assert
+        Assert.Contains("https:", options.Csp.ConnectSrc);
+        Assert.Contains("wss:", options.Csp.ConnectSrc);
+    }
+
+    [Fact]
+    public void SpaReverseProxyPresetAllowsBlobImages()
+    {
+        // Arrange
+        var options = SecurePresets.SpaReverseProxy();
+
+        // Assert
+        Assert.Contains("blob:", options.Csp.ImgSrc);
+    }
 }

@@ -32,11 +32,23 @@ public static class HeaderNames
     /// <summary>Content-Security-Policy (CSP).</summary>
     public const string ContentSecurityPolicy = "Content-Security-Policy";
 
+    /// <summary>Content-Security-Policy-Report-Only (CSP report-only mode).</summary>
+    public const string ContentSecurityPolicyReportOnly = "Content-Security-Policy-Report-Only";
+
     /// <summary>X-DNS-Prefetch-Control — prevents DNS prefetch leakage.</summary>
     public const string XDnsPrefetchControl = "X-DNS-Prefetch-Control";
 
     /// <summary>X-Permitted-Cross-Domain-Policies — restricts Adobe Flash / Acrobat cross-domain policy files.</summary>
     public const string XPermittedCrossDomainPolicies = "X-Permitted-Cross-Domain-Policies";
+
+    /// <summary>Origin-Agent-Cluster — isolates origin in a dedicated process agent cluster.</summary>
+    public const string OriginAgentCluster = "Origin-Agent-Cluster";
+
+    /// <summary>X-Robots-Tag — controls indexing and crawler behavior.</summary>
+    public const string XRobotsTag = "X-Robots-Tag";
+
+    /// <summary>Clear-Site-Data — instructs browsers to clear selected local data stores.</summary>
+    public const string ClearSiteData = "Clear-Site-Data";
 
     /// <summary>Server — removed by middleware to hide server technology.</summary>
     public const string Server = "Server";

@@ -32,6 +32,64 @@ app.MapGet("/", () => "Secure!");                     // 3. Your endpoints
 app.Run();
 ```
 
+## Using CSP Nonces *(v1.1.0+)*
+
+SafeWebCore generates a unique per-request nonce for `<script>` and `<style>` elements.
+
+### In Minimal API / Controllers
+
+```csharp
+app.MapGet("/page", (HttpContext ctx) =>
+{
+    var nonce = ctx.GetCspNonce();  // v1.1.0+
+    return Results.Content(
+        $"""
+        <html>
+        <script nonce="{nonce}">console.log('CSP nonce: {nonce}');</script>
+        <body>Hello, secure world!</body>
+        </html>
+        """,
+        "text/html");
+});
+```
+
+### Zero-Allocation Nonce Generation *(v1.1.0+)*
+
+For high-throughput scenarios, write the nonce directly to a `Span<char>` to avoid allocations:
+
+```csharp
+using SafeWebCore;
+
+var nonceService = HttpContext.RequestServices.GetRequiredService<NonceService>();
+Span<char> nonceBuffer = stackalloc char[NonceService.NonceLength];  // 44 chars
+
+if (nonceService.TryWriteNonce(nonceBuffer))
+{
+    var nonce = new string(nonceBuffer);
+    // Use nonce...
+}
+```
+
+### In Razor Views with TagHelpers *(v1.1.0+)*
+
+Register TagHelpers in `_ViewImports.cshtml`:
+
+```razor
+@addTagHelper *, SafeWebCore
+```
+
+Then nonce is injected automatically:
+
+```html
+<script>
+    console.log('Nonce injected automatically!');
+</script>
+
+<style>
+    body { font-family: sans-serif; }
+</style>
+```
+
 ## Fully Custom Setup
 
 Prefer full control? Use `AddNetSecureHeaders` and configure every header yourself:
@@ -138,7 +196,8 @@ Google's CSP Evaluator checks for common misconfigurations like missing `object-
 
 | Topic | Link |
 |-------|------|
+| **See working examples** | [Examples](examples.md) (MinimalApi, MvcApp, ApiService) |
 | Understand each header | [Security Headers Guide](security-headers.md) |
 | Configure CSP in detail | [CSP Configuration](csp-configuration.md) |
 | Customize the A+ preset | [Presets](presets.md) |
-| Custom policies & reporting | [Advanced Configuration](advanced-configuration.md) |
+| Custom policies, report-only rollout, path-based policies, and TagHelpers | [Advanced Configuration](advanced-configuration.md) |

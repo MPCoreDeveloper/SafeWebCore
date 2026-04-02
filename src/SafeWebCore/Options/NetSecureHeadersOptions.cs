@@ -85,6 +85,26 @@ public sealed class NetSecureHeadersOptions
     /// <summary>X-Permitted-Cross-Domain-Policies value. Default: <c>none</c>.</summary>
     public string XPermittedCrossDomainPoliciesValue { get; set; } = "none";
 
+    // ── Optional additional headers ───────────────────────────────────────
+
+    /// <summary>Enables <c>Origin-Agent-Cluster</c>. Default: <see langword="false"/>.</summary>
+    public bool EnableOriginAgentCluster { get; set; }
+
+    /// <summary>Origin-Agent-Cluster value. Default: <c>?1</c>.</summary>
+    public string OriginAgentClusterValue { get; set; } = "?1";
+
+    /// <summary>Enables <c>X-Robots-Tag</c>. Default: <see langword="false"/>.</summary>
+    public bool EnableXRobotsTag { get; set; }
+
+    /// <summary>X-Robots-Tag value. Default: <c>noindex, nofollow</c>.</summary>
+    public string XRobotsTagValue { get; set; } = "noindex, nofollow";
+
+    /// <summary>Enables <c>Clear-Site-Data</c>. Default: <see langword="false"/>.</summary>
+    public bool EnableClearSiteData { get; set; }
+
+    /// <summary>Clear-Site-Data value. Default: <c>"cache", "cookies", "storage"</c>.</summary>
+    public string ClearSiteDataValue { get; set; } = "\"cache\", \"cookies\", \"storage\"";
+
     // ── Server identity ────────────────────────────────────────────────────
 
     /// <summary>Removes the <c>Server</c> header to hide server technology. Default: <see langword="true"/>.</summary>
@@ -95,8 +115,22 @@ public sealed class NetSecureHeadersOptions
     /// <summary>Enables <c>Content-Security-Policy</c>. Default: <see langword="true"/>.</summary>
     public bool EnableCsp { get; set; } = true;
 
+    /// <summary>
+    /// Emits CSP in <c>Content-Security-Policy-Report-Only</c> mode instead of enforce mode.
+    /// Default: <see langword="false"/>.
+    /// </summary>
+    public bool UseCspReportOnly { get; set; }
+
     /// <summary>CSP options. Configure via <see cref="Builder.CspBuilder"/> or assign directly.</summary>
     public CspOptions Csp { get; set; } = new();
+
+    // ── Path-specific policies ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Path-specific policy overrides applied when request paths match a configured prefix.
+    /// Longest matching prefix wins.
+    /// </summary>
+    public List<PathPolicyOptions> PathPolicies { get; set; } = [];
 
     // ── Extensibility ──────────────────────────────────────────────────────
 
@@ -130,9 +164,17 @@ public sealed class NetSecureHeadersOptions
         XDnsPrefetchControlValue = preset.XDnsPrefetchControlValue;
         EnableXPermittedCrossDomainPolicies = preset.EnableXPermittedCrossDomainPolicies;
         XPermittedCrossDomainPoliciesValue = preset.XPermittedCrossDomainPoliciesValue;
+        EnableOriginAgentCluster = preset.EnableOriginAgentCluster;
+        OriginAgentClusterValue = preset.OriginAgentClusterValue;
+        EnableXRobotsTag = preset.EnableXRobotsTag;
+        XRobotsTagValue = preset.XRobotsTagValue;
+        EnableClearSiteData = preset.EnableClearSiteData;
+        ClearSiteDataValue = preset.ClearSiteDataValue;
         RemoveServerHeader = preset.RemoveServerHeader;
         EnableCsp = preset.EnableCsp;
+        UseCspReportOnly = preset.UseCspReportOnly;
         Csp = preset.Csp;
+        PathPolicies = preset.PathPolicies;
         CustomPolicies = preset.CustomPolicies;
     }
 }

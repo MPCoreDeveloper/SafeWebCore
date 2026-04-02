@@ -1,4 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using SafeWebCore.Abstractions;
 using SafeWebCore.Infrastructure;
 using SafeWebCore.Middleware;
 using SafeWebCore.Options;
@@ -70,12 +73,94 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
 
-        services.Configure(configure);
+        services
+            .AddOptions<NetSecureHeadersOptions>()
+            .Configure(configure)
+            .ValidateOnStart();
+
+        services.AddSingleton<IValidateOptions<NetSecureHeadersOptions>, NetSecureHeadersOptionsValidator>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICspReportSink, CspLoggingReportSink>());
         services.AddSingleton<INonceService, NonceService>();
         services.AddTransient<NetSecureHeadersMiddleware>();
         services.AddTransient<CspReportMiddleware>();
         services.AddHttpContextAccessor();
 
         return services;
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with the API preset.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersApiPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.Api());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with the MVC preset.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersMvcPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.Mvc());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with the Blazor preset.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersBlazorPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.Blazor());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with the SPA reverse-proxy preset.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersSpaReverseProxyPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.SpaReverseProxy());
+            customize?.Invoke(opts);
+        });
     }
 }

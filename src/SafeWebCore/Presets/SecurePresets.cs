@@ -140,4 +140,120 @@ public static class SecurePresets
         // ── No custom policies by default ──────────────────────────────
         CustomPolicies = []
     };
+
+    /// <summary>
+    /// Returns a profile-oriented preset for API-only applications.
+    /// Keeps strong transport and response hardening while disabling CSP by default,
+    /// because APIs typically do not render executable HTML.
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> for API workloads.</returns>
+    public static NetSecureHeadersOptions Api()
+    {
+        var options = CreateFromStrictAPlus();
+        options.EnableCsp = false;
+        options.UseCspReportOnly = false;
+        options.ReferrerPolicyValue = "no-referrer";
+        options.XFrameOptionsValue = "DENY";
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a profile-oriented preset for MVC applications.
+    /// Uses nonce-based CSP with practical defaults for same-origin page assets.
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> for MVC workloads.</returns>
+    public static NetSecureHeadersOptions Mvc()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            ScriptSrc = "'nonce-{nonce}' 'strict-dynamic' https:",
+            StyleSrc = "'nonce-{nonce}'",
+            ImgSrc = "'self' https: data:",
+            FontSrc = "'self' https://fonts.gstatic.com",
+            ConnectSrc = "'self'",
+            ObjectSrc = "'none'",
+            ChildSrc = "",
+            WorkerSrc = "'self'",
+            ManifestSrc = "'self'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            RequireTrustedTypesFor = "'script'",
+            TrustedTypes = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a profile-oriented preset for Blazor applications.
+    /// Relaxes CSP sources needed for WebAssembly and framework resource loading.
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> for Blazor workloads.</returns>
+    public static NetSecureHeadersOptions Blazor()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
+            StyleSrc = "'self' 'nonce-{nonce}'",
+            ImgSrc = "'self' https: data:",
+            FontSrc = "'self' https://fonts.gstatic.com data:",
+            ConnectSrc = "'self' wss:",
+            MediaSrc = "'self' blob:",
+            ObjectSrc = "'none'",
+            WorkerSrc = "'self' blob:",
+            ManifestSrc = "'self'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            RequireTrustedTypesFor = "'script'",
+            TrustedTypes = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a profile-oriented preset for SPA reverse-proxy deployments.
+    /// Keeps strict isolation while allowing common static asset and API patterns.
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> for SPA reverse-proxy workloads.</returns>
+    public static NetSecureHeadersOptions SpaReverseProxy()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
+            StyleSrc = "'self' 'nonce-{nonce}'",
+            ImgSrc = "'self' https: data: blob:",
+            FontSrc = "'self' https: data:",
+            ConnectSrc = "'self' https: wss:",
+            MediaSrc = "'self' https: blob:",
+            ObjectSrc = "'none'",
+            WorkerSrc = "'self' blob:",
+            ManifestSrc = "'self'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            RequireTrustedTypesFor = "'script'",
+            TrustedTypes = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+        return options;
+    }
+
+    private static NetSecureHeadersOptions CreateFromStrictAPlus()
+    {
+        var options = new NetSecureHeadersOptions();
+        options.ApplyPreset(StrictAPlus());
+        return options;
+    }
 }

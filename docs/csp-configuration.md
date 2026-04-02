@@ -244,6 +244,34 @@ This replacement happens once per request in `NetSecureHeadersMiddleware`.
 
 ---
 
+## Performance Optimizations *(v1.1.0+)*
+
+### Pre-built CSP Template (Startup Only)
+
+The CSP header string is computed **once at startup**, not per-request. The middleware only replaces the `{nonce}` placeholder at runtime:
+
+```
+Startup:  BuildCspTemplate("script-src 'nonce-{nonce}' ...")
+              ↓
+          "script-src 'nonce-{nonce}' ... strict-dynamic"
+
+Per-request: Replace {nonce} → actual value
+              ↓
+          "script-src 'nonce-xyz123...' ... strict-dynamic"
+```
+
+This means CSP header generation has **zero per-request overhead** beyond nonce substitution.
+
+### Zero-Allocation Nonce Generation
+
+The nonce is generated using `stackalloc` + `RandomNumberGenerator` — no heap allocation in the hot path. Additionally, `NonceService.TryWriteNonce()` allows direct span writes for fully heap-free scenarios.
+
+### StringBuilder-Based Build
+
+The CSP builder (`CspBuilder`) uses `StringBuilder` internally to eliminate ~20 intermediate string allocations during configuration phase.
+
+---
+
 ## CSP Source Values Reference
 
 | Value | Meaning |

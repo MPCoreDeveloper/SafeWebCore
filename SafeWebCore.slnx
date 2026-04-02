@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/SafeWebCore.Benchmarks/SafeWebCore.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/MinimalApi/MinimalApi.csproj" />
+    <Project Path="examples/MvcApp/MvcApp.csproj" />
+    <Project Path="examples/ApiService/ApiService.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/SafeWebCore/SafeWebCore.csproj" />
   </Folder>

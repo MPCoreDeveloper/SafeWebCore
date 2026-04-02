@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.TestHost;
 using SafeWebCore.Extensions;
+using SafeWebCore.Metadata;
+using SafeWebCore.Options;
 
 namespace SafeWebCore.Tests;
 
@@ -78,5 +80,299 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
         var csp1 = response1.Headers.GetValues("Content-Security-Policy").First();
         var csp2 = response2.Headers.GetValues("Content-Security-Policy").First();
         Assert.NotEqual(csp1, csp2);
+    }
+
+    [Fact]
+    public async Task GetRequestWithReportOnlyEnabledAddsCspReportOnlyHeader()
+    {
+        // Arrange
+        using var reportOnlyHost = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.UseCspReportOnly = true;
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Hello World");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var reportOnlyClient = reportOnlyHost.GetTestClient();
+
+        // Act
+        var response = await reportOnlyClient.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.True(response.Headers.Contains("Content-Security-Policy-Report-Only"));
+        Assert.False(response.Headers.Contains("Content-Security-Policy"));
+
+        var csp = response.Headers.GetValues("Content-Security-Policy-Report-Only").First();
+        Assert.Contains("default-src 'none'", csp);
+        Assert.Contains("script-src 'nonce-", csp);
+
+        await reportOnlyHost.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestOnMappedPathUsesPathSpecificPolicy()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+                        opts.PathPolicies.Add(new PathPolicyOptions
+                        {
+                            PathPrefix = "/api",
+                            Options = new NetSecureHeadersOptions
+                            {
+                                ReferrerPolicyValue = "no-referrer",
+                                UseCspReportOnly = true
+                            }
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Root");
+                        endpoints.MapGet("/api/ping", () => "Pong");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var rootResponse = await client.GetAsync("/", TestContext.Current.CancellationToken);
+        var apiResponse = await client.GetAsync("/api/ping", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("strict-origin-when-cross-origin", rootResponse.Headers.GetValues("Referrer-Policy").First());
+        Assert.True(rootResponse.Headers.Contains("Content-Security-Policy"));
+        Assert.False(rootResponse.Headers.Contains("Content-Security-Policy-Report-Only"));
+
+        Assert.Equal("no-referrer", apiResponse.Headers.GetValues("Referrer-Policy").First());
+        Assert.True(apiResponse.Headers.Contains("Content-Security-Policy-Report-Only"));
+        Assert.False(apiResponse.Headers.Contains("Content-Security-Policy"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestWithNestedPathUsesLongestMatchingPolicy()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.PathPolicies.Add(new PathPolicyOptions
+                        {
+                            PathPrefix = "/api",
+                            Options = new NetSecureHeadersOptions
+                            {
+                                XFrameOptionsValue = "DENY"
+                            }
+                        });
+
+                        opts.PathPolicies.Add(new PathPolicyOptions
+                        {
+                            PathPrefix = "/api/admin",
+                            Options = new NetSecureHeadersOptions
+                            {
+                                XFrameOptionsValue = "SAMEORIGIN"
+                            }
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/api/admin/dashboard", () => "Admin");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/api/admin/dashboard", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("SAMEORIGIN", response.Headers.GetValues("X-Frame-Options").First());
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestOnEndpointWithSkipMetadataDoesNotAddSecurityHeaders()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(_ => { });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseNetSecureHeaders();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/public", () => "Public").SkipNetSecureHeaders();
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/public", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.False(response.Headers.Contains("Content-Security-Policy"));
+        Assert.False(response.Headers.Contains("X-Frame-Options"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestOnEndpointWithReportOnlyMetadataOverridesGlobalCspMode()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.UseCspReportOnly = false;
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseNetSecureHeaders();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/report-only", () => "ReportOnly")
+                            .WithCspMode(CspEndpointMode.ReportOnly);
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/report-only", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.Contains("Content-Security-Policy-Report-Only"));
+        Assert.False(response.Headers.Contains("Content-Security-Policy"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestDoesNotEmitOptionalAdditionalHeadersByDefault()
+    {
+        // Act
+        var response = await _client.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(response.Headers.Contains("Origin-Agent-Cluster"));
+        Assert.False(response.Headers.Contains("X-Robots-Tag"));
+        Assert.False(response.Headers.Contains("Clear-Site-Data"));
+    }
+
+    [Fact]
+    public async Task GetRequestWithOptionalAdditionalHeadersEnabledEmitsConfiguredValues()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.EnableOriginAgentCluster = true;
+                        opts.OriginAgentClusterValue = "?1";
+                        opts.EnableXRobotsTag = true;
+                        opts.XRobotsTagValue = "noindex, nofollow";
+                        opts.EnableClearSiteData = true;
+                        opts.ClearSiteDataValue = "\"cache\", \"cookies\"";
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Hello World");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("?1", response.Headers.GetValues("Origin-Agent-Cluster").First());
+        Assert.Equal("noindex, nofollow", response.Headers.GetValues("X-Robots-Tag").First());
+        Assert.Equal("\"cache\", \"cookies\"", response.Headers.GetValues("Clear-Site-Data").First());
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 }

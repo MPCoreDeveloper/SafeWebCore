@@ -127,6 +127,11 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 🔒 **Strict A+ preset** — one-line setup with the strictest security headers
 - 🛠️ **Fully custom** — configure every header and CSP directive individually
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for scripts and styles
+- 🧷 **Razor nonce TagHelpers** — auto-add nonce to `<script>` and `<style>` in Razor views
+- 🛣️ **Path-based policies** — assign different security profiles per route prefix (longest-prefix wins)
+- 🧪 **Startup validation** — fail fast on invalid combinations and duplicate path policies
+- 📝 **CSP Report-Only mode** — safely test policy changes before hard enforcement
+- 🧱 **Typed policy builders** — strongly typed builders for `Referrer-Policy`, `Permissions-Policy`, and COEP/COOP/CORP
 - 📋 **Full CSP Level 3** (W3C Recommendation) — all 22 directives, nonce/hash support, `strict-dynamic`, `report-to`, `worker-src`, `frame-src`, `manifest-src`, `script-src-elem/attr`, `style-src-elem/attr`
 - 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
 - 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation
@@ -135,6 +140,28 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 🚀 **Pre-built CSP template** — CSP header string computed once at startup, not per-request *(v1.1.0)*
 - 🔌 **Extensible** — custom `IHeaderPolicy` implementations
 - 📊 **CSP violation reporting** — built-in `/csp-report` endpoint using Reporting API v1
+
+### Typed Builders Example
+
+```csharp
+using SafeWebCore.Builder;
+
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.ReferrerPolicyValue = new ReferrerPolicyBuilder().NoReferrer().Build();
+
+    opts.PermissionsPolicyValue = new PermissionsPolicyBuilder()
+        .Disable(PermissionsFeature.Camera)
+        .Disable(PermissionsFeature.Microphone)
+        .AllowSelf(PermissionsFeature.Geolocation)
+        .Build();
+
+    var crossOrigin = new CrossOriginPolicyBuilder().CoepRequireCorp().CoopSameOrigin().CorpSameOrigin().Build();
+    opts.CoepValue = crossOrigin.Coep;
+    opts.CoopValue = crossOrigin.Coop;
+    opts.CorpValue = crossOrigin.Corp;
+});
+```
 
 ## Validate Your Headers
 
@@ -146,6 +173,10 @@ After deploying, test your security headers with:
 ## Documentation
 
 Full documentation: [github.com/MPCoreDeveloper/SafeWebCore/docs](https://github.com/MPCoreDeveloper/SafeWebCore/tree/master/docs)
+
+Planning documents:
+- [v1.2 Roadmap](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/roadmap-v1.2.md)
+- [v1.2 Implementation Plan](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/implementation-plan-v1.2.md)
 
 ## License
 

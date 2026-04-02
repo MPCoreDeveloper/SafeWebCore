@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – SafeWebCore MVC</title>
+    <!--
+        The SafeWebCore CspStyleNonceTagHelper automatically adds
+        nonce="..." to this <style> tag when a nonce is available.
+    -->
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        nav a { margin-right: 1rem; text-decoration: none; color: #0078d4; }
+        footer { margin-top: 3rem; color: #666; font-size: .875rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/public/page">Public Page (Report-Only CSP)</a>
+        </nav>
+        <hr />
+    </header>
+    <main>
+        @RenderBody()
+    </main>
+    <footer>
+        <p>SafeWebCore MVC Example — open DevTools → Network to inspect security headers.</p>
+    </footer>
+    <!--
+        The SafeWebCore CspScriptNonceTagHelper automatically adds
+        nonce="..." to this <script> tag when a nonce is available.
+    -->
+    <script>
+        console.log('Layout script — nonce was injected automatically by the TagHelper.');
+    </script>
+</body>
+</html>

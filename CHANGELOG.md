@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Razor nonce TagHelpers** — New `CspScriptNonceTagHelper` and `CspStyleNonceTagHelper` automatically inject request nonces into `<script>` and `<style>` tags when `nonce` is missing.
+- **Path-based policy overrides** — New `PathPolicyOptions` support in `NetSecureHeadersOptions` allows route-prefix policy selection with longest-prefix match behavior.
+- **Startup option validation** — New `NetSecureHeadersOptionsValidator` validates global and path policy settings using `ValidateOnStart()`.
+
+### Changed
+
+- **CSP report-only support** — Middleware now emits `Content-Security-Policy-Report-Only` when `UseCspReportOnly` is enabled.
+
 ## [1.1.0] — 2025-06-28
 
 ### Added

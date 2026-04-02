@@ -47,8 +47,4 @@
     <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="TagHelpers\" />
-  </ItemGroup>
-
 </Project>

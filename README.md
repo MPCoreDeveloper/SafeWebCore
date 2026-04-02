@@ -15,8 +15,16 @@
 ## ✨ Features
 
 - 🔒 **A+ in one line** — `AddNetSecureHeadersStrictAPlus()` configures the strictest security headers instantly
+- 🧭 **App-profile presets** — ready-made profiles for API, MVC, Blazor, and SPA reverse-proxy apps
 - 🛠️ **Fully custom** — `AddNetSecureHeaders(opts => { ... })` gives you complete control over every header
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for `script-src` and `style-src`
+- 🧷 **Razor nonce TagHelpers** — auto-inject nonce attributes on `<script>` and `<style>` when available
+- 🛣️ **Path-based policies** — apply different security profiles per route prefix with longest-prefix matching
+- 🎯 **Endpoint metadata overrides** — skip headers or force CSP report-only per endpoint
+- 🧪 **Startup configuration validation** — invalid combinations fail fast during startup
+- 📝 **CSP Report-Only support** — ship policies safely before enforcing
+- 🧱 **Typed policy builders** — strongly typed builders for `Referrer-Policy`, `Permissions-Policy`, and COEP/COOP/CORP values
+- 🧰 **Optional additional headers** — opt-in support for `Origin-Agent-Cluster`, `X-Robots-Tag`, and `Clear-Site-Data`
 - 📋 **Full CSP Level 3** (W3C Recommendation) — all directives including `worker-src`, `manifest-src`, `frame-src`, `script-src-elem/attr`, `style-src-elem/attr`, `report-to`, nonce/hash support, `strict-dynamic`
 - 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
 - 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation for every directive
@@ -25,6 +33,51 @@
 - 🛑 **Server header removal** — hides server technology from attackers
 - 🔌 **Extensible** — add custom `IHeaderPolicy` implementations for any header
 - 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint using Reporting API v1
+
+### Typed builders for non-CSP headers
+
+```csharp
+using SafeWebCore.Builder;
+
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.ReferrerPolicyValue = new ReferrerPolicyBuilder()
+        .StrictOriginWhenCrossOrigin()
+        .Build();
+
+    opts.PermissionsPolicyValue = new PermissionsPolicyBuilder()
+        .Disable(PermissionsFeature.Camera)
+        .Disable(PermissionsFeature.Microphone)
+        .AllowSelf(PermissionsFeature.Geolocation)
+        .Build();
+
+    var crossOrigin = new CrossOriginPolicyBuilder()
+        .CoepRequireCorp()
+        .CoopSameOrigin()
+        .CorpSameOrigin()
+        .Build();
+
+    opts.CoepValue = crossOrigin.Coep;
+    opts.CoopValue = crossOrigin.Coop;
+    opts.CorpValue = crossOrigin.Corp;
+});
+```
+
+### Optional additional headers
+
+```csharp
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.EnableOriginAgentCluster = true;
+    opts.OriginAgentClusterValue = "?1";
+
+    opts.EnableXRobotsTag = true;
+    opts.XRobotsTagValue = "noindex, nofollow";
+
+    opts.EnableClearSiteData = true;
+    opts.ClearSiteDataValue = "\"cache\", \"cookies\", \"storage\"";
+});
+```
 
 ### CSP Compliance
 
@@ -157,6 +210,67 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
+## 🧭 v1.2 Milestone Progress
+
+The following features are now implemented from the `v1.2` plan.
+
+### CSP Report-Only mode
+
+```csharp
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.UseCspReportOnly = true;
+});
+```
+
+This emits `Content-Security-Policy-Report-Only` instead of enforce-mode `Content-Security-Policy`.
+
+### Path-based policy overrides
+
+```csharp
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.PathPolicies.Add(new PathPolicyOptions
+    {
+        PathPrefix = "/api",
+        Options = new NetSecureHeadersOptions
+        {
+            ReferrerPolicyValue = "no-referrer",
+            UseCspReportOnly = true
+        }
+    });
+});
+```
+
+Path policies are matched by prefix and the longest matching prefix wins.
+
+### Startup validation
+
+SafeWebCore validates options during startup and fails fast for invalid configurations, for example:
+- `UseCspReportOnly = true` while `EnableCsp = false`
+- duplicate path prefixes (normalized)
+- empty path policy prefixes
+
+### Razor nonce TagHelpers
+
+Register the TagHelpers in your Razor `_ViewImports.cshtml`:
+
+```razor
+@addTagHelper *, SafeWebCore
+```
+
+Then use normal tags; nonce is added automatically when available:
+
+```html
+<script>
+    console.log("nonce is injected automatically");
+</script>
+
+<style>
+    body { font-family: sans-serif; }
+</style>
+```
+
 ## 🔑 Using CSP Nonces in Razor Views
 
 SafeWebCore generates a unique cryptographic nonce per request. Use it in your scripts and styles:
@@ -189,126 +303,83 @@ public class HomeController : Controller
 ```csharp
 using SafeWebCore.Extensions;
 
-// In Minimal APIs, middleware, Razor Pages, etc.
-var nonce = HttpContext.GetCspNonce();
-```
-
-### Direct access via `HttpContext.Items`
-
-```csharp
-var nonce = HttpContext.Items[NetSecureHeaders.CspNonceKey] as string;
-```
-
----
-
-## 📊 CSP Violation Reporting
-
-Enable the built-in CSP report endpoint to catch policy violations:
-
-```csharp
-var app = builder.Build();
-
-app.UseCspReport();           // Handles POST /csp-report
-app.UseNetSecureHeaders();
-
-app.Run();
-```
-
-Configure the CSP to send reports:
-
-```csharp
-builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
+// In Minimal API
+app.MapGet("/page", (HttpContext ctx) =>
 {
-    opts.Csp = opts.Csp with { ReportTo = "default" };
+    var nonce = ctx.GetCspNonce();
+    return Results.Content(
+        $"<script nonce=\"{nonce}\">console.log('nonce ok');</script>",
+        "text/html");
 });
-```
 
-Violations are logged at `Warning` level via `ILogger`.
+// In a controller action
+public IActionResult Index()
+{
+    ViewData["CspNonce"] = HttpContext.GetCspNonce();
+    return View();
+}
+```
 
 ---
 
-## 📁 Project Structure
+## ⚡ Benchmarks
 
+SafeWebCore ships a [BenchmarkDotNet](https://benchmarkdotnet.org/) suite covering nonce generation, CSP header assembly, typed policy builders, preset instantiation, the middleware pipeline, and CSP report parsing.
+
+```bash
+cd benchmarks/SafeWebCore.Benchmarks
+dotnet run -c Release
 ```
-SafeWebCore/
-├── src/SafeWebCore/
-│   ├── Abstractions/          # IHeaderPolicy interface
-│   ├── Attributes/            # [CspNonce] action filter
-│   ├── Builder/               # Fluent CspBuilder
-│   ├── Constants/             # Header name constants
-│   ├── Extensions/            # DI and middleware extensions
-│   ├── Infrastructure/        # NonceService, CspReportMiddleware
-│   ├── Middleware/             # NetSecureHeadersMiddleware
-│   ├── Options/               # NetSecureHeadersOptions, CspOptions
-│   └── Presets/               # SecurePresets (Strict A+)
-├── tests/SafeWebCore.Tests/   # xUnit v3 tests
-├── docs/                      # Documentation
-└── .github/                   # CI, issue templates
+
+See **[docs/benchmarks.md](docs/benchmarks.md)** for scenario descriptions, running instructions, and result interpretation.
+
+---
+
+## 📖 Examples
+
+Three complete, runnable ASP.NET Core applications demonstrating different integration patterns:
+
+| Example | Framework | Key Features |
+|---------|-----------|--------------|
+| [**MinimalApi**](examples/MinimalApi/) | Minimal API | One-line A+ setup, inline nonce, CSP reporting, health probes |
+| [**MvcApp**](examples/MvcApp/) | MVC + Razor Views | Typed policy builders, path policies, nonce TagHelpers, controller attributes |
+| [**ApiService**](examples/ApiService/) | Web API Controllers | Custom CSP report sink, endpoint overrides, API preset |
+
+Each example is fully functional out of the box — just `dotnet run` from the example directory.
+
+```bash
+# Try each example
+cd examples/MinimalApi && dotnet run
+cd examples/MvcApp && dotnet run
+cd examples/ApiService && dotnet run
 ```
+
+See **[examples/README.md](examples/README.md)** for a detailed overview and feature matrix.
 
 ---
 
 ## 📚 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Getting Started](docs/getting-started.md) | Installation, first setup, verification |
-| [Security Headers](docs/security-headers.md) | Every header explained with rationale |
-| [CSP Configuration](docs/csp-configuration.md) | CSP builder, nonces, directives guide |
-| [Presets](docs/presets.md) | Strict A+ preset details and customization |
-| [Advanced Configuration](docs/advanced-configuration.md) | Custom policies, reporting, per-route config |
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | Installation, minimal setup, and verifying your headers |
+| [Examples](docs/examples.md) | Three complete sample projects (Minimal API, MVC, Web API) |
+| [Security Headers](docs/security-headers.md) | Every security header explained with values and rationale |
+| [CSP Configuration](docs/csp-configuration.md) | CSP builder, nonces, directives, and common scenarios |
+| [Presets](docs/presets.md) | Strict A+ and app-profile presets, customization examples |
+| [Advanced Configuration](docs/advanced-configuration.md) | Custom policies, CSP reporting, endpoint overrides, troubleshooting |
+| [Benchmarks](docs/benchmarks.md) | Running benchmarks and interpreting results |
 
 ---
 
-## 🏗️ Building & Testing
+## Examples
 
-```bash
-# Build
-dotnet build
+The [examples/](examples/) directory contains three fully runnable ASP.NET Core applications demonstrating different integration patterns.
 
-# Run tests
-dotnet test
+| Example | Pattern | Highlights |
+|---------|---------|-----------|
+| [MinimalApi](examples/MinimalApi/) | Minimal API | StrictAPlus preset, nonce, SkipNetSecureHeaders |
+| [MvcApp](examples/MvcApp/) | MVC + Razor | Typed builders, path policies, CspNonce attribute, TagHelpers |
+| [ApiService](examples/ApiService/) | Web API | API preset, custom ICspReportSink, endpoint overrides |
 
-# Run tests with coverage
-dotnet tool install -g dotnet-coverage
-dotnet-coverage collect -f cobertura -o coverage.cobertura.xml dotnet test
-```
 
----
-
-## ✅ Validate Your Security Headers
-
-After deploying your application, verify your headers with these tools:
-
-### 1. [securityheaders.com](https://securityheaders.com/)
-
-Scans **all** response headers and grades your site **A+** through **F**. Validates HSTS, CSP, X-Frame-Options, Permissions-Policy, Referrer-Policy, and more.
-
-> With SafeWebCore's Strict A+ preset you should score **A+** immediately.
-
-### 2. [Google CSP Evaluator](https://csp-evaluator.withgoogle.com/)
-
-Paste your `Content-Security-Policy` header value to check for common CSP misconfigurations:
-- ❌ Missing `object-src 'none'`
-- ❌ `'unsafe-inline'` without a nonce or hash
-- ❌ Missing `'strict-dynamic'` for trust propagation
-- ❌ Overly permissive wildcards (`*`, `https:`)
-- ✅ Nonce-based policy with `'strict-dynamic'` (SafeWebCore default)
-
-### 3. Browser DevTools
-
-Open **DevTools → Network tab → Response Headers** to inspect headers on every request. Any CSP violations will also appear in the **Console** tab.
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history.

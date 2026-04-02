@@ -4,6 +4,18 @@ SafeWebCore includes pre-configured security presets for common use cases. Prese
 
 ---
 
+## Available Presets
+
+| Preset | Best for | Registration helper |
+|--------|----------|---------------------|
+| `StrictAPlus` | Maximum lockdown / A+ target | `AddNetSecureHeadersStrictAPlus()` |
+| `Api` | API-only services | `AddNetSecureHeadersApiPreset()` |
+| `Mvc` | MVC + Razor server-rendered apps | `AddNetSecureHeadersMvcPreset()` |
+| `Blazor` | Blazor Server/WebAssembly hybrid hosting | `AddNetSecureHeadersBlazorPreset()` |
+| `SpaReverseProxy` | SPA frontend behind ASP.NET Core reverse proxy | `AddNetSecureHeadersSpaReverseProxyPreset()` |
+
+---
+
 ## Strict A+ Preset
 
 The `StrictAPlus` preset configures **every security header** to the strictest possible value, targeting an A+ rating on [securityheaders.com](https://securityheaders.com) and a passing grade on [Google CSP Evaluator](https://csp-evaluator.withgoogle.com/).
@@ -189,41 +201,240 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 
 ---
 
+## API Preset
+
+The `Api` preset is for **API-only services** that return JSON instead of HTML.
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersApiPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersApiPreset(opts =>
+{
+    opts.Csp = opts.Csp with { ConnectSrc = "'self' https://api.example.com" };
+});
+```
+
+### What It Configures
+
+- **CSP disabled** (`EnableCsp = false`) — APIs return JSON, not HTML
+- **HSTS enabled** — 2-year HTTPS enforcement
+- **CORS/embedding headers** — `Cross-Origin-Embedder-Policy: require-corp`, etc.
+- **Referrer-Policy** — `strict-origin-when-cross-origin`
+- **Permissions-Policy** — All browser features denied
+- **`X-Robots-Tag` disabled by default** — Enable if you don't want search indexing
+
+### When to use
+
+- REST/GraphQL APIs
+- Microservices
+- Backend services consumed by SPAs or mobile apps
+
+---
+
+## MVC Preset
+
+The `Mvc` preset is for **server-rendered MVC + Razor Views** applications.
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersMvcPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersMvcPreset(opts =>
+{
+    opts.Csp = opts.Csp with { ImgSrc = "'self' https://cdn.example.com" };
+});
+```
+
+### What It Configures
+
+- **Nonce-based CSP** — Per-request nonce for `<script>` and `<style>`
+- **Practical asset allowances** — `img-src 'self' https: data:`, `font-src 'self' https:`
+- **HSTS enabled** — 2-year HTTPS enforcement with preload
+- **Referrer-Policy** — `strict-origin-when-cross-origin` (balanced for navigation)
+- **Server header removed**
+- **TagHelpers enabled** — Use `@addTagHelper *, SafeWebCore` in `_ViewImports.cshtml`
+
+### CSP Details
+
+```
+default-src 'none';
+script-src 'nonce-{nonce}' 'strict-dynamic' https%;
+style-src 'nonce-{nonce}';
+img-src 'self' https: data%;
+font-src 'self' https%;
+connect-src 'self';
+```
+
+### When to use
+
+- ASP.NET Core MVC apps
+- Razor Pages apps
+- Server-rendered apps with static assets
+
+### Example: CDN + API
+
+```csharp
+builder.Services.AddNetSecureHeadersMvcPreset(opts =>
+{
+    opts.Csp = opts.Csp with
+    {
+        ImgSrc = "'self' https://cdn.example.com",
+        FontSrc = "'self' https://fonts.gstatic.com",
+        ConnectSrc = "'self' https://api.example.com"
+    };
+
+    opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+});
+```
+
+---
+
+## Blazor Preset
+
+The `Blazor` preset is for **Blazor Server + WebAssembly hybrid hosting**.
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersBlazorPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersBlazorPreset(opts =>
+{
+    opts.Csp = opts.Csp with { WorkerSrc = "'self' blob:" };
+});
+```
+
+### What It Configures
+
+- **Nonce-based CSP** — Per-request nonce for inline scripts
+- **WebAssembly + Worker support** — `worker-src 'self' blob:` for Blazor WASM
+- **WebSocket connections** — `connect-src 'self' wss:` for Blazor Server signaling
+- **HSTS enabled** — 2-year HTTPS enforcement
+- **Permissions-Policy** — Stricter than MVC, no geolocation/camera
+
+### CSP Details
+
+```
+default-src 'none';
+script-src 'nonce-{nonce}' 'strict-dynamic' https%;
+style-src 'nonce-{nonce}';
+img-src 'self' https: data%;
+font-src 'self' https%;
+connect-src 'self' wss%;
+worker-src 'self' blob%;
+```
+
+### When to use
+
+- Blazor Server apps
+- Blazor WebAssembly hosted by ASP.NET Core
+- Apps combining server and client-side rendering
+
+---
+
+## SPA Reverse-Proxy Preset
+
+The `SpaReverseProxy` preset is for **Single-Page Apps (Vue, React, Angular) served behind ASP.NET Core**.
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersSpaReverseProxyPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersSpaReverseProxyPreset(opts =>
+{
+    opts.Csp = opts.Csp with { ConnectSrc = "'self' https://api.example.com wss://ws.example.com" };
+});
+```
+
+### What It Configures
+
+- **Nonce-based CSP** — Per-request nonce for frameworks that inline scripts
+- **Broad asset allowances** — `img-src 'self' https: data: blob:`, `font-src 'self' https:`
+- **WebSocket + API support** — `connect-src 'self' https: wss:`
+- **Blob support** — For dynamic imports and canvas operations
+- **HSTS enabled** — 2-year HTTPS enforcement
+
+### CSP Details
+
+```
+default-src 'none';
+script-src 'nonce-{nonce}' 'strict-dynamic' https: wss%;
+style-src 'nonce-{nonce}' https%;
+img-src 'self' https: data: blob%;
+font-src 'self' https%;
+connect-src 'self' https: wss%;
+worker-src 'self' blob%;
+```
+
+### When to use
+
+- Vue.js, React, Angular apps
+- Frontend served by ASP.NET Core reverse proxy
+- Apps with dynamic imports or web workers
+
+### Example: API backend
+
+```csharp
+builder.Services.AddNetSecureHeadersSpaReverseProxyPreset(opts =>
+{
+    opts.Csp = opts.Csp with { ConnectSrc = "'self' https://api.example.com wss://ws.example.com" };
+});
+```
+
+---
+
+## Comparing Presets
+
+| Feature | StrictAPlus | Api | Mvc | Blazor | SpaReverseProxy |
+|---------|:----------:|:---:|:---:|:------:|:---------------:|
+| **CSP enabled** | ✅ Nonce | ❌ | ✅ Nonce | ✅ Nonce | ✅ Nonce |
+| **HSTS** | ✅ 2-year | ✅ 1-year | ✅ 2-year | ✅ 2-year | ✅ 2-year |
+| **WebSocket** | ❌ | ❌ | ❌ | ✅ `wss:` | ✅ `wss:` |
+| **Worker/Blob** | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **External HTTPS** | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Images/Data** | `'self'` | N/A | `https: data:` | `https: data:` | `https: data: blob:` |
+| **Permissions-Policy** | 29 features denied | All denied | Balanced | Restricted | Balanced |
+
+---
+
 ## Using the Preset Directly
 
-You can also use the `SecurePresets` class directly for more control:
+You can inspect preset values without registering them:
 
 ```csharp
 using SafeWebCore.Presets;
 
 // Get the preset as an options object
 var strictOptions = SecurePresets.StrictAPlus();
+var mvcOptions = SecurePresets.Mvc();
 
 // Inspect values
 Console.WriteLine(strictOptions.HstsValue);
-Console.WriteLine(strictOptions.Csp.Build());
+Console.WriteLine(mvcOptions.Csp.Build());
 ```
 
 This is useful for:
 - Unit testing your customizations
-- Building custom presets based on the strict A+ baseline
-- Inspecting the exact values at startup
-
-### Building custom presets *(v1.1.0+)*
-
-Internally, `AddNetSecureHeadersStrictAPlus` uses an `ApplyPreset` helper to copy all preset values. You can inspect `SecurePresets.StrictAPlus()` as a baseline and override properties using the customize callback — without needing to create a full custom configuration.
+- Building custom presets based on a preset baseline
+- Comparing preset values at startup
 
 ---
 
-## When to NOT Use Strict A+
+## Choosing Your Preset
 
-The Strict A+ preset is intentionally aggressive. You may need a different approach when:
-
-| Scenario | Issue | Solution |
-|----------|-------|----------|
-| Third-party widgets (chat, analytics) | Blocked by `default-src 'none'` | Add specific origins to `connect-src`, `script-src` |
-| CDN-hosted assets | Blocked by `'self'`-only policies | Add CDN origins to relevant directives |
-| OAuth/SAML redirects | Blocked by `form-action 'self'` | Add identity provider origin to `form-action` |
-| Embedded iframes (YouTube, maps) | Blocked by `child-src 'none'` | Add embed origins to `child-src` |
-| COEP with third-party images | Third parties lack CORP headers | Set `EnableCoep = false` or use `credentialless` |
-| Legacy browsers | May not support CSP Level 3 | Add `https:` fallback to `script-src` |
+| Your Application | Recommended Preset | Why |
+|------------------|-------------------|-----|
+| REST/GraphQL API | `Api` | No HTML = no CSP needed; focus on transport & CORS |
+| MVC + Razor Pages | `Mvc` | Server-rendered HTML with practical asset allowances |
+| Blazor Server | `Blazor` | WebSocket + Blazor runtime support |
+| Blazor WASM hosted | `Blazor` | Worker/blob support for WASM + nonce for Server interop |
+| React/Vue/Angular SPA | `SpaReverseProxy` | Dynamic imports, web workers, broad asset support |
+| Maximum security locked down | `StrictAPlus` | Strictest possible; relax selectively for your needs |
