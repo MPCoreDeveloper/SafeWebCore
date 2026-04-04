@@ -328,6 +328,7 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
         Assert.False(response.Headers.Contains("Origin-Agent-Cluster"));
         Assert.False(response.Headers.Contains("X-Robots-Tag"));
         Assert.False(response.Headers.Contains("Clear-Site-Data"));
+        Assert.False(response.Headers.Contains("Reporting-Endpoints"));
     }
 
     [Fact]
@@ -372,6 +373,92 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
         Assert.Equal("?1", response.Headers.GetValues("Origin-Agent-Cluster").First());
         Assert.Equal("noindex, nofollow", response.Headers.GetValues("X-Robots-Tag").First());
         Assert.Equal("\"cache\", \"cookies\"", response.Headers.GetValues("Clear-Site-Data").First());
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestWithAdditionalHeadersEmitsConfiguredValues()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.AdditionalHeaders.Add(new()
+                        {
+                            Name = "Document-Policy",
+                            Value = "force-load-at-top"
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Hello World");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("force-load-at-top", response.Headers.GetValues("Document-Policy").First());
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestWithReportingEndpointsEmitsReportingEndpointsHeader()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.ReportingEndpoints.Add(new()
+                        {
+                            Group = "default",
+                            Url = "https://reports.example.com/default"
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Hello World");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("default=\"https://reports.example.com/default\"", response.Headers.GetValues("Reporting-Endpoints").First());
 
         await host.StopAsync(TestContext.Current.CancellationToken);
     }

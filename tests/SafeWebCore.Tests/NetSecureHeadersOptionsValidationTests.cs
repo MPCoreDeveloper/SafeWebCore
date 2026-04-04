@@ -47,6 +47,46 @@ public sealed class NetSecureHeadersOptionsValidationTests
         Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
     }
 
+    [Fact]
+    public void StartWithDuplicateAdditionalHeadersThrowsOptionsValidationException()
+    {
+        // Arrange
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            opts.AdditionalHeaders.Add(new()
+            {
+                Name = "Document-Policy",
+                Value = "force-load-at-top"
+            });
+
+            opts.AdditionalHeaders.Add(new()
+            {
+                Name = "document-policy",
+                Value = "js-profiling"
+            });
+        });
+
+        // Act + Assert
+        Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
+    }
+
+    [Fact]
+    public void StartWithRelativeReportingEndpointUrlThrowsOptionsValidationException()
+    {
+        // Arrange
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            opts.ReportingEndpoints.Add(new()
+            {
+                Group = "default",
+                Url = "/reports"
+            });
+        });
+
+        // Act + Assert
+        Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
+    }
+
     private static IHostBuilder CreateHostBuilder(Action<NetSecureHeadersOptions> configure)
         => new HostBuilder()
             .ConfigureWebHost(webBuilder =>

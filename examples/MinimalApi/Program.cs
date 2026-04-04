@@ -9,12 +9,23 @@ var builder = WebApplication.CreateBuilder(args);
 // -----------------------------------------------------------------------
 builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 {
+    // Safe rollout: start in report-only mode and inspect violations first.
+    opts.UseCspReportOnly = true;
+
     // Allow images from a CDN in addition to 'self'
     opts.Csp = opts.Csp with
     {
         ImgSrc = "'self' https://picsum.photos data:",
         ConnectSrc = "'self' https://api.example.com",
+        ReportTo = "csp-endpoint",
     };
+
+    // First-class Reporting API endpoint mapping for `report-to`.
+    opts.ReportingEndpoints.Add(new()
+    {
+        Group = "csp-endpoint",
+        Url = "https://localhost:5001/csp-report"
+    });
 });
 
 var app = builder.Build();

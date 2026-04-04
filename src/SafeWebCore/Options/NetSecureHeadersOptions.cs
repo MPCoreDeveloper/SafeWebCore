@@ -132,6 +132,20 @@ public sealed class NetSecureHeadersOptions
     /// </summary>
     public List<PathPolicyOptions> PathPolicies { get; set; } = [];
 
+    /// <summary>
+    /// Additional response headers emitted as first-class configuration.
+    /// Use this collection to support upcoming or non-standard headers without
+    /// implementing custom <see cref="Abstractions.IHeaderPolicy"/> types.
+    /// Default: empty.
+    /// </summary>
+    public List<AdditionalHeaderOptions> AdditionalHeaders { get; set; } = [];
+
+    /// <summary>
+    /// Reporting API endpoint groups emitted via the <c>Reporting-Endpoints</c>
+    /// response header. Default: empty (header omitted).
+    /// </summary>
+    public List<ReportingEndpointOptions> ReportingEndpoints { get; set; } = [];
+
     // ── Extensibility ──────────────────────────────────────────────────────
 
     /// <summary>Custom header policies applied after the built-in headers.</summary>
@@ -175,6 +189,8 @@ public sealed class NetSecureHeadersOptions
         UseCspReportOnly = preset.UseCspReportOnly;
         Csp = preset.Csp;
         PathPolicies = preset.PathPolicies;
+        AdditionalHeaders = preset.AdditionalHeaders;
+        ReportingEndpoints = preset.ReportingEndpoints;
         CustomPolicies = preset.CustomPolicies;
     }
 }

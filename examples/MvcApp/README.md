@@ -7,6 +7,7 @@ Demonstrates SafeWebCore in a full ASP.NET Core MVC application with Razor Views
 | Feature | Where |
 |---------|-------|
 | `AddNetSecureHeadersMvcPreset()` | `Program.cs` |
+| `report-to` + `ReportingEndpoints` first-class setup | `Program.cs` |
 | `ReferrerPolicyBuilder` typed builder | `Program.cs` |
 | `PermissionsPolicyBuilder` typed builder | `Program.cs` |
 | `CrossOriginPolicyBuilder` typed builder | `Program.cs` |
@@ -44,6 +45,21 @@ After adding `@addTagHelper *, SafeWebCore` to `_ViewImports.cshtml`, every `<sc
 
 The `/public` route prefix uses a separate policy with `UseCspReportOnly = true`. All other routes use the strict enforced CSP from the MVC preset. This lets you roll out tighter policies gradually.
 
+## Reporting API rollout
+
+`Program.cs` demonstrates first-class reporting endpoint configuration for CSP `report-to`:
+
+```csharp
+opts.Csp = opts.Csp with { ReportTo = "csp-endpoint" };
+opts.ReportingEndpoints.Add(new()
+{
+    Group = "csp-endpoint",
+    Url = "https://localhost:5001/csp-report"
+});
+```
+
+Combined with `UseCspReport()`, this gives a complete staged rollout path while staying fully backward compatible.
+
 ## Typed builders
 
 Use the fluent builders for non-CSP headers instead of raw strings:
@@ -53,4 +69,3 @@ opts.PermissionsPolicyValue = new PermissionsPolicyBuilder()
     .Disable(PermissionsFeature.Camera)
     .AllowSelf(PermissionsFeature.Geolocation)
     .Build();
-```

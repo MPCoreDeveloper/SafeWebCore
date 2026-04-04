@@ -50,6 +50,9 @@ public static class HeaderNames
     /// <summary>Clear-Site-Data — instructs browsers to clear selected local data stores.</summary>
     public const string ClearSiteData = "Clear-Site-Data";
 
+    /// <summary>Reporting-Endpoints — maps endpoint groups for Reporting API consumers such as CSP `report-to`.</summary>
+    public const string ReportingEndpoints = "Reporting-Endpoints";
+
     /// <summary>Server — removed by middleware to hide server technology.</summary>
     public const string Server = "Server";
 }

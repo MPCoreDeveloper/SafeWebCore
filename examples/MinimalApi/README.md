@@ -8,6 +8,8 @@ Demonstrates the fastest way to add an **A+ security header** profile to an ASP.
 |---------|-------|
 | `AddNetSecureHeadersStrictAPlus()` one-liner | `Program.cs` |
 | CSP directive customisation with `with { ... }` | `Program.cs` |
+| `UseCspReportOnly` staged rollout | `Program.cs` |
+| `report-to` + `ReportingEndpoints` first-class setup | `Program.cs` |
 | `UseNetSecureHeaders()` middleware registration | `Program.cs` |
 | `UseCspReport()` violation reporting endpoint | `Program.cs` |
 | `HttpContext.GetCspNonce()` extension method | `Program.cs` `MapGet("/")` |
@@ -51,3 +53,18 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
     opts.UseCspReportOnly = true;
 });
 ```
+
+## Reporting API rollout (`report-to` + `Reporting-Endpoints`)
+
+This example also maps a first-class reporting endpoint group used by CSP:
+
+```csharp
+opts.Csp = opts.Csp with { ReportTo = "csp-endpoint" };
+opts.ReportingEndpoints.Add(new()
+{
+    Group = "csp-endpoint",
+    Url = "https://localhost:5001/csp-report"
+});
+```
+
+This keeps rollout backward compatible: existing apps keep working unchanged, and reporting is enabled only when explicitly configured.

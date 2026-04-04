@@ -17,12 +17,19 @@ public sealed class NetSecureHeadersMiddleware(
     INonceService nonceService,
     IOptions<NetSecureHeadersOptions> options) : IMiddleware
 {
-    private sealed record ResolvedPathPolicy(PathString Prefix, NetSecureHeadersOptions Options, string? CspTemplate);
+    private sealed record ResolvedPathPolicy(
+        PathString Prefix,
+        NetSecureHeadersOptions Options,
+        string? CspTemplate,
+        string? ReportingEndpointsValue);
 
     private readonly NetSecureHeadersOptions _defaultOptions = options.Value;
 
     // PERF: Pre-build the CSP template once — avoids StringBuilder work on every request
     private readonly string? _defaultCspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
+
+    // PERF: Pre-build Reporting-Endpoints once for the default policy
+    private readonly string? _defaultReportingEndpointsValue = BuildReportingEndpointsValue(options.Value.ReportingEndpoints);
 
     private readonly List<ResolvedPathPolicy> _pathPolicies = BuildPathPolicies(options.Value.PathPolicies);
 
@@ -45,14 +52,14 @@ public sealed class NetSecureHeadersMiddleware(
         }
 
         var endpointCspMode = endpoint?.Metadata.GetMetadata<CspModeAttribute>()?.Mode;
-        var (effectiveOptions, cspTemplate) = ResolvePolicy(context.Request.Path);
+        var (effectiveOptions, cspTemplate, reportingEndpointsValue) = ResolvePolicy(context.Request.Path);
 
         // Generate per-request nonce and expose via HttpContext.Items
         var nonce = nonceService.GenerateNonce();
         context.Items[NetSecureHeaders.CspNonceKey] = nonce;
 
         // Set security headers before the response body is written
-        AddSecurityHeaders(context.Response, nonce, effectiveOptions, cspTemplate, endpointCspMode);
+        AddSecurityHeaders(context.Response, nonce, effectiveOptions, cspTemplate, reportingEndpointsValue, endpointCspMode);
 
         // Remove Server header just before headers are flushed to the client
         if (effectiveOptions.RemoveServerHeader)
@@ -87,7 +94,13 @@ public sealed class NetSecureHeadersMiddleware(
                 ? policy.Options.Csp.Build()
                 : null;
 
-            resolvedPolicies.Add(new ResolvedPathPolicy(new PathString(normalizedPrefix), policy.Options, cspTemplate));
+            var reportingEndpointsValue = BuildReportingEndpointsValue(policy.Options.ReportingEndpoints);
+
+            resolvedPolicies.Add(new ResolvedPathPolicy(
+                new PathString(normalizedPrefix),
+                policy.Options,
+                cspTemplate,
+                reportingEndpointsValue));
         }
 
         resolvedPolicies.Sort(static (a, b) =>
@@ -96,15 +109,23 @@ public sealed class NetSecureHeadersMiddleware(
         return resolvedPolicies;
     }
 
-    private (NetSecureHeadersOptions Options, string? CspTemplate) ResolvePolicy(PathString requestPath)
+    private (NetSecureHeadersOptions Options, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
     {
         var matchedPolicy = _pathPolicies
             .FirstOrDefault(policy => requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase));
 
         if (matchedPolicy is not null)
-            return (matchedPolicy.Options, matchedPolicy.CspTemplate);
+            return (matchedPolicy.Options, matchedPolicy.CspTemplate, matchedPolicy.ReportingEndpointsValue);
 
-        return (_defaultOptions, _defaultCspTemplate);
+        return (_defaultOptions, _defaultCspTemplate, _defaultReportingEndpointsValue);
+    }
+
+    private static string? BuildReportingEndpointsValue(List<ReportingEndpointOptions> endpoints)
+    {
+        if (endpoints.Count == 0)
+            return null;
+
+        return string.Join(", ", endpoints.Select(static endpoint => $"{endpoint.Group}=\"{endpoint.Url}\""));
     }
 
     private static void AddSecurityHeaders(
@@ -112,6 +133,7 @@ public sealed class NetSecureHeadersMiddleware(
         string nonce,
         NetSecureHeadersOptions options,
         string? cspTemplate,
+        string? reportingEndpointsValue,
         CspEndpointMode? endpointCspMode)
     {
         var headers = response.Headers;
@@ -155,6 +177,9 @@ public sealed class NetSecureHeadersMiddleware(
         if (options.EnableClearSiteData)
             headers.Append(HeaderNames.ClearSiteData, options.ClearSiteDataValue);
 
+        if (!string.IsNullOrWhiteSpace(reportingEndpointsValue))
+            headers.Append(HeaderNames.ReportingEndpoints, reportingEndpointsValue);
+
         if (cspTemplate is not null)
         {
             var cspValue = cspTemplate.Replace("{nonce}", nonce, StringComparison.Ordinal);
@@ -170,6 +195,11 @@ public sealed class NetSecureHeadersMiddleware(
                 : HeaderNames.ContentSecurityPolicy;
 
             headers.Append(cspHeaderName, cspValue);
+        }
+
+        foreach (var additionalHeader in options.AdditionalHeaders)
+        {
+            headers[additionalHeader.Name] = additionalHeader.Value;
         }
 
         // Apply custom policies

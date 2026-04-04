@@ -2,6 +2,10 @@
 
 A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
+## Backward Compatibility Goal
+
+SafeWebCore keeps a strict **100% backward compatibility** contract. New capabilities are additive and opt-in, so existing configurations keep their current behavior.
+
 ## Two Ways to Use SafeWebCore
 
 ### Option 1 — Strict A+ Preset (fastest)
@@ -132,6 +136,8 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 🧪 **Startup validation** — fail fast on invalid combinations and duplicate path policies
 - 📝 **CSP Report-Only mode** — safely test policy changes before hard enforcement
 - 🧱 **Typed policy builders** — strongly typed builders for `Referrer-Policy`, `Permissions-Policy`, and COEP/COOP/CORP
+- 🧭 **First-class upcoming header support** — configure non-standard or emerging headers through `AdditionalHeaders` (opt-in)
+- 📡 **First-class Reporting API endpoint support** — emit `Reporting-Endpoints` from typed `ReportingEndpoints` options (opt-in)
 - 📋 **Full CSP Level 3** (W3C Recommendation) — all 22 directives, nonce/hash support, `strict-dynamic`, `report-to`, `worker-src`, `frame-src`, `manifest-src`, `script-src-elem/attr`, `style-src-elem/attr`
 - 🔮 **CSP Level 4 ready** — Trusted Types (`require-trusted-types-for`, `trusted-types`), `fenced-frame-src` (Privacy Sandbox)
 - 🎯 **Fluent CSP Builder** — type-safe, chainable API with full XML documentation
@@ -141,26 +147,42 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 - 🔌 **Extensible** — custom `IHeaderPolicy` implementations
 - 📊 **CSP violation reporting** — built-in `/csp-report` endpoint using Reporting API v1
 
-### Typed Builders Example
+## First-class Upcoming Headers (Opt-in)
+
+Use `AdditionalHeaders` when you want to emit upcoming or non-standard headers without writing a custom policy type:
 
 ```csharp
-using SafeWebCore.Builder;
-
 builder.Services.AddNetSecureHeaders(opts =>
 {
-    opts.ReferrerPolicyValue = new ReferrerPolicyBuilder().NoReferrer().Build();
-
-    opts.PermissionsPolicyValue = new PermissionsPolicyBuilder()
-        .Disable(PermissionsFeature.Camera)
-        .Disable(PermissionsFeature.Microphone)
-        .AllowSelf(PermissionsFeature.Geolocation)
-        .Build();
-
-    var crossOrigin = new CrossOriginPolicyBuilder().CoepRequireCorp().CoopSameOrigin().CorpSameOrigin().Build();
-    opts.CoepValue = crossOrigin.Coep;
-    opts.CoopValue = crossOrigin.Coop;
-    opts.CorpValue = crossOrigin.Corp;
+    opts.AdditionalHeaders.Add(new()
+    {
+        Name = "Document-Policy",
+        Value = "force-load-at-top"
+    });
 });
+```
+
+## First-class Reporting Endpoints (Opt-in)
+
+Use `ReportingEndpoints` to emit the `Reporting-Endpoints` response header and map endpoint groups used by CSP `report-to`:
+
+```csharp
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.Csp = opts.Csp with { ReportTo = "default" };
+
+    opts.ReportingEndpoints.Add(new()
+    {
+        Group = "default",
+        Url = "https://reports.example.com/csp"
+    });
+});
+```
+
+Emitted header value:
+
+```text
+Reporting-Endpoints: default="https://reports.example.com/csp"
 ```
 
 ## Validate Your Headers

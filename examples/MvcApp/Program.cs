@@ -11,6 +11,15 @@ builder.Services.AddControllersWithViews();
 // -----------------------------------------------------------------------
 builder.Services.AddNetSecureHeadersMvcPreset(opts =>
 {
+    // Route CSP reports through Reporting API endpoint groups.
+    opts.Csp = opts.Csp with { ReportTo = "csp-endpoint" };
+
+    opts.ReportingEndpoints.Add(new()
+    {
+        Group = "csp-endpoint",
+        Url = "https://localhost:5001/csp-report"
+    });
+
     // Override the Referrer-Policy using the typed builder
     opts.ReferrerPolicyValue = new ReferrerPolicyBuilder()
         .StrictOriginWhenCrossOrigin()
@@ -45,6 +54,15 @@ builder.Services.AddNetSecureHeadersMvcPreset(opts =>
             EnableCsp = true,
             UseCspReportOnly = true,
             ReferrerPolicyValue = "strict-origin-when-cross-origin",
+            Csp = opts.Csp with { ReportTo = "csp-endpoint" },
+            ReportingEndpoints =
+            [
+                new()
+                {
+                    Group = "csp-endpoint",
+                    Url = "https://localhost:5001/csp-report"
+                }
+            ]
         }
     });
 });
