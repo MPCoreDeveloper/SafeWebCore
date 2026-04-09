@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>SafeWebCore.FraudDetection</RootNamespace>
+  </PropertyGroup>
+
+  <!-- NuGet Package Metadata -->
+  <PropertyGroup>
+    <PackageId>SafeWebCore.FraudDetection</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>MPCoreDeveloper</Authors>
+    <Company>Posseth Software</Company>
+    <Product>SafeWebCore.FraudDetection</Product>
+    <Description>
+      Optional advanced fraud-detection module for SafeWebCore.
+      Detects Western-identity impersonation and penetration-test scanner traffic
+      using IP, timezone, language, fingerprint, header, and behavioral signals.
+      Supports options pattern configuration with runtime fallback to database-backed settings.
+    </Description>
+    <PackageTags>fraud;detection;security;scanner;pentest;aspnetcore;safeweb</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

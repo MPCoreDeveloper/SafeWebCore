@@ -11,4 +11,8 @@
     <ProjectReference Include="../../src/SafeWebCore/SafeWebCore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Infrastructure\" />
+  </ItemGroup>
+
 </Project>
