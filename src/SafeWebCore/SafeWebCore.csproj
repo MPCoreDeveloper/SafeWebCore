@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,6 +23,21 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
+## v1.3.0 — Permissions-Policy Browser Compatibility Cleanup
+
+**Changed:**
+- StrictAPlus preset: removed 8 stale Permissions-Policy tokens that Chromium logs as
+  "Unrecognized feature" (ambient-light-sensor, battery, cross-origin-isolated,
+  document-domain, execution-while-not-rendered, execution-while-out-of-viewport,
+  navigation-override, sync-xhr). These were removed from or were never part of the
+  Permissions Policy spec.
+- StrictAPlus preset: added 7 modern Permissions-Policy tokens standardised in 2022–2024
+  (clipboard-read, clipboard-write, identity-credentials-get, local-fonts,
+  otp-credentials, publickey-credentials-create, window-management).
+
+**Result:** Preset now emits 28 recognised feature tokens, eliminating browser console
+noise while keeping full deny-all coverage for all current standardised features.
+
 ## v1.2.0 — Security Rollout and Developer Experience
 
 **Major Features:**

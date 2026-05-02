@@ -9,15 +9,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+---
 
-- **Razor nonce TagHelpers** — New `CspScriptNonceTagHelper` and `CspStyleNonceTagHelper` automatically inject request nonces into `<script>` and `<style>` tags when `nonce` is missing.
-- **Path-based policy overrides** — New `PathPolicyOptions` support in `NetSecureHeadersOptions` allows route-prefix policy selection with longest-prefix match behavior.
-- **Startup option validation** — New `NetSecureHeadersOptionsValidator` validates global and path policy settings using `ValidateOnStart()`.
+## [1.3.0] — 2026-05-02
 
 ### Changed
 
-- **CSP report-only support** — Middleware now emits `Content-Security-Policy-Report-Only` when `UseCspReportOnly` is enabled.
+- **`StrictAPlus` preset — Permissions-Policy browser-compatibility cleanup**
+
+  The `StrictAPlus` (and all presets derived from it: `Api`, `Mvc`, `Blazor`, `SpaReverseProxy`) no longer emits Permissions-Policy tokens that are absent from the current spec. Chromium-based browsers log each unrecognised token as a console warning, which surfaced as noise for consumers of the preset.
+
+  **Removed (8 stale tokens — no longer in the Permissions Policy spec):**
+
+  | Token | Reason |
+  |---|---|
+  | `ambient-light-sensor` | Removed from spec; not recognised by Chromium |
+  | `battery` | Was in old Feature Policy; never added to Permissions Policy |
+  | `cross-origin-isolated` | Document Policy concept, not a Permissions Policy feature |
+  | `document-domain` | Proposed but removed before standardisation |
+  | `execution-while-not-rendered` | Removed from spec |
+  | `execution-while-out-of-viewport` | Removed from spec |
+  | `navigation-override` | Removed from spec |
+  | `sync-xhr` | Deprecated and removed from spec |
+
+  **Added (7 modern tokens — standardised 2022–2024):**
+
+  | Token | Standardised since |
+  |---|---|
+  | `clipboard-read` | Chrome 76 / Permissions Policy v2 |
+  | `clipboard-write` | Chrome 76 / Permissions Policy v2 |
+  | `identity-credentials-get` | Chrome 116 (FedCM) |
+  | `local-fonts` | Chrome 103 |
+  | `otp-credentials` | Chrome 93 (WebOTP) |
+  | `publickey-credentials-create` | Chrome 108 (WebAuthn L2) |
+  | `window-management` | Chrome 100 (replaces `window-placement`) |
+
+  The preset now emits **28 recognised feature tokens** — all denied — providing full coverage without browser console noise.
+
+### Tests
+
+- Added `StrictAPlusPermissionsPolicyIncludesModernTokens` — asserts all 7 new tokens are present.
+- Added `StrictAPlusPermissionsPolicyExcludesStaleTokens` — asserts all 8 removed tokens are absent, preventing regressions.
+
+### Compatibility
+
+- ✅ **100% backwards compatible** with v1.0.0 – v1.2.0
+- The `PermissionsPolicyValue` string changes, but it is still a valid Permissions-Policy header value. Any application that overrides `PermissionsPolicyValue` manually (as the stopgap pattern) is unaffected.
+
+
 
 ## [1.1.0] — 2025-06-28
 
@@ -69,6 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server header removal
 - Comprehensive documentation and test suite
 
-[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/MPCoreDeveloper/SafeWebCore/releases/tag/v1.0.0

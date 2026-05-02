@@ -120,7 +120,7 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `no-referrer` |
-| `Permissions-Policy` | All 29 browser features denied |
+| `Permissions-Policy` | All 28 browser features denied (modern, Chromium-recognised tokens) |
 | `Cross-Origin-Embedder-Policy` | `require-corp` |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 | `Cross-Origin-Resource-Policy` | `same-origin` |
@@ -129,6 +129,7 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 ## Features
 
 - 🔒 **Strict A+ preset** — one-line setup with the strictest security headers
+- 🌐 **Browser-safe Permissions-Policy** — preset emits only tokens recognised by current Chromium builds; stale tokens (`ambient-light-sensor`, `battery`, `navigation-override`, etc.) removed in v1.3.0 to eliminate console noise
 - 🛠️ **Fully custom** — configure every header and CSP directive individually
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for scripts and styles
 - 🧷 **Razor nonce TagHelpers** — auto-add nonce to `<script>` and `<style>` in Razor views

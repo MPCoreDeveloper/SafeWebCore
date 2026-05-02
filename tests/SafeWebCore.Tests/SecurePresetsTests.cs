@@ -67,6 +67,34 @@ public sealed class SecurePresetsTests
         Assert.Contains("fullscreen=()", _options.PermissionsPolicyValue);
     }
 
+    [Fact]
+    public void StrictAPlusPermissionsPolicyIncludesModernTokens()
+    {
+        // Tokens added in v1.3.0 — standardised in 2022–2024
+        Assert.Contains("clipboard-read=()", _options.PermissionsPolicyValue);
+        Assert.Contains("clipboard-write=()", _options.PermissionsPolicyValue);
+        Assert.Contains("identity-credentials-get=()", _options.PermissionsPolicyValue);
+        Assert.Contains("local-fonts=()", _options.PermissionsPolicyValue);
+        Assert.Contains("otp-credentials=()", _options.PermissionsPolicyValue);
+        Assert.Contains("publickey-credentials-create=()", _options.PermissionsPolicyValue);
+        Assert.Contains("window-management=()", _options.PermissionsPolicyValue);
+    }
+
+    [Fact]
+    public void StrictAPlusPermissionsPolicyExcludesStaleTokens()
+    {
+        // These tokens were removed from the Permissions Policy spec and cause
+        // "Unrecognized feature" warnings in Chromium — they must not appear.
+        Assert.DoesNotContain("ambient-light-sensor", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("battery", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("cross-origin-isolated", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("document-domain", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("execution-while-not-rendered", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("execution-while-out-of-viewport", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("navigation-override", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("sync-xhr", _options.PermissionsPolicyValue);
+    }
+
     // ── Cross-Origin isolation ─────────────────────────────────────────────
 
     [Fact]

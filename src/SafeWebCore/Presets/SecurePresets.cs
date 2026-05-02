@@ -36,37 +36,44 @@ public static class SecurePresets
     /// <returns>A fully configured <see cref="NetSecureHeadersOptions"/> with the strictest A+ settings.</returns>
     public static NetSecureHeadersOptions StrictAPlus()
     {
-        // All browser features denied for maximum security
+        // All browser features denied for maximum security.
+        // Tokens are limited to features currently recognized by Chromium-based browsers.
+        // Removed stale tokens no longer in the Permissions Policy spec:
+        //   ambient-light-sensor, battery, cross-origin-isolated, document-domain,
+        //   execution-while-not-rendered, execution-while-out-of-viewport,
+        //   navigation-override, sync-xhr
+        // Added modern tokens standardised in 2022–2024:
+        //   clipboard-read, clipboard-write, identity-credentials-get,
+        //   local-fonts, otp-credentials, publickey-credentials-create, window-management
         string[] deniedPermissions =
         [
             "accelerometer=()",
-            "ambient-light-sensor=()",
             "autoplay=()",
-            "battery=()",
             "camera=()",
-            "cross-origin-isolated=()",
+            "clipboard-read=()",
+            "clipboard-write=()",
             "display-capture=()",
-            "document-domain=()",
             "encrypted-media=()",
-            "execution-while-not-rendered=()",
-            "execution-while-out-of-viewport=()",
             "fullscreen=()",
             "geolocation=()",
             "gyroscope=()",
             "hid=()",
+            "identity-credentials-get=()",
             "idle-detection=()",
+            "local-fonts=()",
             "magnetometer=()",
             "microphone=()",
             "midi=()",
-            "navigation-override=()",
+            "otp-credentials=()",
             "payment=()",
             "picture-in-picture=()",
+            "publickey-credentials-create=()",
             "publickey-credentials-get=()",
             "screen-wake-lock=()",
             "serial=()",
-            "sync-xhr=()",
             "usb=()",
             "web-share=()",
+            "window-management=()",
             "xr-spatial-tracking=()"
         ];
 
