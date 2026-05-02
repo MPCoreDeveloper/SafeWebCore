@@ -1,2 +1,4 @@
 <Solution>
+  <Project Path="src\SafeWebCore\SafeWebCore.csproj" />
+  <Project Path="src\SafeWebCore.FraudDetection\SafeWebCore.FraudDetection.csproj" />
 </Solution>
