@@ -88,19 +88,15 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.1.0
+## 🆕 What's New in v1.3.0
 
-v1.1.0 is a **performance and developer-experience** release — fully backwards compatible with v1.0.0.
+v1.3.0 is a **browser compatibility and maintenance** release — fully backwards compatible with v1.2.0.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Pre-built CSP template** | CSP header string is computed once at startup, not per-request |
-| **`StringBuilder`-based `Build()`** | Eliminates ~20 intermediate string allocations in CSP header generation |
-| **`HttpContext.GetCspNonce()`** | New extension method — no more magic string lookups |
-| **`NonceService.TryWriteNonce(Span<char>)`** | Zero-allocation nonce generation for high-throughput paths |
-| **`NonceService.NonceLength`** | Public constant (44) for pre-allocating nonce buffers |
-| **CancellationToken in CSP reporting** | Report reads now respect client disconnects |
-| **Modern C# patterns** | Pattern matching, cleaner preset application, reduced boilerplate |
+| **Permissions-Policy cleanup** | Removed 8 stale tokens no longer in the spec, added 7 modern tokens |
+| **Browser console noise reduction** | Eliminates Chromium warnings for unrecognised Permissions-Policy tokens |
+| **Full spec compliance** | StrictAPlus preset now emits only recognised feature tokens |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 
