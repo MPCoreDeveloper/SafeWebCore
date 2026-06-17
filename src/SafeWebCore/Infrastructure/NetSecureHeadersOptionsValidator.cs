@@ -5,6 +5,7 @@ namespace SafeWebCore.Infrastructure;
 
 internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSecureHeadersOptions>
 {
+    /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, NetSecureHeadersOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

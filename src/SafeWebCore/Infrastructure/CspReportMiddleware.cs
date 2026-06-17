@@ -102,41 +102,56 @@ public sealed partial class CspReportMiddleware(
         }
     }
 
+    /// <summary>
+    /// Internal payload model matching the browser JSON schema for CSP violation reports.
+    /// </summary>
     private sealed record CspViolationReportPayload
     {
+        /// <summary>The protected resource URI.</summary>
         [JsonPropertyName("document-uri")]
         public string? DocumentUri { get; init; }
 
+        /// <summary>The referrer URI, if present.</summary>
         [JsonPropertyName("referrer")]
         public string? Referrer { get; init; }
 
+        /// <summary>The violated CSP directive.</summary>
         [JsonPropertyName("violated-directive")]
         public string? ViolatedDirective { get; init; }
 
+        /// <summary>The effective directive that was enforced.</summary>
         [JsonPropertyName("effective-directive")]
         public string? EffectiveDirective { get; init; }
 
+        /// <summary>The original policy string evaluated by the browser.</summary>
         [JsonPropertyName("original-policy")]
         public string? OriginalPolicy { get; init; }
 
+        /// <summary>The URI that was blocked.</summary>
         [JsonPropertyName("blocked-uri")]
         public string? BlockedUri { get; init; }
 
+        /// <summary>The enforcement disposition (e.g., enforce or report).</summary>
         [JsonPropertyName("disposition")]
         public string? Disposition { get; init; }
 
+        /// <summary>The HTTP status code observed by the browser.</summary>
         [JsonPropertyName("status-code")]
         public int? StatusCode { get; init; }
 
+        /// <summary>The source file where the violation originated, when available.</summary>
         [JsonPropertyName("source-file")]
         public string? SourceFile { get; init; }
 
+        /// <summary>The source line number for the violation, when available.</summary>
         [JsonPropertyName("line-number")]
         public int? LineNumber { get; init; }
 
+        /// <summary>The source column number for the violation, when available.</summary>
         [JsonPropertyName("column-number")]
         public int? ColumnNumber { get; init; }
 
+        /// <summary>A browser-provided sample of the violating script.</summary>
         [JsonPropertyName("script-sample")]
         public string? ScriptSample { get; init; }
     }

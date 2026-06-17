@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using SafeWebCore.FraudDetection.Abstractions;
 using SafeWebCore.FraudDetection.Infrastructure;
 using SafeWebCore.FraudDetection.Models;
@@ -10,15 +8,23 @@ using SafeWebCore.FraudDetection.Options;
 namespace SafeWebCore.FraudDetection.Detection;
 
 /// <summary>
-/// Legacy detector implementation using Western-centric naming and defaults.
+/// Neutral, multi-region implementation of <see cref="IFraudDetector"/>.
 /// 
-/// <para><b>Full backward compatibility:</b> This class, its constructors, and the
-/// <see cref="Options.WesternDetectorOptions"/> it consumes remain 100% supported.</para>
+/// Detects strong geo-cultural inconsistencies between observed signals
+/// (IP country, timezone, browser language, device font/script support)
+/// and the expected primary region configured by the operator.
 /// 
-/// <para><b>Recommended for new scenarios:</b> Use <see cref="GeoCulturalConsistencyDetector"/>
-/// + <see cref="Options.GeoCulturalConsistencyOptions"/> instead. The neutral detector allows
-/// protecting any primary region (Western, Gulf/Arabic, Russian/CIS, African, East-Asian, etc.)
-/// by simple configuration, without culturally biased naming.</para>
+/// This detector is region-agnostic. You configure which countries, timezones
+/// and languages are "expected" vs "inconsistent" for your use case.
+/// 
+/// Common scenarios:
+/// - Protect a Western-European / North-American service (previous "Western impersonation")
+/// - Protect a Gulf / Arabic-speaking service
+/// - Protect a Russian / CIS service
+/// - Protect services primarily serving Sub-Saharan Africa, East Asia, Latin America, etc.
+/// 
+/// The detector is intentionally conservative and focuses on strong inconsistency signals
+/// that are difficult to fake consistently.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -36,8 +42,7 @@ namespace SafeWebCore.FraudDetection.Detection;
 /// This keeps the detector focused purely on analysis.
 /// </para>
 /// </remarks>
-[Obsolete("Use GeoCulturalConsistencyDetector + GeoCulturalConsistencyOptions for new multi-region use cases. This type remains fully functional for backward compatibility.")]
-public sealed partial class WesternImpersonationDetector : IFraudDetector
+public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
 {
     private const int ZapHeaderScore = 80;
     private const int HeaderScore = 50;
@@ -45,57 +50,42 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
     private const int PathProbeScore = 20;
     private const int BurstScore = 30;
 
-    private static readonly FraudDetectionOptions LegacyDefaults = new()
-    {
-        EnablePenTestDetection = false
-    };
-
     private readonly IFraudDetectionOptionsResolver? _optionsResolver;
-    private readonly WesternDetectorOptions? _legacyOptions;
+    private readonly GeoCulturalConsistencyOptions? _directOptions;
     private readonly IGeoIpService? _geoIpService;
     private readonly IPenTestAuthorizationNotificationSender _notificationSender;
-    private readonly ILogger<WesternImpersonationDetector> _logger;
+    private readonly ILogger<GeoCulturalConsistencyDetector> _logger;
     private readonly TimeProvider _timeProvider;
 
     private readonly ConcurrentDictionary<string, ConcurrentQueue<DateTimeOffset>> _requestWindows = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastNotifications = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Initializes a detector using the legacy Western-only options model.
+    /// Creates a detector using direct options (primarily for testing or simple scenarios).
     /// </summary>
-    /// <param name="options">Legacy detector options.</param>
-    /// <param name="logger">Logger used for analysis diagnostics.</param>
-    /// <param name="geoIpService">Optional geo-IP service.</param>
-    public WesternImpersonationDetector(
-        IOptions<WesternDetectorOptions> options,
-        ILogger<WesternImpersonationDetector> logger,
-        IGeoIpService? geoIpService = null)
+    public GeoCulturalConsistencyDetector(
+        GeoCulturalConsistencyOptions options,
+        ILogger<GeoCulturalConsistencyDetector> logger,
+        IGeoIpService? geoIpService = null,
+        IPenTestAuthorizationNotificationSender? notificationSender = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _legacyOptions = options.Value;
+        _directOptions = options;
         _logger = logger;
         _geoIpService = geoIpService;
-        _notificationSender = new DispatchingPenTestAuthorizationNotificationSender(
-        [
-            new LoggingPenTestAuthorizationNotificationSender(
-                NullLogger<LoggingPenTestAuthorizationNotificationSender>.Instance)
-        ]);
-        _timeProvider = TimeProvider.System;
+        _notificationSender = notificationSender ?? new NoOpNotificationSender();
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <summary>
-    /// Initializes a detector using full runtime-configurable fraud-detection options.
+    /// Creates a detector using the runtime options resolver (recommended for production).
     /// </summary>
-    /// <param name="optionsResolver">Runtime options resolver.</param>
-    /// <param name="logger">Logger used for analysis diagnostics.</param>
-    /// <param name="notificationSender">Authorization-check notification sender.</param>
-    /// <param name="geoIpService">Optional geo-IP service.</param>
-    /// <param name="timeProvider">Optional time provider for burst and cooldown checks.</param>
-    internal WesternImpersonationDetector(
+    internal GeoCulturalConsistencyDetector(
         IFraudDetectionOptionsResolver optionsResolver,
-        ILogger<WesternImpersonationDetector> logger,
+        ILogger<GeoCulturalConsistencyDetector> logger,
         IPenTestAuthorizationNotificationSender notificationSender,
         IGeoIpService? geoIpService = null,
         TimeProvider? timeProvider = null)
@@ -111,12 +101,25 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
+    // Parameterless constructor for DI scenarios where we resolve options at runtime
+    internal GeoCulturalConsistencyDetector() : this(
+        new NoOpOptionsResolver(),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<GeoCulturalConsistencyDetector>.Instance,
+        new NoOpNotificationSender())
+    {
+    }
+
+    private sealed class NoOpOptionsResolver : IFraudDetectionOptionsResolver
+    {
+        public FraudDetectionOptions GetCurrent(string? tenantId) => new();
+    }
+
     /// <inheritdoc />
     public FraudReport Analyze(ClientFingerprintData data)
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var options = ResolveOptions(data.TenantId);
+        var options = ResolveGeoOptions(data.TenantId);
         List<string> triggers = [];
 
         if (IsAuthorizedPenTestBypass(data, options.PenTestDetection))
@@ -138,27 +141,27 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         }
 
         var enriched = GeoIpEnricher.Enrich(data, _geoIpService);
-        var westernOptions = options.WesternImpersonation;
+        var geoOptions = options.GeoCulturalConsistency;
 
         int finalScore = 0;
         var verdict = FraudVerdict.Clean;
         var action = RecommendedAction.NoAction;
-        bool isNotWesternCountry = false;
+        bool isNotInExpectedRegion = false;
 
-        if (options.EnableWesternImpersonation)
+        if (options.EnableGeoCulturalConsistency)
         {
-            var scorer = new SuspicionScorer(westernOptions);
-            var travelEvaluator = new TravelModeEvaluator(westernOptions);
+            var scorer = new SuspicionScorer(geoOptions);
+            var travelEvaluator = new TravelModeEvaluator(geoOptions);
 
-            var (rawScore, westernTriggers) = scorer.Evaluate(enriched);
+            var (rawScore, geoTriggers) = scorer.Evaluate(enriched);
             finalScore = travelEvaluator.AdjustScore(rawScore, enriched);
-            triggers.AddRange(westernTriggers);
+            triggers.AddRange(geoTriggers);
 
-            isNotWesternCountry =
+            isNotInExpectedRegion =
                 !string.IsNullOrWhiteSpace(enriched.ResolvedCountryCode) &&
-                !westernOptions.AllowedCountries.Contains(enriched.ResolvedCountryCode);
+                !geoOptions.ExpectedCountries.Contains(enriched.ResolvedCountryCode);
 
-            verdict = DetermineVerdict(finalScore, westernOptions);
+            verdict = DetermineVerdict(finalScore, geoOptions);
             action = DetermineAction(verdict);
         }
 
@@ -206,8 +209,14 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
 
         return new FraudReport
         {
+            // Neutral properties (new)
+            IsRegionImpersonation = verdict is FraudVerdict.RegionImpersonation,
+            IsNotInExpectedRegion = isNotInExpectedRegion,
+
+            // Legacy Western properties kept for backward compatibility (map to same underlying value)
             IsFakeWestern = verdict is FraudVerdict.RegionImpersonation,
-            IsNotInWesternCountry = isNotWesternCountry,
+            IsNotInWesternCountry = isNotInExpectedRegion,
+
             IsPenTestScannerDetected = scannerDetected,
             IsAuthorizedPenTest = false,
             IsDetectionBypassed = false,
@@ -220,18 +229,16 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         };
     }
 
-    private FraudDetectionOptions ResolveOptions(string? tenantId)
+    private FraudDetectionOptions ResolveGeoOptions(string? tenantId)
     {
         if (_optionsResolver is null)
         {
-            if (_legacyOptions is null)
-                return LegacyDefaults;
-
+            // Direct options mode (testing / simple usage)
             return new FraudDetectionOptions
             {
-                EnableWesternImpersonation = true,
+                EnableGeoCulturalConsistency = true,
                 EnablePenTestDetection = false,
-                WesternImpersonation = _legacyOptions,
+                GeoCulturalConsistency = _directOptions ?? new GeoCulturalConsistencyOptions(),
                 PenTestDetection = new PenTestDetectionOptions()
             };
         }
@@ -358,9 +365,9 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
     private static string GetSourceKey(ClientFingerprintData data)
         => $"{data.TenantId ?? "default"}:{data.FingerprintVisitorId ?? "unknown"}:{data.IpAddress ?? "unknown"}";
 
-    private static FraudVerdict DetermineVerdict(int score, WesternDetectorOptions options) => score switch
+    private static FraudVerdict DetermineVerdict(int score, GeoCulturalConsistencyOptions options) => score switch
     {
-        _ when score >= options.FakeWesternThreshold => FraudVerdict.RegionImpersonation,
+        _ when score >= options.HighInconsistencyThreshold => FraudVerdict.RegionImpersonation,
         _ when score >= options.HighSuspicionThreshold => FraudVerdict.HighlySuspicious,
         _ when score >= options.MediumSuspicionThreshold => FraudVerdict.Suspicious,
         _ => FraudVerdict.Clean
@@ -390,4 +397,12 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         RecommendedAction action,
         bool scannerDetected,
         int triggerCount);
+
+    /// <summary>
+    /// No-op sender used when no real notification sender is provided in direct-options mode.
+    /// </summary>
+    private sealed class NoOpNotificationSender : IPenTestAuthorizationNotificationSender
+    {
+        public void SendAuthorizationCheck(PenTestAuthorizationNotification notification) { }
+    }
 }

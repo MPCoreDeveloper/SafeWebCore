@@ -74,10 +74,15 @@ public static class FraudDetectionServiceCollectionExtensions
 
     /// <summary>
     /// Backward-compatible registration overload for legacy Western-only options.
+    /// 
+    /// For new projects or multi-region scenarios, prefer configuring
+    /// <see cref="FraudDetectionOptions.GeoCulturalConsistency"/> and
+    /// <see cref="FraudDetectionOptions.EnableGeoCulturalConsistency"/>.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configure">Optional Western detector customization.</param>
     /// <returns>The service collection for chaining.</returns>
+    [Obsolete("Use AddSafeWebCoreFraudDetection(Action<FraudDetectionOptions>) and set EnableGeoCulturalConsistency + GeoCulturalConsistency for new scenarios. This overload remains fully supported.")]
     public static IServiceCollection AddSafeWebCoreFraudDetection(
         this IServiceCollection services,
         Action<WesternDetectorOptions>? configure)
@@ -99,15 +104,19 @@ public static class FraudDetectionServiceCollectionExtensions
 
     /// <summary>
     /// Backward-compatible named registration overload for legacy Western-only options.
+    /// 
+    /// For new multi-region scenarios, configure via <see cref="FraudDetectionOptions"/>
+    /// and <see cref="GeoCulturalConsistencyOptions"/>.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="name">Options name.</param>
     /// <param name="configure">Configuration delegate.</param>
     /// <returns>The service collection for chaining.</returns>
+    #pragma warning disable CS0618
     public static IServiceCollection AddSafeWebCoreFraudDetection(
-        this IServiceCollection services,
-        string name,
-        Action<WesternDetectorOptions> configure)
+            this IServiceCollection services,
+            string name,
+            Action<WesternDetectorOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -116,6 +125,7 @@ public static class FraudDetectionServiceCollectionExtensions
         services.AddOptions<WesternDetectorOptions>(name).Configure(configure);
         return services;
     }
+    #pragma warning restore CS0618
 
     /// <summary>
     /// Registers a pen-test authorization notification consumer.
@@ -132,6 +142,22 @@ public static class FraudDetectionServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers an injectable mail client and wires it as an authorization notification consumer.
+    /// </summary>
+    /// <typeparam name="TMailClient">Mail client implementation type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddPenTestAuthorizationNotificationMailClient<TMailClient>(this IServiceCollection services)
+        where TMailClient : class, IPenTestAuthorizationNotificationMailClient
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.TryAddSingleton<IPenTestAuthorizationNotificationMailClient, TMailClient>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IPenTestAuthorizationNotificationConsumer, MailClientPenTestAuthorizationNotificationConsumer>());
+        return services;
+    }
+
     private static IServiceCollection AddFraudDetectionCore(IServiceCollection services)
     {
         services.TryAddSingleton<IPenTestAuthorizationNotificationSender, DispatchingPenTestAuthorizationNotificationSender>();
@@ -141,13 +167,41 @@ public static class FraudDetectionServiceCollectionExtensions
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<FraudDetectionOptions>, FraudDetectionOptionsValidator>());
 
+        // Register the appropriate detector implementation based on configuration.
+        // Neutral multi-region detector is preferred when EnableGeoCulturalConsistency is configured.
+        // Legacy Western detector remains available for full backward compatibility.
         services.TryAddSingleton<IFraudDetector>(sp =>
-            new WesternImpersonationDetector(
-                sp.GetRequiredService<IFraudDetectionOptionsResolver>(),
+        {
+            var resolver = sp.GetRequiredService<IFraudDetectionOptionsResolver>();
+            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GeoCulturalConsistencyDetector>>();
+            var sender = sp.GetRequiredService<IPenTestAuthorizationNotificationSender>();
+            var geoIp = sp.GetService<IGeoIpService>();
+            var timeProvider = sp.GetRequiredService<TimeProvider>();
+
+            // Peek at the options to decide which detector implementation to use.
+            // This keeps the decision at startup without per-request cost.
+            var currentOptions = resolver.GetCurrent(null);
+
+            if (currentOptions.EnableGeoCulturalConsistency)
+            {
+                return new GeoCulturalConsistencyDetector(
+                    resolver,
+                    sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GeoCulturalConsistencyDetector>>(),
+                    sender,
+                    geoIp,
+                    timeProvider);
+            }
+
+            // Legacy path (Western-centric naming) for backward compatibility.
+#pragma warning disable CS0618
+            return new WesternImpersonationDetector(
+                resolver,
                 sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WesternImpersonationDetector>>(),
-                sp.GetRequiredService<IPenTestAuthorizationNotificationSender>(),
-                sp.GetService<IGeoIpService>(),
-                sp.GetRequiredService<TimeProvider>()));
+                sender,
+                geoIp,
+                timeProvider);
+#pragma warning restore CS0618
+        });
 
         return services;
     }

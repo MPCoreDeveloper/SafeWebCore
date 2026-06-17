@@ -1,10 +1,15 @@
 namespace SafeWebCore.FraudDetection.Options;
 
 /// <summary>
-/// Configuration for <c>WesternImpersonationDetector</c>.
-/// All collections are pre-populated with sensible defaults so the detector
-/// works out of the box; override only what you need.
+/// Legacy configuration for the Western-centric detector.
+/// 
+/// <para><b>Backward compatibility:</b> This type continues to work exactly as before.</para>
+/// 
+/// <para><b>Recommended for new work:</b> Use <see cref="GeoCulturalConsistencyOptions"/> instead.
+/// It allows protecting any primary region (Western, Gulf/Arabic, Russian/CIS, African, East-Asian, etc.)
+/// without cultural bias in the naming.</para>
 /// </summary>
+[Obsolete("Use GeoCulturalConsistencyOptions for new multi-region scenarios. This type remains fully supported for backward compatibility.")]
 public sealed class WesternDetectorOptions
 {
     // ── Allowed-country set ────────────────────────────────────────────────

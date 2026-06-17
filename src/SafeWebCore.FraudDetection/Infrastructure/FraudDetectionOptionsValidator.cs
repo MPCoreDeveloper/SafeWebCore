@@ -5,6 +5,7 @@ namespace SafeWebCore.FraudDetection.Infrastructure;
 
 internal sealed class FraudDetectionOptionsValidator : IValidateOptions<FraudDetectionOptions>
 {
+    /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, FraudDetectionOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -19,7 +20,9 @@ internal sealed class FraudDetectionOptionsValidator : IValidateOptions<FraudDet
             : ValidateOptionsResult.Success;
     }
 
+    #pragma warning disable CS0618
     private static void ValidateWesternThresholds(WesternDetectorOptions options, List<string> failures)
+    #pragma warning restore CS0618
     {
         if (options.MediumSuspicionThreshold < 0 || options.HighSuspicionThreshold < 0 || options.FakeWesternThreshold < 0)
             failures.Add("Western detector thresholds must be greater than or equal to zero.");

@@ -6,6 +6,7 @@ namespace SafeWebCore.Infrastructure;
 
 internal sealed partial class CspLoggingReportSink(ILogger<CspLoggingReportSink> logger) : ICspReportSink
 {
+    /// <inheritdoc />
     public Task WriteAsync(CspViolationReport report, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(report);

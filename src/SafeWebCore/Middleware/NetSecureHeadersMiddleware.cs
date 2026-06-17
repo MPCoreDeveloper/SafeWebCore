@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SafeWebCore.Attributes;
@@ -111,11 +112,13 @@ public sealed class NetSecureHeadersMiddleware(
 
     private (NetSecureHeadersOptions Options, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
     {
-        var matchedPolicy = _pathPolicies
-            .FirstOrDefault(policy => requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase));
+        foreach (var policy in _pathPolicies)
+        {
+            if (!requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
 
-        if (matchedPolicy is not null)
-            return (matchedPolicy.Options, matchedPolicy.CspTemplate, matchedPolicy.ReportingEndpointsValue);
+            return (policy.Options, policy.CspTemplate, policy.ReportingEndpointsValue);
+        }
 
         return (_defaultOptions, _defaultCspTemplate, _defaultReportingEndpointsValue);
     }
@@ -125,7 +128,18 @@ public sealed class NetSecureHeadersMiddleware(
         if (endpoints.Count == 0)
             return null;
 
-        return string.Join(", ", endpoints.Select(static endpoint => $"{endpoint.Group}=\"{endpoint.Url}\""));
+        var builder = new StringBuilder(endpoints.Count * 48);
+
+        for (var index = 0; index < endpoints.Count; index++)
+        {
+            if (index > 0)
+                builder.Append(", ");
+
+            var endpoint = endpoints[index];
+            builder.Append(endpoint.Group).Append("=\"").Append(endpoint.Url).Append('"');
+        }
+
+        return builder.ToString();
     }
 
     private static void AddSecurityHeaders(

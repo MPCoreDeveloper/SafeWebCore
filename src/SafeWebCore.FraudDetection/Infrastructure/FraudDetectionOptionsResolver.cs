@@ -8,6 +8,7 @@ internal sealed class FraudDetectionOptionsResolver(
     IOptionsMonitor<FraudDetectionOptions> optionsMonitor,
     IFraudDetectionConfigurationStore? configurationStore = null) : IFraudDetectionOptionsResolver
 {
+    /// <inheritdoc />
     public FraudDetectionOptions GetCurrent(string? tenantId)
         => configurationStore?.GetOptions(tenantId) ?? optionsMonitor.CurrentValue;
 }

@@ -16,16 +16,30 @@ public sealed record ClientFingerprintData
     // ── Network signals ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Client IP address (IPv4 or IPv6). Used for geo-IP resolution when an
-    /// <see cref="Abstractions.IGeoIpService"/> is registered.
+    /// Client IP address (IPv4 or IPv6).
+    /// 
+    /// This is used only as a fallback for geo-resolution when:
+    /// <list type="bullet">
+    ///   <item>An <see cref="Abstractions.IGeoIpService"/> is registered, and</item>
+    ///   <item><see cref="ResolvedCountryCode"/> or <see cref="SystemTimezone"/> is not already provided.</item>
+    /// </list>
+    /// 
+    /// <para>
+    /// <b>Preferred:</b> Resolve the country and timezone yourself (e.g. in middleware)
+    /// and populate <see cref="ResolvedCountryCode"/> + <see cref="SystemTimezone"/> directly.
+    /// This avoids an extra lookup inside the detector.
+    /// </para>
     /// </summary>
     public string? IpAddress { get; init; }
 
     /// <summary>
-    /// Pre-resolved ISO 3166-1 alpha-2 country code (e.g. <c>"NL"</c>).
-    /// Supply this directly if you already have a geo-IP result; the detector
-    /// will not call <see cref="Abstractions.IGeoIpService"/> for this field
-    /// when it is non-null.
+    /// Pre-resolved ISO 3166-1 alpha-2 country code (e.g. <c>"NL"</c>, <c>"AE"</c>, <c>"RU"</c>).
+    /// 
+    /// When this value is provided, the detector will <b>not</b> attempt to resolve the country
+    /// again via <see cref="Abstractions.IGeoIpService"/>, even if one is registered.
+    /// 
+    /// <para><b>Strongly recommended</b> for performance and architectural clarity:
+    /// populate this as early as possible using your own geo-IP logic.</para>
     /// </summary>
     public string? ResolvedCountryCode { get; init; }
 
@@ -44,8 +58,14 @@ public sealed record ClientFingerprintData
 
     /// <summary>
     /// IANA timezone identifier reported by the browser, e.g.
-    /// <c>"Europe/Moscow"</c> or <c>"Asia/Kolkata"</c>.
-    /// Obtain via <c>Intl.DateTimeFormat().resolvedOptions().timeZone</c>.
+    /// <c>"Europe/Amsterdam"</c>, <c>"Asia/Dubai"</c>, or <c>"America/New_York"</c>.
+    /// 
+    /// Obtain via <c>Intl.DateTimeFormat().resolvedOptions().timeZone</c> on the client.
+    /// 
+    /// <para>
+    /// When this value is provided, the detector will <b>not</b> overwrite it with a
+    /// geo-IP lookup, even if an <see cref="Abstractions.IGeoIpService"/> is registered.
+    /// </para>
     /// </summary>
     public string? SystemTimezone { get; init; }
 

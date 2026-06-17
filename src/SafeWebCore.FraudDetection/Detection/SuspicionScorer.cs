@@ -10,11 +10,71 @@ namespace SafeWebCore.FraudDetection.Detection;
 /// </summary>
 /// <remarks>
 /// Score weights are intentionally internal constants. Administrators tune the
-/// response to those scores via <see cref="WesternDetectorOptions"/> thresholds,
+/// response to those scores via detector options thresholds,
 /// not by altering individual weights.
+/// 
+/// Supports both legacy WesternDetectorOptions and the neutral GeoCulturalConsistencyOptions.
 /// </remarks>
-internal sealed class SuspicionScorer(WesternDetectorOptions options)
+internal sealed class SuspicionScorer
 {
+    private readonly HashSet<string> _expectedCountries;
+    private readonly HashSet<string> _travelCountries;
+    private readonly HashSet<string> _inconsistentTimezones;
+    private readonly HashSet<string> _travelTimezones;
+    private readonly HashSet<string> _inconsistentLanguages;
+    private readonly bool _enableTravelMode;
+    private readonly bool _enableDeviceFingerprinting;
+
+    /// <summary>
+    /// Creates a scorer from legacy Western-centric options (for backward compatibility).
+    /// </summary>
+#pragma warning disable CS0618
+    public SuspicionScorer(WesternDetectorOptions options)
+#pragma warning restore CS0618
+        : this(
+            options?.AllowedCountries ?? [],
+            options?.KnownVacationCountries ?? [],
+            options?.SuspiciousTimezones ?? [],
+            options?.VacationTimezones ?? [],
+            options?.NonWesternLanguageCodes ?? [],
+            options?.EnableTravelMode ?? true,
+            options?.EnableDeviceFingerprinting ?? true)
+    {
+    }
+
+    /// <summary>
+    /// Creates a scorer from the neutral geo-cultural options.
+    /// </summary>
+    public SuspicionScorer(GeoCulturalConsistencyOptions options)
+        : this(
+            options?.ExpectedCountries ?? [],
+            options?.KnownTravelCountries ?? [],
+            options?.InconsistentTimezones ?? [],
+            options?.TravelTimezones ?? [],
+            options?.InconsistentLanguageCodes ?? [],
+            options?.EnableTravelMode ?? true,
+            options?.EnableDeviceFingerprinting ?? true)
+    {
+    }
+
+    private SuspicionScorer(
+        HashSet<string> expectedCountries,
+        HashSet<string> travelCountries,
+        HashSet<string> inconsistentTimezones,
+        HashSet<string> travelTimezones,
+        HashSet<string> inconsistentLanguages,
+        bool enableTravelMode,
+        bool enableDeviceFingerprinting)
+    {
+        _expectedCountries = expectedCountries;
+        _travelCountries = travelCountries;
+        _inconsistentTimezones = inconsistentTimezones;
+        _travelTimezones = travelTimezones;
+        _inconsistentLanguages = inconsistentLanguages;
+        _enableTravelMode = enableTravelMode;
+        _enableDeviceFingerprinting = enableDeviceFingerprinting;
+    }
+
     // ── Per-signal score weights ───────────────────────────────────────────
 
     private const int IpNonWesternScore          = 20;
@@ -28,53 +88,48 @@ internal sealed class SuspicionScorer(WesternDetectorOptions options)
     private const int FontCjkScore               = 15;
     private const int FontDevanagariScore        = 15;
 
-    // Inconsistency bonuses for Western-IP + non-Western-other combinations.
-    // The strongest signal is Western IP + non-Western timezone + non-Western
-    // language simultaneously (classic VPN fingerprint).
-    private const int FullInconsistencyBonus     = 30;   // tz + lang mismatch
-    private const int TimezoneOnlyBonus          = 15;   // tz mismatch only
-    private const int LanguageOnlyBonus          = 5;    // lang mismatch only (weaker)
+    // Inconsistency bonuses for expected-region IP + inconsistent other signals.
+    private const int FullInconsistencyBonus     = 30;
+    private const int TimezoneOnlyBonus          = 15;
+    private const int LanguageOnlyBonus          = 5;
 
     private const int MaxScore = 100;
 
     // ── Public API ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Evaluates all configured signals and returns a raw score capped at
-    /// <c>100</c> along with the list of fired trigger keys.
+    /// Evaluates all configured signals and returns a raw suspicion score capped at 100
+    /// along with the individual trigger keys.
     /// </summary>
     internal (int Score, List<string> Triggers) Evaluate(ClientFingerprintData data)
     {
         List<string> triggers = [];
         int score = 0;
 
-        bool ipIsWestern         = EvaluateIpCountry(data, triggers, ref score);
-        bool timezoneIsNonWestern = EvaluateTimezone(data, triggers, ref score);
-        bool languageIsNonWestern = EvaluateLanguages(data, triggers, ref score);
+        bool ipIsExpected           = EvaluateIpCountry(data, triggers, ref score);
+        bool timezoneIsInconsistent = EvaluateTimezone(data, triggers, ref score);
+        bool languageIsInconsistent = EvaluateLanguages(data, triggers, ref score);
 
-        if (options.EnableDeviceFingerprinting)
+        if (_enableDeviceFingerprinting)
             EvaluateFontSupport(data, triggers, ref score);
 
-        ApplyInconsistencyBonus(ipIsWestern, timezoneIsNonWestern, languageIsNonWestern, triggers, ref score);
+        ApplyInconsistencyBonus(ipIsExpected, timezoneIsInconsistent, languageIsInconsistent, triggers, ref score);
 
         return (Math.Min(score, MaxScore), triggers);
     }
 
     // ── Signal evaluators ──────────────────────────────────────────────────
 
-    /// <returns>
-    /// <see langword="true"/> when the IP resolves to a confirmed Western country.
-    /// </returns>
     private bool EvaluateIpCountry(ClientFingerprintData data, List<string> triggers, ref int score)
     {
         var country = data.ResolvedCountryCode;
         if (string.IsNullOrWhiteSpace(country))
-            return false; // unknown — not penalized, but not confirmed Western either
+            return false;
 
-        if (options.AllowedCountries.Contains(country))
-            return true; // confirmed Western; no penalty
+        if (_expectedCountries.Contains(country))
+            return true;
 
-        if (options.EnableTravelMode && options.KnownVacationCountries.Contains(country))
+        if (_enableTravelMode && _travelCountries.Contains(country))
         {
             score += IpVacationScore;
             triggers.Add(FraudTrigger.IpVacationCountry);
@@ -88,24 +143,20 @@ internal sealed class SuspicionScorer(WesternDetectorOptions options)
         return false;
     }
 
-    /// <returns>
-    /// <see langword="true"/> when the timezone is in
-    /// <see cref="WesternDetectorOptions.SuspiciousTimezones"/>.
-    /// </returns>
     private bool EvaluateTimezone(ClientFingerprintData data, List<string> triggers, ref int score)
     {
         var tz = data.SystemTimezone;
         if (string.IsNullOrWhiteSpace(tz))
             return false;
 
-        if (options.SuspiciousTimezones.Contains(tz))
+        if (_inconsistentTimezones.Contains(tz))
         {
             score += TimezoneNonWesternScore;
             triggers.Add(FraudTrigger.TimezoneNonWestern);
             return true;
         }
 
-        if (options.EnableTravelMode && options.VacationTimezones.Contains(tz))
+        if (_enableTravelMode && _travelTimezones.Contains(tz))
         {
             score += TimezoneVacationScore;
             triggers.Add(FraudTrigger.TimezoneVacation);
@@ -220,7 +271,7 @@ internal sealed class SuspicionScorer(WesternDetectorOptions options)
     {
         // "ru-RU" → "ru",  "zh-Hans-CN" → "zh"
         var primary = langTag.Split('-', 2)[0].ToLowerInvariant().Trim();
-        return options.NonWesternLanguageCodes.Contains(primary);
+        return _inconsistentLanguages.Contains(primary);
     }
 
     private static IEnumerable<string> ParseAcceptLanguage(string headerValue)
