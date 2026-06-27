@@ -110,6 +110,20 @@ public sealed class NetSecureHeadersOptions
     /// <summary>Removes the <c>Server</c> header to hide server technology. Default: <see langword="true"/>.</summary>
     public bool RemoveServerHeader { get; set; } = true;
 
+    /// <summary>Removes the <c>X-Powered-By</c> header to reduce server technology fingerprinting. Default: <see langword="false"/> (Strict A+ enables it).</summary>
+    public bool RemoveXPoweredBy { get; set; }
+
+    // ── Network Error Logging ──────────────────────────────────────────────
+
+    /// <summary>Enables <c>NEL</c> (Network Error Logging) header. Default: <see langword="false"/>.</summary>
+    public bool EnableNel { get; set; }
+
+    /// <summary>
+    /// NEL header value (JSON object). When <see cref="EnableNel"/> is true and this is non-empty, the header is emitted.
+    /// Example: <c>{"report_to":"default","max_age":2592000,"include_subdomains":true}</c>
+    /// </summary>
+    public string NelValue { get; set; } = string.Empty;
+
     // ── Content Security Policy ────────────────────────────────────────────
 
     /// <summary>Enables <c>Content-Security-Policy</c>. Default: <see langword="true"/>.</summary>
@@ -185,6 +199,9 @@ public sealed class NetSecureHeadersOptions
         EnableClearSiteData = preset.EnableClearSiteData;
         ClearSiteDataValue = preset.ClearSiteDataValue;
         RemoveServerHeader = preset.RemoveServerHeader;
+        RemoveXPoweredBy = preset.RemoveXPoweredBy;
+        EnableNel = preset.EnableNel;
+        NelValue = preset.NelValue;
         EnableCsp = preset.EnableCsp;
         UseCspReportOnly = preset.UseCspReportOnly;
         Csp = preset.Csp;

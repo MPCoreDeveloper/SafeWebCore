@@ -2,6 +2,15 @@
 
 A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
+**Current version:** 1.3.5
+
+New in 1.3.5:
+- `RemoveXPoweredBy` (enabled in Strict A+ presets) — removes `X-Powered-By` header.
+- First-class `NEL` (Network Error Logging) support.
+- More reliable `Server` / `X-Powered-By` removal via `OnStarting`.
+- Permissions-Policy now only emits scanner-safe directives (no more "invalid directive" warnings on securityheaders.com).
+- Improved documentation for IIS and reverse proxy hosting scenarios.
+
 ## Backward Compatibility Goal
 
 SafeWebCore keeps a strict **100% backward compatibility** contract. New capabilities are additive and opt-in, so existing configurations keep their current behavior.
@@ -120,16 +129,17 @@ Both methods are defined in **`SafeWebCore.Extensions.ServiceCollectionExtension
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `no-referrer` |
-| `Permissions-Policy` | All 28 browser features denied (modern, Chromium-recognised tokens) |
+| `Permissions-Policy` | All recognized features denied (scanner-safe, modern Chromium tokens only) |
 | `Cross-Origin-Embedder-Policy` | `require-corp` |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 | `Cross-Origin-Resource-Policy` | `same-origin` |
 | `Server` | _(removed)_ |
+| `X-Powered-By` | _(removed)_ |
 
 ## Features
 
 - 🔒 **Strict A+ preset** — one-line setup with the strictest security headers
-- 🌐 **Browser-safe Permissions-Policy** — preset emits only tokens recognised by current Chromium builds; stale tokens (`ambient-light-sensor`, `battery`, `navigation-override`, etc.) removed in v1.3.0 to eliminate console noise
+- 🌐 **Browser-safe Permissions-Policy** — preset emits only scanner-recognised tokens; invalid directives (e.g. identity-credentials-get, otp-credentials, publickey-credentials-create, window-management) and stale tokens removed to pass securityheaders.com checks without warnings
 - 🛠️ **Fully custom** — configure every header and CSP directive individually
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for scripts and styles
 - 🧷 **Razor nonce TagHelpers** — auto-add nonce to `<script>` and `<style>` in Razor views

@@ -14,7 +14,7 @@ dotnet add package SafeWebCore
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="SafeWebCore" Version="1.3.0" />
+<PackageReference Include="SafeWebCore" Version="1.3.5" />
 ```
 
 ## Minimal Setup (A+ in 3 lines)
@@ -116,6 +116,7 @@ builder.Services.AddNetSecureHeaders(opts =>
     opts.PermissionsPolicyValue = "camera=(), microphone=(), geolocation=()";
 
     opts.RemoveServerHeader = true;
+    opts.RemoveXPoweredBy = true; // removes X-Powered-By (enabled by default in Strict A+ presets)
 
     // CSP — use the fluent builder
     opts.Csp = new CspBuilder()

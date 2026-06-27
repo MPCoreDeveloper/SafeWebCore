@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.3.0</Version>
+    <Version>1.3.5</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,6 +23,26 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
+## v1.3.5 — Security Headers Hardening &amp; Scanner Compliance
+
+**New Features:**
+- `RemoveXPoweredBy` option (default `false`; enabled in all Strict A+ presets) to remove the `X-Powered-By` header and reduce server fingerprinting.
+- First-class support for `NEL` (Network Error Logging) via `EnableNel` + `NelValue`.
+- `Server` and `X-Powered-By` removal now consistently use `HttpResponse.OnStarting` for maximum effectiveness against late-added headers.
+- Improved documentation for hosting realities (IIS AspNetCoreModule, reverse proxies, CDNs) and recommended `web.config` configuration.
+
+**Changed (Strict A+ / Presets):**
+- Permissions-Policy in StrictAPlus (and derived presets) no longer emits four directives that securityheaders.com and Chromium flag as invalid:
+  `identity-credentials-get`, `otp-credentials`, `publickey-credentials-create`, `window-management`.
+- Preset now emits only scanner-safe, currently recognised feature tokens while maintaining strong deny-all posture.
+- All Strict* presets now also remove `X-Powered-By` by default.
+
+**Documentation:**
+- Expanded "Server Header Removal" and new "X-Powered-By Header Removal" sections explaining `OnStarting` behaviour and host-level configuration requirements.
+- Updated README, PACKAGE.md, getting-started.md and security-headers.md with v1.3.5 feature highlights and correct version numbers.
+
+**Breaking Changes:** None — 100% backward compatible.
+
 ## v1.3.0 — Permissions-Policy Browser Compatibility Cleanup
 
 **Changed:**

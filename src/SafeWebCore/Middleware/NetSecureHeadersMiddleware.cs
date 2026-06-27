@@ -62,14 +62,19 @@ public sealed class NetSecureHeadersMiddleware(
         // Set security headers before the response body is written
         AddSecurityHeaders(context.Response, nonce, effectiveOptions, cspTemplate, reportingEndpointsValue, endpointCspMode);
 
-        // Remove Server header just before headers are flushed to the client
-        if (effectiveOptions.RemoveServerHeader)
+        // Remove Server and/or X-Powered-By just before headers are flushed to the client.
+        // Using OnStarting to ensure we catch headers added by later components (e.g. Kestrel, IIS modules).
+        if (effectiveOptions.RemoveServerHeader || effectiveOptions.RemoveXPoweredBy)
         {
+            var removeServer = effectiveOptions.RemoveServerHeader;
+            var removeXpb = effectiveOptions.RemoveXPoweredBy;
             context.Response.OnStarting(static state =>
             {
-                ((HttpResponse)state).Headers.Remove(HeaderNames.Server);
+                var (srv, xpb, resp) = ((bool, bool, HttpResponse))state;
+                if (srv) resp.Headers.Remove(HeaderNames.Server);
+                if (xpb) resp.Headers.Remove(HeaderNames.XPoweredBy);
                 return Task.CompletedTask;
-            }, context.Response);
+            }, (removeServer, removeXpb, context.Response));
         }
 
         await next(context);
@@ -190,6 +195,9 @@ public sealed class NetSecureHeadersMiddleware(
 
         if (options.EnableClearSiteData)
             headers.Append(HeaderNames.ClearSiteData, options.ClearSiteDataValue);
+
+        if (options.EnableNel && !string.IsNullOrWhiteSpace(options.NelValue))
+            headers.Append(HeaderNames.NetworkErrorLogging, options.NelValue);
 
         if (!string.IsNullOrWhiteSpace(reportingEndpointsValue))
             headers.Append(HeaderNames.ReportingEndpoints, reportingEndpointsValue);

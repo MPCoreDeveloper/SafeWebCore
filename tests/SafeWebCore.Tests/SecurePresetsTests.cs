@@ -70,21 +70,19 @@ public sealed class SecurePresetsTests
     [Fact]
     public void StrictAPlusPermissionsPolicyIncludesModernTokens()
     {
-        // Tokens added in v1.3.0 — standardised in 2022–2024
+        // Modern valid tokens (Chromium-recognised, no scanner warnings).
+        // Note: identity-credentials-get, otp-credentials, publickey-credentials-create, window-management
+        // were removed because security scanners flag them as invalid directives.
         Assert.Contains("clipboard-read=()", _options.PermissionsPolicyValue);
         Assert.Contains("clipboard-write=()", _options.PermissionsPolicyValue);
-        Assert.Contains("identity-credentials-get=()", _options.PermissionsPolicyValue);
         Assert.Contains("local-fonts=()", _options.PermissionsPolicyValue);
-        Assert.Contains("otp-credentials=()", _options.PermissionsPolicyValue);
-        Assert.Contains("publickey-credentials-create=()", _options.PermissionsPolicyValue);
-        Assert.Contains("window-management=()", _options.PermissionsPolicyValue);
     }
 
     [Fact]
     public void StrictAPlusPermissionsPolicyExcludesStaleTokens()
     {
-        // These tokens were removed from the Permissions Policy spec and cause
-        // "Unrecognized feature" warnings in Chromium — they must not appear.
+        // These tokens were removed because they are either stale or cause
+        // "invalid directive" warnings from security scanners (securityheaders.com etc.).
         Assert.DoesNotContain("ambient-light-sensor", _options.PermissionsPolicyValue);
         Assert.DoesNotContain("battery", _options.PermissionsPolicyValue);
         Assert.DoesNotContain("cross-origin-isolated", _options.PermissionsPolicyValue);
@@ -93,6 +91,12 @@ public sealed class SecurePresetsTests
         Assert.DoesNotContain("execution-while-out-of-viewport", _options.PermissionsPolicyValue);
         Assert.DoesNotContain("navigation-override", _options.PermissionsPolicyValue);
         Assert.DoesNotContain("sync-xhr", _options.PermissionsPolicyValue);
+
+        // Invalid per scanner — explicitly excluded to pass securityheaders.com checks
+        Assert.DoesNotContain("identity-credentials-get", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("otp-credentials", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("publickey-credentials-create", _options.PermissionsPolicyValue);
+        Assert.DoesNotContain("window-management", _options.PermissionsPolicyValue);
     }
 
     // ── Cross-Origin isolation ─────────────────────────────────────────────
@@ -128,6 +132,14 @@ public sealed class SecurePresetsTests
     {
         // Assert
         Assert.True(_options.RemoveServerHeader);
+    }
+
+    [Fact]
+    public void StrictAPlusXPoweredByHeaderRemoved()
+    {
+        // X-Powered-By removal is enabled in Strict A+ (and inherited by other presets).
+        // Default in NetSecureHeadersOptions is false for backward compatibility.
+        Assert.True(_options.RemoveXPoweredBy);
     }
 
     // ── CSP ────────────────────────────────────────────────────────────────

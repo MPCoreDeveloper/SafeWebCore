@@ -88,15 +88,17 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.3.0
+## 🆕 What's New in v1.3.5
 
-v1.3.0 is a **browser compatibility and maintenance** release — fully backwards compatible with v1.2.0.
+v1.3.5 is a **security headers hardening and scanner compliance** release — fully backwards compatible with v1.3.0 and earlier.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Permissions-Policy cleanup** | Removed 8 stale tokens no longer in the spec, added 7 modern tokens |
-| **Browser console noise reduction** | Eliminates Chromium warnings for unrecognised Permissions-Policy tokens |
-| **Full spec compliance** | StrictAPlus preset now emits only recognised feature tokens |
+| **X-Powered-By removal** | New `RemoveXPoweredBy` option (enabled by default in all Strict A+ presets) |
+| **NEL support** | First-class `EnableNel` + `NelValue` for Network Error Logging |
+| **More reliable header removal** | `Server` and `X-Powered-By` now removed via `OnStarting` (latest possible pipeline hook) |
+| **Permissions-Policy scanner fix** | Removed 4 invalid directives (`identity-credentials-get`, `otp-credentials`, `publickey-credentials-create`, `window-management`) that securityheaders.com flagged |
+| **Better IIS / proxy documentation** | Clear guidance + `web.config` example for complete removal when hosting behind IIS or reverse proxies |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 
@@ -136,7 +138,7 @@ That's it! Your application now returns these headers on every response:
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `no-referrer` |
-| `Permissions-Policy` | All features denied |
+| `Permissions-Policy` | All recognized features denied (scanner-safe) |
 | `Cross-Origin-Embedder-Policy` | `require-corp` |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 | `Cross-Origin-Resource-Policy` | `same-origin` |
@@ -144,6 +146,7 @@ That's it! Your application now returns these headers on every response:
 | `X-Permitted-Cross-Domain-Policies` | `none` |
 | `Content-Security-Policy` | Nonce-based, strict-dynamic, Trusted Types |
 | `Server` | _(removed)_ |
+| `X-Powered-By` | _(removed)_ |
 
 ### 3. Strict A+ with customization
 

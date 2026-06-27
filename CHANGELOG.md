@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.5] — 2026-05-09
+
+### Added
+- `RemoveXPoweredBy` option (defaults to `false`; enabled automatically by all Strict A+ presets) to remove the `X-Powered-By` response header.
+- First-class support for the `NEL` (Network Error Logging) header via new options `EnableNel` and `NelValue`.
+- `ReportingEndpoints` integration example for NEL in documentation.
+
+### Changed
+- `Server` and `X-Powered-By` header removal now consistently use `HttpResponse.OnStarting` for the highest possible reliability against headers added late in the pipeline (Kestrel, hosting layer, other middleware).
+- Strict A+ (and derived presets: Api, Mvc, Blazor, SpaReverseProxy) no longer emit four Permissions-Policy directives that securityheaders.com and Chromium-based browsers flag as invalid:
+  - `identity-credentials-get`
+  - `otp-credentials`
+  - `publickey-credentials-create`
+  - `window-management`
+- Permissions-Policy in StrictAPlus now only contains scanner-safe, currently recognised Chromium feature tokens while keeping a strong deny-all posture.
+
+### Documentation
+- Major expansion of "Server Header Removal" and new dedicated "X-Powered-By Header Removal" sections in `docs/security-headers.md`.
+- Clear explanation of `OnStarting` behaviour and real-world hosting limitations (IIS AspNetCoreModule, reverse proxies, CDNs).
+- Added concrete `web.config` example for complete IIS removal.
+- Updated all version references, quick-start examples, and "What's New" sections across README.md, PACKAGE.md, docs/getting-started.md, and docs/presets.md.
+- New feature highlights added to PackageReleaseNotes in the .csproj.
+
+### Fixed
+- Eliminated "invalid directive" warnings reported by securityheaders.com for Permissions-Policy when using Strict A+ presets.
+- Ensured `X-Powered-By` is removed by default when using `AddNetSecureHeadersStrictAPlus()` and related preset helpers.
+
+**No breaking changes** — fully backward compatible. All new options default to previous behaviour.
+
+---
+
 ## [1.3.0] — 2026-05-02
 
 ### Changed
@@ -108,7 +139,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server header removal
 - Comprehensive documentation and test suite
 
-[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.5...HEAD
+[1.3.5]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.0...v1.3.5
 [1.3.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.0.0...v1.1.0

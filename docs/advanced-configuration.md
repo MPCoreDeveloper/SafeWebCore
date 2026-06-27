@@ -386,6 +386,8 @@ builder.Services.AddNetSecureHeaders(opts =>
     opts.RemoveServerHeader = false;              // Monitoring needs Server header
     opts.EnableCsp = false;                       // Managed by WAF instead
     opts.EnablePermissionsPolicy = false;         // Not relevant for your app
+    opts.RemoveXPoweredBy = false;                // Keep X-Powered-By for diagnostics
+    opts.EnableNel = false;                       // NEL not needed
 });
 ```
 

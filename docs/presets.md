@@ -41,6 +41,7 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 |--------|-------|-----|
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | 2-year HTTPS enforcement, preload eligible |
 | `Server` | _(removed)_ | Hides server technology |
+| `X-Powered-By` | _(removed)_ | Hides framework (ASP.NET etc.) — enabled in Strict A+ |
 
 #### Framing & Embedding
 
@@ -60,18 +61,20 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 | `X-DNS-Prefetch-Control` | `off` | No DNS leak |
 | `X-Permitted-Cross-Domain-Policies` | `none` | No Flash/Acrobat policies |
 
-#### Permissions-Policy (29 features denied)
+#### Permissions-Policy (scanner-safe features denied)
+
+Only tokens recognized by current security scanners are emitted. Invalid directives that trigger warnings on securityheaders.com are excluded.
 
 ```
-accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(),
-camera=(), cross-origin-isolated=(), display-capture=(),
-document-domain=(), encrypted-media=(), execution-while-not-rendered=(),
-execution-while-out-of-viewport=(), fullscreen=(), geolocation=(),
-gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(),
-midi=(), navigation-override=(), payment=(), picture-in-picture=(),
-publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(),
-usb=(), web-share=(), xr-spatial-tracking=()
+accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(),
+display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(),
+gyroscope=(), hid=(), idle-detection=(), local-fonts=(), magnetometer=(),
+microphone=(), midi=(), payment=(), picture-in-picture=(),
+publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(),
+web-share=(), xr-spatial-tracking=()
 ```
+
+> Note: `identity-credentials-get`, `otp-credentials`, `publickey-credentials-create`, and `window-management` are omitted to avoid "invalid directive" warnings.
 
 #### Content Security Policy
 
@@ -196,6 +199,32 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 {
     opts.EnableCoep = false;  // Allows loading cross-origin resources without CORP
+});
+```
+
+### Remove X-Powered-By explicitly (enabled by default in Strict A+)
+
+```csharp
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.RemoveXPoweredBy = true;
+});
+```
+
+### Enable Network Error Logging (NEL) — opt-in
+
+```csharp
+using SafeWebCore.Options;
+
+builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
+{
+    opts.EnableNel = true;
+    opts.NelValue = """{"report_to":"default","max_age":2592000,"include_subdomains":true}""";
+    opts.ReportingEndpoints.Add(new ReportingEndpointOptions
+    {
+        Group = "default",
+        Url = "https://your-report-uri.example.com/nel"
+    });
 });
 ```
 
@@ -401,7 +430,7 @@ builder.Services.AddNetSecureHeadersSpaReverseProxyPreset(opts =>
 | **Worker/Blob** | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **External HTTPS** | ❌ | ✅ | ✅ | ✅ | ✅ |
 | **Images/Data** | `'self'` | N/A | `https: data:` | `https: data:` | `https: data: blob:` |
-| **Permissions-Policy** | 29 features denied | All denied | Balanced | Restricted | Balanced |
+| **Permissions-Policy** | ~24 scanner-safe features denied | All denied | Balanced | Restricted | Balanced |
 
 ---
 

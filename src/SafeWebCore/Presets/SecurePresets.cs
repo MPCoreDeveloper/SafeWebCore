@@ -23,13 +23,14 @@ public static class SecurePresets
     ///   <item><c>X-Frame-Options</c> — DENY</item>
     ///   <item><c>X-Content-Type-Options</c> — nosniff</item>
     ///   <item><c>Referrer-Policy</c> — no-referrer (strictest)</item>
-    ///   <item><c>Permissions-Policy</c> — all features denied</item>
+    ///   <item><c>Permissions-Policy</c> — all recognized features denied (modern Chromium tokens only)</item>
     ///   <item><c>Cross-Origin-Embedder-Policy</c> — require-corp</item>
     ///   <item><c>Cross-Origin-Opener-Policy</c> — same-origin</item>
     ///   <item><c>Cross-Origin-Resource-Policy</c> — same-origin</item>
     ///   <item><c>X-DNS-Prefetch-Control</c> — off</item>
     ///   <item><c>X-Permitted-Cross-Domain-Policies</c> — none</item>
     ///   <item><c>Server</c> header — removed</item>
+    ///   <item><c>X-Powered-By</c> header — removed</item>
     ///   <item><c>Content-Security-Policy</c> — nonce-based, strict-dynamic, Trusted Types</item>
     /// </list>
     /// </summary>
@@ -37,14 +38,13 @@ public static class SecurePresets
     public static NetSecureHeadersOptions StrictAPlus()
     {
         // All browser features denied for maximum security.
-        // Tokens are limited to features currently recognized by Chromium-based browsers.
-        // Removed stale tokens no longer in the Permissions Policy spec:
+        // Tokens are limited to features currently recognized by Chromium-based browsers (no invalid directives).
+        // Removed stale/invalid tokens that trigger scanner warnings:
         //   ambient-light-sensor, battery, cross-origin-isolated, document-domain,
         //   execution-while-not-rendered, execution-while-out-of-viewport,
-        //   navigation-override, sync-xhr
-        // Added modern tokens standardised in 2022–2024:
-        //   clipboard-read, clipboard-write, identity-credentials-get,
-        //   local-fonts, otp-credentials, publickey-credentials-create, window-management
+        //   navigation-override, sync-xhr,
+        //   identity-credentials-get, otp-credentials, publickey-credentials-create, window-management
+        // Kept modern valid tokens (2022–2024): clipboard-read, clipboard-write, local-fonts
         string[] deniedPermissions =
         [
             "accelerometer=()",
@@ -58,22 +58,18 @@ public static class SecurePresets
             "geolocation=()",
             "gyroscope=()",
             "hid=()",
-            "identity-credentials-get=()",
             "idle-detection=()",
             "local-fonts=()",
             "magnetometer=()",
             "microphone=()",
             "midi=()",
-            "otp-credentials=()",
             "payment=()",
             "picture-in-picture=()",
-            "publickey-credentials-create=()",
             "publickey-credentials-get=()",
             "screen-wake-lock=()",
             "serial=()",
             "usb=()",
             "web-share=()",
-            "window-management=()",
             "xr-spatial-tracking=()"
         ];
 
@@ -119,6 +115,7 @@ public static class SecurePresets
 
             // ── Server identity ────────────────────────────────────────────
             RemoveServerHeader = true,
+            RemoveXPoweredBy = true,
 
             // ── Content Security Policy — maximum lockdown ─────────────────
             EnableCsp = true,

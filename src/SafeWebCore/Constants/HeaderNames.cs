@@ -55,4 +55,10 @@ public static class HeaderNames
 
     /// <summary>Server — removed by middleware to hide server technology.</summary>
     public const string Server = "Server";
+
+    /// <summary>X-Powered-By — identifies server technology/framework (e.g. ASP.NET). Removed to reduce fingerprinting.</summary>
+    public const string XPoweredBy = "X-Powered-By";
+
+    /// <summary>NEL (Network Error Logging) — instructs browsers to report network/application errors to a collector.</summary>
+    public const string NetworkErrorLogging = "NEL";
 }
