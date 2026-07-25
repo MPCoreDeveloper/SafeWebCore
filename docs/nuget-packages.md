@@ -110,7 +110,7 @@ dotnet add package SafeWebCore
 
 - [ ] Version bump aligned with Unreleased features
 - [ ] `PACKAGE.md` still describes 1.3.5; refresh for next release
-- [ ] Broken doc links in `PACKAGE.md` still point at old `docs/roadmap-v1.2.md` paths (now under `docs/archive/`)
+- [x] Broken doc links in `PACKAGE.md` still point at old `docs/roadmap-v1.2.md` paths (now under `docs/archive/`)
 - [ ] CI pack + push workflow missing
 - [ ] Git tags use `V1.x.0.0` style; nuget versions use `1.x.y` — standardize tags (`v1.4.0`)
 

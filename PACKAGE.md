@@ -210,8 +210,9 @@ After deploying, test your security headers with:
 Full documentation: [github.com/MPCoreDeveloper/SafeWebCore/docs](https://github.com/MPCoreDeveloper/SafeWebCore/tree/master/docs)
 
 Planning documents:
-- [v1.2 Roadmap](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/roadmap-v1.2.md)
-- [v1.2 Implementation Plan](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/implementation-plan-v1.2.md)
+- [Current Roadmap](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/roadmap.md) — active planning for v1.4 → v1.6
+- [v1.2 Roadmap (archived / completed)](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/archive/roadmap-v1.2.md)
+- [v1.2 Implementation Plan (archived / completed)](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/archive/implementation-plan-v1.2.md)
 
 ## License
 
