@@ -10,6 +10,8 @@
 
 **SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
+**Current version:** 1.6.0
+
 ---
 
 ## ✨ Features
@@ -35,6 +37,12 @@
 - 🛑 **Server header removal** — hides server technology from attackers
 - 🔌 **Extensible** — add custom `IHeaderPolicy` implementations for any header
 - 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint using Reporting API v1
+- 🔍 **Diagnostics preview** — `MapSafeWebCoreDiagnostics(...)` for an opt-in JSON preview of effective headers, path-policy resolution, and CSP mode
+- 📈 **Opt-in metrics** — `System.Diagnostics.Metrics` counters for core middleware and fraud detection
+- 🚨 **Fraud action pipeline** — `IFraudEventSink` / `FraudEvent` for reacting to fraud analysis results (logging, webhooks, custom actions)
+- 📦 **Companion packages** — `SafeWebCore.FraudDetection`, `SafeWebCore.Analyzers` (preview), and `SafeWebCore.Testing` (preview)
+- 📖 **Recipe docs** — practical integration guides under `docs/recipes/`
+- ✅ **Actionable startup validation** — remediation guidance for CSP mode, path prefixes, additional headers, and reporting endpoints
 
 ### Typed builders for non-CSP headers
 
@@ -395,17 +403,3 @@ See **[examples/README.md](examples/README.md)** for a detailed overview and fea
 | [Presets](docs/presets.md) | Strict A+ and app-profile presets, customization examples |
 | [Advanced Configuration](docs/advanced-configuration.md) | Custom policies, CSP reporting, endpoint overrides, troubleshooting |
 | [Benchmarks](docs/benchmarks.md) | Running benchmarks and interpreting results |
-
----
-
-## Examples
-
-The [examples/](examples/) directory contains three fully runnable ASP.NET Core applications demonstrating different integration patterns.
-
-| Example | Pattern | Highlights |
-|---------|---------|-----------|
-| [MinimalApi](examples/MinimalApi/) | Minimal API | StrictAPlus preset, nonce, SkipNetSecureHeaders |
-| [MvcApp](examples/MvcApp/) | MVC + Razor | Typed builders, path policies, CspNonce attribute, TagHelpers |
-| [ApiService](examples/ApiService/) | Web API | API preset, custom ICspReportSink, endpoint overrides |
-
-

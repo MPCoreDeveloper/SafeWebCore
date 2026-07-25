@@ -30,10 +30,10 @@ jobs:
         run: dotnet restore SafeWebCore.slnx
 
       - name: Build
-        run: dotnet build SafeWebCore.slnx -c ${{ env.Configuration }} --no-restore
+        run: dotnet build SafeWebCore.slnx -c ${{ env.Configuration }} --no-restore --no-incremental
 
       - name: Test
-        run: dotnet test SafeWebCore.slnx -c ${{ env.Configuration }} --no-build --verbosity normal
+        run: dotnet test SafeWebCore.slnx -c ${{ env.Configuration }} --verbosity normal
 
       - name: Pack
         run: |
