@@ -215,5 +215,4 @@ Planning documents:
 - [v1.2 Implementation Plan (archived / completed)](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/archive/implementation-plan-v1.2.md)
 
 ## License
-
 MIT — see [LICENSE](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/LICENSE)
