@@ -113,6 +113,7 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
                 failures.Add($"{scope}: Reporting endpoint '{endpoint.Group}' URL must not be null, empty, or whitespace. Fix: provide an absolute HTTPS URL such as 'https://reports.example.com/csp'.");
             }
             else if (!Uri.TryCreate(endpoint.Url, UriKind.Absolute, out var parsedUrl) ||
+                     parsedUrl is null ||
                      (parsedUrl.Scheme != Uri.UriSchemeHttps && parsedUrl.Scheme != Uri.UriSchemeHttp))
             {
                 failures.Add($"{scope}: Reporting endpoint '{endpoint.Group}' URL must be absolute. Fix: use a full URL such as 'https://reports.example.com/csp'.");
