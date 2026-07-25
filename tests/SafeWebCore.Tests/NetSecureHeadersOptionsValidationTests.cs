@@ -104,6 +104,26 @@ public sealed class NetSecureHeadersOptionsValidationTests
     }
 
     [Fact]
+    public void NonHttpSchemeReportingEndpointUrlThrowsOptionsValidationException()
+    {
+        // Arrange
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            opts.ReportingEndpoints.Add(new()
+            {
+                Group = "default",
+                Url = "file:///reports"
+            });
+        });
+
+        // Act
+        var exception = Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
+
+        // Assert
+        Assert.Contains("Reporting endpoint 'default' URL must be absolute", exception.Message);
+    }
+
+    [Fact]
     public void StartWithNelEnabledButEmptyNelValueThrowsOptionsValidationException()
     {
         // Arrange
