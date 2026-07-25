@@ -34,6 +34,7 @@ public static class FraudDetectionServiceCollectionExtensions
     /// <param name="configuration">Application configuration.</param>
     /// <param name="sectionName">Configuration section path.</param>
     /// <returns>The service collection for chaining.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0027", Justification = "Preserves backward-compatible overloads. The overload with the optional parameter is the one with the most parameters.")]
     public static IServiceCollection AddSafeWebCoreFraudDetection(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -164,6 +165,12 @@ public static class FraudDetectionServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IPenTestAuthorizationNotificationConsumer, LoggingPenTestAuthorizationNotificationSender>());
         services.TryAddSingleton<IFraudDetectionOptionsResolver, FraudDetectionOptionsResolver>();
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<IFraudEventDispatcher>(sp =>
+            new FraudEventDispatcher(
+                sp.GetServices<IFraudEventSink>(),
+                sp.GetService<SafeWebCoreFraudMetrics>()));
+        services.TryAddSingleton<SafeWebCoreFraudMetrics>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IFraudEventSink, LoggingFraudEventSink>());
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<FraudDetectionOptions>, FraudDetectionOptionsValidator>());
 
@@ -177,6 +184,7 @@ public static class FraudDetectionServiceCollectionExtensions
             var sender = sp.GetRequiredService<IPenTestAuthorizationNotificationSender>();
             var geoIp = sp.GetService<IGeoIpService>();
             var timeProvider = sp.GetRequiredService<TimeProvider>();
+            var fraudDispatcher = sp.GetRequiredService<IFraudEventDispatcher>();
 
             // Peek at the options to decide which detector implementation to use.
             // This keeps the decision at startup without per-request cost.
@@ -189,7 +197,8 @@ public static class FraudDetectionServiceCollectionExtensions
                     sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GeoCulturalConsistencyDetector>>(),
                     sender,
                     geoIp,
-                    timeProvider);
+                    timeProvider,
+                    fraudDispatcher);
             }
 
             // Legacy path (Western-centric naming) for backward compatibility.
@@ -199,9 +208,54 @@ public static class FraudDetectionServiceCollectionExtensions
                 sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WesternImpersonationDetector>>(),
                 sender,
                 geoIp,
-                timeProvider);
+                timeProvider,
+                fraudDispatcher);
 #pragma warning restore CS0618
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a custom <see cref="IFraudEventSink"/> to receive fraud analysis events.
+    /// This is additive and opt-in. Multiple sinks can be registered.
+    /// </summary>
+    /// <typeparam name="TSink">The sink implementation type.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddFraudEventSink<TSink>(this IServiceCollection services)
+        where TSink : class, IFraudEventSink
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IFraudEventSink, TSink>());
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a webhook-based <see cref="IFraudEventSink"/> that POSTs <see cref="FraudEvent"/> payloads as JSON.
+    /// This is additive and opt-in.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="webhookUrl">Absolute URL to POST fraud events to.</param>
+    /// <param name="httpClientName">Optional named HttpClient to use (allows custom configuration such as timeouts, headers, or Polly).</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddFraudWebhookSink(
+        this IServiceCollection services,
+        string webhookUrl,
+        string httpClientName = "FraudWebhook")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(webhookUrl);
+
+        // Ensure a default named client exists if the caller didn't configure one
+        services.AddHttpClient(httpClientName);
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IFraudEventSink, WebhookFraudEventSink>(sp =>
+                new WebhookFraudEventSink(
+                    sp.GetRequiredService<IHttpClientFactory>(),
+                    httpClientName,
+                    webhookUrl)));
 
         return services;
     }

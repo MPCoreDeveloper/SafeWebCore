@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -10,11 +10,11 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.3.5</Version>
+    <Version>1.6.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
-    <Description>Lightweight, high-performance ASP.NET Core middleware that adds security headers targeting an A+ rating on securityheaders.com. Includes nonce-based CSP, Strict-Transport-Security, Permissions-Policy, Cross-Origin isolation, Trusted Types, and more — all configurable with a single line of code.</Description>
+    <Description>Lightweight, high-performance ASP.NET Core middleware that adds security headers targeting an A+ rating on securityheaders.com. Includes nonce-based CSP, Strict-Transport-Security, Permissions-Policy, Cross-Origin isolation, Trusted Types, and more â€” all configurable with a single line of code.</Description>
     <PackageTags>security;headers;csp;content-security-policy;hsts;xss;middleware;aspnetcore;nonce;strict-dynamic;trusted-types;permissions-policy;securityheaders</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
@@ -22,76 +22,27 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>
-## v1.3.5 — Security Headers Hardening &amp; Scanner Compliance
+        <PackageReleaseNotes>
+## v1.6.0 — DX, tooling, and observability
 
-**New Features:**
-- `RemoveXPoweredBy` option (default `false`; enabled in all Strict A+ presets) to remove the `X-Powered-By` header and reduce server fingerprinting.
-- First-class support for `NEL` (Network Error Logging) via `EnableNel` + `NelValue`.
-- `Server` and `X-Powered-By` removal now consistently use `HttpResponse.OnStarting` for maximum effectiveness against late-added headers.
-- Improved documentation for hosting realities (IIS AspNetCoreModule, reverse proxies, CDNs) and recommended `web.config` configuration.
+**Developer experience (v1.4):**
+- AddNetSecureHeadersFromConfiguration(...) for direct configuration binding
+- AddNetSecureHeadersForEnvironment / StrictAPlusForEnvironment helpers (CSP report-only outside production by default)
+- MapSafeWebCoreDiagnostics(...) opt-in effective header / path-policy preview
+- Actionable startup validation messages with concrete remediation guidance
+- Public API baseline tracking (PublicApiAnalyzers)
 
-**Changed (Strict A+ / Presets):**
-- Permissions-Policy in StrictAPlus (and derived presets) no longer emits four directives that securityheaders.com and Chromium flag as invalid:
-  `identity-credentials-get`, `otp-credentials`, `publickey-credentials-create`, `window-management`.
-- Preset now emits only scanner-safe, currently recognised feature tokens while maintaining strong deny-all posture.
-- All Strict* presets now also remove `X-Powered-By` by default.
+**Tooling (v1.5):**
+- Companion packages: SafeWebCore.Analyzers (preview) and SafeWebCore.Testing (preview)
+- Practical recipe docs under docs/recipes/
 
-**Documentation:**
-- Expanded "Server Header Removal" and new "X-Powered-By Header Removal" sections explaining `OnStarting` behaviour and host-level configuration requirements.
-- Updated README, PACKAGE.md, getting-started.md and security-headers.md with v1.3.5 feature highlights and correct version numbers.
+**Observability (v1.6):**
+- Opt-in System.Diagnostics.Metrics (meter SafeWebCore): headers_applied_total, csp_violations_total, path_policy_matches_total
+- ISecurityEventSink / SecurityEventDispatcher extensibility remains supported
 
-**Breaking Changes:** None — 100% backward compatible.
+**Breaking Changes:** None — 100% backward compatible. All new APIs are additive and opt-in.
 
-## v1.3.0 — Permissions-Policy Browser Compatibility Cleanup
-
-**Changed:**
-- StrictAPlus preset: removed 8 stale Permissions-Policy tokens that Chromium logs as
-  "Unrecognized feature" (ambient-light-sensor, battery, cross-origin-isolated,
-  document-domain, execution-while-not-rendered, execution-while-out-of-viewport,
-  navigation-override, sync-xhr). These were removed from or were never part of the
-  Permissions Policy spec.
-- StrictAPlus preset: added 7 modern Permissions-Policy tokens standardised in 2022–2024
-  (clipboard-read, clipboard-write, identity-credentials-get, local-fonts,
-  otp-credentials, publickey-credentials-create, window-management).
-
-**Result:** Preset now emits 28 recognised feature tokens, eliminating browser console
-noise while keeping full deny-all coverage for all current standardised features.
-
-## v1.2.0 — Security Rollout and Developer Experience
-
-**Major Features:**
-- CSP Report-Only mode for safe policy rollout before enforcement
-- Path-based policy selection (different headers per route prefix, longest-prefix matching)
-- Startup validation with actionable errors for invalid configurations
-- Razor TagHelpers for automatic nonce injection on &lt;script&gt; and &lt;style&gt;
-- Typed builders for Referrer-Policy, Permissions-Policy, and Cross-Origin policies
-- CSP violation reporting with ICspReportSink abstraction (custom handling, logging, telemetry)
-- Endpoint metadata overrides ([SkipNetSecureHeaders], [CspMode]) for targeted exceptions
-- Optional additional headers: Origin-Agent-Cluster, X-Robots-Tag, Clear-Site-Data
-- Five app-profile presets: StrictAPlus, Api, Mvc, Blazor, SpaReverseProxy
-
-**Performance Optimizations (v1.1.0+):**
-- Pre-built CSP template (computed once at startup, not per-request)
-- StringBuilder-based CSP header generation (eliminates ~20 intermediate string allocations)
-- Zero-allocation nonce generation: TryWriteNonce(Span&lt;char&gt;) for heap-free scenarios
-- NonceService.NonceLength constant (44) for buffer pre-allocation
-
-**New APIs:**
-- HttpContext.GetCspNonce() extension method for discoverable nonce access
-- NonceService.TryWriteNonce(Span&lt;char&gt;, out int written) for zero-alloc scenarios
-- CspBuilder.Build() returns immutable CspOptions record
-- Improved CancellationToken propagation in CSP reporting pipeline
-
-**Improvements:**
-- Modernized C# patterns (primary constructors, collection expressions, file-scoped namespaces)
-- Comprehensive documentation for all features and presets
-- Full CSP Level 3 (W3C Recommendation) support
-- CSP Level 4 ready (Trusted Types, fenced-frame-src)
-
-**Breaking Changes:** None — fully backward compatible with v1.0.0+
-
-See docs/ for complete guides and examples/ for runnable sample projects.
+See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>
     <Copyright>Copyright (c) 2026 MPCoreDeveloper</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -110,6 +61,32 @@ See docs/ for complete guides and examples/ for runnable sample projects.
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
+  <!-- Public API surface tracking for backward compatibility (additive, build-time only) -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Explicitly register the public API baseline files -->
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
+  <!-- Public API baseline enforcement (roadmap v1.4 item 1.2) -->
+  <PropertyGroup>
+    <!-- Generate / validate PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt -->
+    <GeneratePublicApiFiles>true</GeneratePublicApiFiles>
+    <!-- RS0037 = removal or rename of a previously shipped public API symbol â†’ hard error (protects backward compatibility) -->
+    <WarningsAsErrors>$(WarningsAsErrors);RS0037</WarningsAsErrors>
+    <!-- During initial rollout of public API tracking (v1.4 item 1.2):
+         - RS0016 (public symbol not declared in the txt files) â†’ warning
+         - RS0017 (symbol listed in txt files but not found / not public) â†’ warning
+         This lets us introduce the mechanism without a perfect baseline on day one.
+         After the baseline is curated and stable, remove these from WarningsNotAsErrors
+         to enforce a clean public surface. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);RS0016;RS0017</WarningsNotAsErrors>
+  </PropertyGroup>
 
   <!-- Files included in the NuGet package -->
   <ItemGroup>

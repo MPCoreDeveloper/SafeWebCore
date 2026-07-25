@@ -65,7 +65,9 @@ public class CspReportParseBenchmarks
     public void GlobalSetup() =>
         _middleware = new CspReportMiddleware(
             NullLogger<CspReportMiddleware>.Instance,
-            []);
+            [],
+            null,  // dispatcher is optional
+            null); // metrics is optional (will create internal instance)
 
     /// <summary>
     /// Baseline: parse and map a minimal CSP report with only the required fields.

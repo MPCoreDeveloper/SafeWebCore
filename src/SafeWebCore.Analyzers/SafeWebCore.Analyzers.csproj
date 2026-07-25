@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>SafeWebCore.Analyzers</RootNamespace>
+
+    <!-- Analyzer packaging -->
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Suppress release tracking warnings for the initial preview. -->
+    <NoWarn>$(NoWarn);RS2007;RS2008</NoWarn>
+
+    <!-- Package metadata -->
+    <PackageId>SafeWebCore.Analyzers</PackageId>
+    <Version>1.0.0-preview.1</Version>
+    <Authors>MPCoreDeveloper</Authors>
+    <Company>Posseth Software</Company>
+    <Product>SafeWebCore.Analyzers</Product>
+    <Description>Roslyn analyzers for SafeWebCore. Catches common integration mistakes at build time (e.g. registering services without adding the middleware).</Description>
+    <PackageTags>safewebcore;analyzers;roslyn;security;aspnetcore;diagnostics</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddAnalyzerToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="AddAnalyzerToPackage">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(OutputPath)$(AssemblyName).dll" PackagePath="analyzers/dotnet/cs" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\icon.png" Link="icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>true</Pack>
+    </None>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

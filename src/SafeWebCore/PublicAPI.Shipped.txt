@@ -1,0 +1,439 @@
+#nullable enable
+~override SafeWebCore.Builder.CrossOriginPolicyValues.Equals(object obj) -> bool
+~override SafeWebCore.Builder.CrossOriginPolicyValues.ToString() -> string
+const SafeWebCore.HeaderNames.ClearSiteData = "Clear-Site-Data" -> string!
+const SafeWebCore.HeaderNames.ContentSecurityPolicy = "Content-Security-Policy" -> string!
+const SafeWebCore.HeaderNames.ContentSecurityPolicyReportOnly = "Content-Security-Policy-Report-Only" -> string!
+const SafeWebCore.HeaderNames.CrossOriginEmbedderPolicy = "Cross-Origin-Embedder-Policy" -> string!
+const SafeWebCore.HeaderNames.CrossOriginOpenerPolicy = "Cross-Origin-Opener-Policy" -> string!
+const SafeWebCore.HeaderNames.CrossOriginResourcePolicy = "Cross-Origin-Resource-Policy" -> string!
+const SafeWebCore.HeaderNames.NetworkErrorLogging = "NEL" -> string!
+const SafeWebCore.HeaderNames.OriginAgentCluster = "Origin-Agent-Cluster" -> string!
+const SafeWebCore.HeaderNames.PermissionsPolicy = "Permissions-Policy" -> string!
+const SafeWebCore.HeaderNames.ReferrerPolicy = "Referrer-Policy" -> string!
+const SafeWebCore.HeaderNames.ReportingEndpoints = "Reporting-Endpoints" -> string!
+const SafeWebCore.HeaderNames.Server = "Server" -> string!
+const SafeWebCore.HeaderNames.StrictTransportSecurity = "Strict-Transport-Security" -> string!
+const SafeWebCore.HeaderNames.XContentTypeOptions = "X-Content-Type-Options" -> string!
+const SafeWebCore.HeaderNames.XDnsPrefetchControl = "X-DNS-Prefetch-Control" -> string!
+const SafeWebCore.HeaderNames.XFrameOptions = "X-Frame-Options" -> string!
+const SafeWebCore.HeaderNames.XPermittedCrossDomainPolicies = "X-Permitted-Cross-Domain-Policies" -> string!
+const SafeWebCore.HeaderNames.XPoweredBy = "X-Powered-By" -> string!
+const SafeWebCore.HeaderNames.XRobotsTag = "X-Robots-Tag" -> string!
+const SafeWebCore.NetSecureHeaders.CspNonceKey = "CspNonce" -> string!
+const SafeWebCore.NonceService.NonceLength = 44 -> int
+override SafeWebCore.Abstractions.SecurityEvent.Equals(object? obj) -> bool
+override SafeWebCore.Abstractions.SecurityEvent.GetHashCode() -> int
+override SafeWebCore.Abstractions.SecurityEvent.ToString() -> string!
+override SafeWebCore.Attributes.CspNonceAttribute.OnActionExecuted(Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext! context) -> void
+override SafeWebCore.Builder.CrossOriginPolicyValues.GetHashCode() -> int
+override SafeWebCore.Models.CspViolationReport.Equals(object? obj) -> bool
+override SafeWebCore.Models.CspViolationReport.GetHashCode() -> int
+override SafeWebCore.Models.CspViolationReport.ToString() -> string!
+override SafeWebCore.Options.AdditionalHeaderOptions.Equals(object? obj) -> bool
+override SafeWebCore.Options.AdditionalHeaderOptions.GetHashCode() -> int
+override SafeWebCore.Options.AdditionalHeaderOptions.ToString() -> string!
+override SafeWebCore.Options.CspOptions.Equals(object? obj) -> bool
+override SafeWebCore.Options.CspOptions.GetHashCode() -> int
+override SafeWebCore.Options.CspOptions.ToString() -> string!
+override SafeWebCore.Options.ReportingEndpointOptions.Equals(object? obj) -> bool
+override SafeWebCore.Options.ReportingEndpointOptions.GetHashCode() -> int
+override SafeWebCore.Options.ReportingEndpointOptions.ToString() -> string!
+override SafeWebCore.TagHelpers.CspScriptNonceTagHelper.Process(Microsoft.AspNetCore.Razor.TagHelpers.TagHelperContext! context, Microsoft.AspNetCore.Razor.TagHelpers.TagHelperOutput! output) -> void
+override SafeWebCore.TagHelpers.CspStyleNonceTagHelper.Process(Microsoft.AspNetCore.Razor.TagHelpers.TagHelperContext! context, Microsoft.AspNetCore.Razor.TagHelpers.TagHelperOutput! output) -> void
+SafeWebCore.Abstractions.ICspReportSink
+SafeWebCore.Abstractions.ICspReportSink.WriteAsync(SafeWebCore.Models.CspViolationReport! report, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+SafeWebCore.Abstractions.IHeaderPolicy
+SafeWebCore.Abstractions.IHeaderPolicy.Apply(Microsoft.AspNetCore.Http.HttpResponse! response) -> void
+SafeWebCore.Abstractions.ISecurityEventSink
+SafeWebCore.Abstractions.ISecurityEventSink.WriteAsync(SafeWebCore.Abstractions.SecurityEvent! securityEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+SafeWebCore.Abstractions.SecurityEvent
+SafeWebCore.Abstractions.SecurityEvent.<Clone>$() -> SafeWebCore.Abstractions.SecurityEvent!
+SafeWebCore.Abstractions.SecurityEvent.Equals(SafeWebCore.Abstractions.SecurityEvent? other) -> bool
+SafeWebCore.Abstractions.SecurityEvent.EventType.get -> SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Abstractions.SecurityEvent.EventType.init -> void
+SafeWebCore.Abstractions.SecurityEvent.Path.get -> string?
+SafeWebCore.Abstractions.SecurityEvent.Path.init -> void
+SafeWebCore.Abstractions.SecurityEvent.Properties.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+SafeWebCore.Abstractions.SecurityEvent.Properties.init -> void
+SafeWebCore.Abstractions.SecurityEvent.SecurityEvent() -> void
+SafeWebCore.Abstractions.SecurityEvent.Timestamp.get -> System.DateTimeOffset
+SafeWebCore.Abstractions.SecurityEvent.Timestamp.init -> void
+SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Abstractions.SecurityEventType.CspViolation = 1 -> SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Abstractions.SecurityEventType.Diagnostic = 4 -> SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Abstractions.SecurityEventType.HeadersApplied = 3 -> SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Abstractions.SecurityEventType.PathPolicyMatched = 2 -> SafeWebCore.Abstractions.SecurityEventType
+SafeWebCore.Attributes.CspModeAttribute
+SafeWebCore.Attributes.CspModeAttribute.CspModeAttribute(SafeWebCore.Metadata.CspEndpointMode mode) -> void
+SafeWebCore.Attributes.CspModeAttribute.Mode.get -> SafeWebCore.Metadata.CspEndpointMode
+SafeWebCore.Attributes.CspNonceAttribute
+SafeWebCore.Attributes.CspNonceAttribute.CspNonceAttribute() -> void
+SafeWebCore.Attributes.SkipNetSecureHeadersAttribute
+SafeWebCore.Attributes.SkipNetSecureHeadersAttribute.SkipNetSecureHeadersAttribute() -> void
+SafeWebCore.Builder.CrossOriginPolicyBuilder
+SafeWebCore.Builder.CrossOriginPolicyBuilder.Build() -> SafeWebCore.Builder.CrossOriginPolicyValues
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CoepCredentialless() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CoepRequireCorp() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CoopSameOrigin() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CoopSameOriginAllowPopups() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CoopUnsafeNone() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CorpCrossOrigin() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CorpSameOrigin() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CorpSameSite() -> SafeWebCore.Builder.CrossOriginPolicyBuilder!
+SafeWebCore.Builder.CrossOriginPolicyBuilder.CrossOriginPolicyBuilder() -> void
+SafeWebCore.Builder.CrossOriginPolicyValues
+SafeWebCore.Builder.CrossOriginPolicyValues.Coep.get -> string!
+SafeWebCore.Builder.CrossOriginPolicyValues.Coep.init -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.Coop.get -> string!
+SafeWebCore.Builder.CrossOriginPolicyValues.Coop.init -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.Corp.get -> string!
+SafeWebCore.Builder.CrossOriginPolicyValues.Corp.init -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.CrossOriginPolicyValues() -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.CrossOriginPolicyValues(string! Coep, string! Coop, string! Corp) -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.Deconstruct(out string! Coep, out string! Coop, out string! Corp) -> void
+SafeWebCore.Builder.CrossOriginPolicyValues.Equals(SafeWebCore.Builder.CrossOriginPolicyValues other) -> bool
+SafeWebCore.Builder.CspBuilder
+SafeWebCore.Builder.CspBuilder.BaseUri(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.Build() -> SafeWebCore.Options.CspOptions!
+SafeWebCore.Builder.CspBuilder.ChildSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ConnectSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.CspBuilder() -> void
+SafeWebCore.Builder.CspBuilder.DefaultSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.FencedFrameSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.FontSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.FormAction(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.FrameAncestors(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.FrameSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ImgSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ManifestSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.MediaSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ObjectSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ReportTo(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.RequireTrustedTypesFor(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.Sandbox(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ScriptSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ScriptSrcAttr(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.ScriptSrcElem(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.StyleSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.StyleSrcAttr(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.StyleSrcElem(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.TrustedTypes(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.UpgradeInsecureRequests(bool enable = true) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.CspBuilder.WorkerSrc(string! value) -> SafeWebCore.Builder.CspBuilder!
+SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Accelerometer = 0 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.AmbientLightSensor = 1 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Autoplay = 2 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Battery = 3 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Camera = 4 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.CrossOriginIsolated = 5 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.DisplayCapture = 6 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.DocumentDomain = 7 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.EncryptedMedia = 8 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.ExecutionWhileNotRendered = 9 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.ExecutionWhileOutOfViewport = 10 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Fullscreen = 11 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Geolocation = 12 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Gyroscope = 13 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Hid = 14 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.IdleDetection = 15 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Magnetometer = 16 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Microphone = 17 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Midi = 18 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.NavigationOverride = 19 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Payment = 20 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.PictureInPicture = 21 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.PublickeyCredentialsGet = 22 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.ScreenWakeLock = 23 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Serial = 24 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.SyncXhr = 25 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.Usb = 26 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.WebShare = 27 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsFeature.XrSpatialTracking = 28 -> SafeWebCore.Builder.PermissionsFeature
+SafeWebCore.Builder.PermissionsPolicyBuilder
+SafeWebCore.Builder.PermissionsPolicyBuilder.Allow(SafeWebCore.Builder.PermissionsFeature feature, params string![]! allowList) -> SafeWebCore.Builder.PermissionsPolicyBuilder!
+SafeWebCore.Builder.PermissionsPolicyBuilder.AllowSelf(SafeWebCore.Builder.PermissionsFeature feature) -> SafeWebCore.Builder.PermissionsPolicyBuilder!
+SafeWebCore.Builder.PermissionsPolicyBuilder.Build() -> string!
+SafeWebCore.Builder.PermissionsPolicyBuilder.Disable(SafeWebCore.Builder.PermissionsFeature feature) -> SafeWebCore.Builder.PermissionsPolicyBuilder!
+SafeWebCore.Builder.PermissionsPolicyBuilder.PermissionsPolicyBuilder() -> void
+SafeWebCore.Builder.ReferrerPolicyBuilder
+SafeWebCore.Builder.ReferrerPolicyBuilder.Build() -> string!
+SafeWebCore.Builder.ReferrerPolicyBuilder.NoReferrer() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.NoReferrerWhenDowngrade() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.Origin() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.OriginWhenCrossOrigin() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.ReferrerPolicyBuilder() -> void
+SafeWebCore.Builder.ReferrerPolicyBuilder.SameOrigin() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.StrictOrigin() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.StrictOriginWhenCrossOrigin() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Builder.ReferrerPolicyBuilder.UnsafeUrl() -> SafeWebCore.Builder.ReferrerPolicyBuilder!
+SafeWebCore.Extensions.ApplicationBuilderExtensions
+SafeWebCore.Extensions.DiagnosticsEndpointRouteBuilderExtensions
+SafeWebCore.Extensions.EndpointConventionBuilderExtensions
+SafeWebCore.Extensions.HttpContextExtensions
+SafeWebCore.Extensions.ServiceCollectionExtensions
+SafeWebCore.HeaderNames
+SafeWebCore.Infrastructure.CspReportMiddleware
+SafeWebCore.Infrastructure.CspReportMiddleware.CspReportMiddleware(Microsoft.Extensions.Logging.ILogger<SafeWebCore.Infrastructure.CspReportMiddleware!>! logger, System.Collections.Generic.IEnumerable<SafeWebCore.Abstractions.ICspReportSink!>! sinks) -> void
+SafeWebCore.Infrastructure.CspReportMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext! context, Microsoft.AspNetCore.Http.RequestDelegate! next) -> System.Threading.Tasks.Task!
+SafeWebCore.Infrastructure.SecurityEventDispatcher
+SafeWebCore.Infrastructure.SecurityEventDispatcher.EmitAsync(SafeWebCore.Abstractions.SecurityEvent! securityEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+SafeWebCore.Infrastructure.SecurityEventDispatcher.SecurityEventDispatcher(System.Collections.Generic.IEnumerable<SafeWebCore.Abstractions.ISecurityEventSink!>! sinks) -> void
+SafeWebCore.INonceService
+SafeWebCore.INonceService.GenerateNonce() -> string!
+SafeWebCore.Metadata.CspEndpointMode
+SafeWebCore.Metadata.CspEndpointMode.Enforce = 0 -> SafeWebCore.Metadata.CspEndpointMode
+SafeWebCore.Metadata.CspEndpointMode.ReportOnly = 1 -> SafeWebCore.Metadata.CspEndpointMode
+SafeWebCore.Middleware.NetSecureHeadersMiddleware
+SafeWebCore.Middleware.NetSecureHeadersMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext! context, Microsoft.AspNetCore.Http.RequestDelegate! next) -> System.Threading.Tasks.Task!
+SafeWebCore.Middleware.NetSecureHeadersMiddleware.NetSecureHeadersMiddleware(SafeWebCore.INonceService! nonceService, Microsoft.Extensions.Options.IOptions<SafeWebCore.Options.NetSecureHeadersOptions!>! options, SafeWebCore.Infrastructure.SecurityEventDispatcher! eventDispatcher) -> void
+SafeWebCore.Models.CspViolationReport
+SafeWebCore.Models.CspViolationReport.<Clone>$() -> SafeWebCore.Models.CspViolationReport!
+SafeWebCore.Models.CspViolationReport.BlockedUri.get -> string?
+SafeWebCore.Models.CspViolationReport.BlockedUri.init -> void
+SafeWebCore.Models.CspViolationReport.ColumnNumber.get -> int?
+SafeWebCore.Models.CspViolationReport.ColumnNumber.init -> void
+SafeWebCore.Models.CspViolationReport.CspViolationReport() -> void
+SafeWebCore.Models.CspViolationReport.Disposition.get -> string?
+SafeWebCore.Models.CspViolationReport.Disposition.init -> void
+SafeWebCore.Models.CspViolationReport.DocumentUri.get -> string?
+SafeWebCore.Models.CspViolationReport.DocumentUri.init -> void
+SafeWebCore.Models.CspViolationReport.EffectiveDirective.get -> string?
+SafeWebCore.Models.CspViolationReport.EffectiveDirective.init -> void
+SafeWebCore.Models.CspViolationReport.Equals(SafeWebCore.Models.CspViolationReport? other) -> bool
+SafeWebCore.Models.CspViolationReport.LineNumber.get -> int?
+SafeWebCore.Models.CspViolationReport.LineNumber.init -> void
+SafeWebCore.Models.CspViolationReport.OriginalPolicy.get -> string?
+SafeWebCore.Models.CspViolationReport.OriginalPolicy.init -> void
+SafeWebCore.Models.CspViolationReport.Referrer.get -> string?
+SafeWebCore.Models.CspViolationReport.Referrer.init -> void
+SafeWebCore.Models.CspViolationReport.Sample.get -> string?
+SafeWebCore.Models.CspViolationReport.Sample.init -> void
+SafeWebCore.Models.CspViolationReport.SourceFile.get -> string?
+SafeWebCore.Models.CspViolationReport.SourceFile.init -> void
+SafeWebCore.Models.CspViolationReport.StatusCode.get -> int?
+SafeWebCore.Models.CspViolationReport.StatusCode.init -> void
+SafeWebCore.Models.CspViolationReport.ViolatedDirective.get -> string?
+SafeWebCore.Models.CspViolationReport.ViolatedDirective.init -> void
+SafeWebCore.NetSecureHeaders
+SafeWebCore.NonceService
+SafeWebCore.NonceService.GenerateNonce() -> string!
+SafeWebCore.NonceService.NonceService() -> void
+SafeWebCore.NonceService.TryWriteNonce(System.Span<char> destination, out int charsWritten) -> bool
+SafeWebCore.Options.AdditionalHeaderOptions
+SafeWebCore.Options.AdditionalHeaderOptions.<Clone>$() -> SafeWebCore.Options.AdditionalHeaderOptions!
+SafeWebCore.Options.AdditionalHeaderOptions.AdditionalHeaderOptions() -> void
+SafeWebCore.Options.AdditionalHeaderOptions.Equals(SafeWebCore.Options.AdditionalHeaderOptions? other) -> bool
+SafeWebCore.Options.AdditionalHeaderOptions.Name.get -> string!
+SafeWebCore.Options.AdditionalHeaderOptions.Name.init -> void
+SafeWebCore.Options.AdditionalHeaderOptions.Value.get -> string!
+SafeWebCore.Options.AdditionalHeaderOptions.Value.init -> void
+SafeWebCore.Options.CspOptions
+SafeWebCore.Options.CspOptions.BaseUri.get -> string!
+SafeWebCore.Options.CspOptions.BaseUri.init -> void
+SafeWebCore.Options.CspOptions.Build() -> string!
+SafeWebCore.Options.CspOptions.ChildSrc.get -> string!
+SafeWebCore.Options.CspOptions.ChildSrc.init -> void
+SafeWebCore.Options.CspOptions.ConnectSrc.get -> string!
+SafeWebCore.Options.CspOptions.ConnectSrc.init -> void
+SafeWebCore.Options.CspOptions.CspOptions() -> void
+SafeWebCore.Options.CspOptions.CspOptions(SafeWebCore.Options.CspOptions! original) -> void
+SafeWebCore.Options.CspOptions.DefaultSrc.get -> string!
+SafeWebCore.Options.CspOptions.DefaultSrc.init -> void
+SafeWebCore.Options.CspOptions.EnableBlockAllMixedContent.get -> bool
+SafeWebCore.Options.CspOptions.EnableBlockAllMixedContent.init -> void
+SafeWebCore.Options.CspOptions.EnableUpgradeInsecureRequests.get -> bool
+SafeWebCore.Options.CspOptions.EnableUpgradeInsecureRequests.init -> void
+SafeWebCore.Options.CspOptions.FencedFrameSrc.get -> string!
+SafeWebCore.Options.CspOptions.FencedFrameSrc.init -> void
+SafeWebCore.Options.CspOptions.FontSrc.get -> string!
+SafeWebCore.Options.CspOptions.FontSrc.init -> void
+SafeWebCore.Options.CspOptions.FormAction.get -> string!
+SafeWebCore.Options.CspOptions.FormAction.init -> void
+SafeWebCore.Options.CspOptions.FrameAncestors.get -> string!
+SafeWebCore.Options.CspOptions.FrameAncestors.init -> void
+SafeWebCore.Options.CspOptions.FrameSrc.get -> string!
+SafeWebCore.Options.CspOptions.FrameSrc.init -> void
+SafeWebCore.Options.CspOptions.ImgSrc.get -> string!
+SafeWebCore.Options.CspOptions.ImgSrc.init -> void
+SafeWebCore.Options.CspOptions.ManifestSrc.get -> string!
+SafeWebCore.Options.CspOptions.ManifestSrc.init -> void
+SafeWebCore.Options.CspOptions.MediaSrc.get -> string!
+SafeWebCore.Options.CspOptions.MediaSrc.init -> void
+SafeWebCore.Options.CspOptions.ObjectSrc.get -> string!
+SafeWebCore.Options.CspOptions.ObjectSrc.init -> void
+SafeWebCore.Options.CspOptions.ReportTo.get -> string!
+SafeWebCore.Options.CspOptions.ReportTo.init -> void
+SafeWebCore.Options.CspOptions.ReportUri.get -> string!
+SafeWebCore.Options.CspOptions.ReportUri.init -> void
+SafeWebCore.Options.CspOptions.RequireTrustedTypesFor.get -> string!
+SafeWebCore.Options.CspOptions.RequireTrustedTypesFor.init -> void
+SafeWebCore.Options.CspOptions.Sandbox.get -> string!
+SafeWebCore.Options.CspOptions.Sandbox.init -> void
+SafeWebCore.Options.CspOptions.ScriptSrc.get -> string!
+SafeWebCore.Options.CspOptions.ScriptSrc.init -> void
+SafeWebCore.Options.CspOptions.ScriptSrcAttr.get -> string!
+SafeWebCore.Options.CspOptions.ScriptSrcAttr.init -> void
+SafeWebCore.Options.CspOptions.ScriptSrcElem.get -> string!
+SafeWebCore.Options.CspOptions.ScriptSrcElem.init -> void
+SafeWebCore.Options.CspOptions.StyleSrc.get -> string!
+SafeWebCore.Options.CspOptions.StyleSrc.init -> void
+SafeWebCore.Options.CspOptions.StyleSrcAttr.get -> string!
+SafeWebCore.Options.CspOptions.StyleSrcAttr.init -> void
+SafeWebCore.Options.CspOptions.StyleSrcElem.get -> string!
+SafeWebCore.Options.CspOptions.StyleSrcElem.init -> void
+SafeWebCore.Options.CspOptions.TrustedTypes.get -> string!
+SafeWebCore.Options.CspOptions.TrustedTypes.init -> void
+SafeWebCore.Options.CspOptions.WorkerSrc.get -> string!
+SafeWebCore.Options.CspOptions.WorkerSrc.init -> void
+SafeWebCore.Options.NetSecureHeadersOptions
+SafeWebCore.Options.NetSecureHeadersOptions.AdditionalHeaders.get -> System.Collections.Generic.List<SafeWebCore.Options.AdditionalHeaderOptions!>!
+SafeWebCore.Options.NetSecureHeadersOptions.AdditionalHeaders.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.ClearSiteDataValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.ClearSiteDataValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.CoepValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.CoepValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.CoopValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.CoopValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.CorpValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.CorpValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.Csp.get -> SafeWebCore.Options.CspOptions!
+SafeWebCore.Options.NetSecureHeadersOptions.Csp.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.CustomPolicies.get -> System.Collections.Generic.List<SafeWebCore.Abstractions.IHeaderPolicy!>!
+SafeWebCore.Options.NetSecureHeadersOptions.CustomPolicies.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableClearSiteData.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableClearSiteData.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCoep.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCoep.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCoop.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCoop.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCorp.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCorp.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCsp.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableCsp.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableHsts.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableHsts.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableNel.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableNel.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableOriginAgentCluster.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableOriginAgentCluster.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnablePermissionsPolicy.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnablePermissionsPolicy.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableReferrerPolicy.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableReferrerPolicy.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXContentTypeOptions.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXContentTypeOptions.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXDnsPrefetchControl.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXDnsPrefetchControl.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXFrameOptions.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXFrameOptions.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXPermittedCrossDomainPolicies.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXPermittedCrossDomainPolicies.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXRobotsTag.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.EnableXRobotsTag.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.HstsValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.HstsValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.NelValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.NelValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.NetSecureHeadersOptions() -> void
+SafeWebCore.Options.NetSecureHeadersOptions.OriginAgentClusterValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.OriginAgentClusterValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.PathPolicies.get -> System.Collections.Generic.List<SafeWebCore.Options.PathPolicyOptions!>!
+SafeWebCore.Options.NetSecureHeadersOptions.PathPolicies.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.PermissionsPolicyValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.PermissionsPolicyValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.ReferrerPolicyValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.ReferrerPolicyValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.RemoveServerHeader.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.RemoveServerHeader.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.RemoveXPoweredBy.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.RemoveXPoweredBy.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.ReportingEndpoints.get -> System.Collections.Generic.List<SafeWebCore.Options.ReportingEndpointOptions!>!
+SafeWebCore.Options.NetSecureHeadersOptions.ReportingEndpoints.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.UseCspReportOnly.get -> bool
+SafeWebCore.Options.NetSecureHeadersOptions.UseCspReportOnly.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.XContentTypeOptionsValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.XContentTypeOptionsValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.XDnsPrefetchControlValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.XDnsPrefetchControlValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.XFrameOptionsValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.XFrameOptionsValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.XPermittedCrossDomainPoliciesValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.XPermittedCrossDomainPoliciesValue.set -> void
+SafeWebCore.Options.NetSecureHeadersOptions.XRobotsTagValue.get -> string!
+SafeWebCore.Options.NetSecureHeadersOptions.XRobotsTagValue.set -> void
+SafeWebCore.Options.PathPolicyOptions
+SafeWebCore.Options.PathPolicyOptions.Options.get -> SafeWebCore.Options.NetSecureHeadersOptions!
+SafeWebCore.Options.PathPolicyOptions.Options.init -> void
+SafeWebCore.Options.PathPolicyOptions.PathPolicyOptions() -> void
+SafeWebCore.Options.PathPolicyOptions.PathPrefix.get -> string!
+SafeWebCore.Options.PathPolicyOptions.PathPrefix.init -> void
+SafeWebCore.Options.ReportingEndpointOptions
+SafeWebCore.Options.ReportingEndpointOptions.<Clone>$() -> SafeWebCore.Options.ReportingEndpointOptions!
+SafeWebCore.Options.ReportingEndpointOptions.Equals(SafeWebCore.Options.ReportingEndpointOptions? other) -> bool
+SafeWebCore.Options.ReportingEndpointOptions.Group.get -> string!
+SafeWebCore.Options.ReportingEndpointOptions.Group.init -> void
+SafeWebCore.Options.ReportingEndpointOptions.ReportingEndpointOptions() -> void
+SafeWebCore.Options.ReportingEndpointOptions.Url.get -> string!
+SafeWebCore.Options.ReportingEndpointOptions.Url.init -> void
+SafeWebCore.Presets.SecurePresets
+SafeWebCore.TagHelpers.CspScriptNonceTagHelper
+SafeWebCore.TagHelpers.CspScriptNonceTagHelper.CspScriptNonceTagHelper(Microsoft.AspNetCore.Http.IHttpContextAccessor! httpContextAccessor) -> void
+SafeWebCore.TagHelpers.CspStyleNonceTagHelper
+SafeWebCore.TagHelpers.CspStyleNonceTagHelper.CspStyleNonceTagHelper(Microsoft.AspNetCore.Http.IHttpContextAccessor! httpContextAccessor) -> void
+static SafeWebCore.Abstractions.SecurityEvent.operator !=(SafeWebCore.Abstractions.SecurityEvent? left, SafeWebCore.Abstractions.SecurityEvent? right) -> bool
+static SafeWebCore.Abstractions.SecurityEvent.operator ==(SafeWebCore.Abstractions.SecurityEvent? left, SafeWebCore.Abstractions.SecurityEvent? right) -> bool
+static SafeWebCore.Builder.CrossOriginPolicyValues.operator !=(SafeWebCore.Builder.CrossOriginPolicyValues left, SafeWebCore.Builder.CrossOriginPolicyValues right) -> bool
+static SafeWebCore.Builder.CrossOriginPolicyValues.operator ==(SafeWebCore.Builder.CrossOriginPolicyValues left, SafeWebCore.Builder.CrossOriginPolicyValues right) -> bool
+static SafeWebCore.Extensions.ApplicationBuilderExtensions.UseCspReport(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static SafeWebCore.Extensions.ApplicationBuilderExtensions.UseNetSecureHeaders(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static SafeWebCore.Extensions.DiagnosticsEndpointRouteBuilderExtensions.MapSafeWebCoreDiagnostics(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! pattern = "/safewebcore/diagnostics") -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder!
+static SafeWebCore.Extensions.EndpointConventionBuilderExtensions.SkipNetSecureHeaders<TBuilder>(this TBuilder builder) -> TBuilder
+static SafeWebCore.Extensions.EndpointConventionBuilderExtensions.WithCspMode<TBuilder>(this TBuilder builder, SafeWebCore.Metadata.CspEndpointMode mode) -> TBuilder
+static SafeWebCore.Extensions.HttpContextExtensions.GetCspNonce(this Microsoft.AspNetCore.Http.HttpContext! context) -> string?
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeaders(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersApiPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersBlazorPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersBlazorWebSocketPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersForEnvironment(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Hosting.IHostEnvironment! environment, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersFromConfiguration(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, string! sectionName = "NetSecureHeaders") -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersFromConfiguration(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfigurationSection! section) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersMvcPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersReverseProxyPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersSpaReverseProxyPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersStrictAPlus(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersStrictAPlusForEnvironment(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Hosting.IHostEnvironment! environment, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersSwagger(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddSafeWebCoreSecurityEventSink<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Models.CspViolationReport.operator !=(SafeWebCore.Models.CspViolationReport? left, SafeWebCore.Models.CspViolationReport? right) -> bool
+static SafeWebCore.Models.CspViolationReport.operator ==(SafeWebCore.Models.CspViolationReport? left, SafeWebCore.Models.CspViolationReport? right) -> bool
+static SafeWebCore.Options.AdditionalHeaderOptions.operator !=(SafeWebCore.Options.AdditionalHeaderOptions? left, SafeWebCore.Options.AdditionalHeaderOptions? right) -> bool
+static SafeWebCore.Options.AdditionalHeaderOptions.operator ==(SafeWebCore.Options.AdditionalHeaderOptions? left, SafeWebCore.Options.AdditionalHeaderOptions? right) -> bool
+static SafeWebCore.Options.CspOptions.operator !=(SafeWebCore.Options.CspOptions? left, SafeWebCore.Options.CspOptions? right) -> bool
+static SafeWebCore.Options.CspOptions.operator ==(SafeWebCore.Options.CspOptions? left, SafeWebCore.Options.CspOptions? right) -> bool
+static SafeWebCore.Options.ReportingEndpointOptions.operator !=(SafeWebCore.Options.ReportingEndpointOptions? left, SafeWebCore.Options.ReportingEndpointOptions? right) -> bool
+static SafeWebCore.Options.ReportingEndpointOptions.operator ==(SafeWebCore.Options.ReportingEndpointOptions? left, SafeWebCore.Options.ReportingEndpointOptions? right) -> bool
+static SafeWebCore.Presets.SecurePresets.Api() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.ApiMinimal() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.ApiPath(string! pathPrefix = "/api", System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> SafeWebCore.Options.PathPolicyOptions!
+static SafeWebCore.Presets.SecurePresets.Blazor() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.BlazorWebSocket() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.Mvc() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.ReverseProxy() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.SpaReverseProxy() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.StrictAPlus() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.Swagger() -> SafeWebCore.Options.NetSecureHeadersOptions!
+virtual SafeWebCore.Options.CspOptions.<Clone>$() -> SafeWebCore.Options.CspOptions!
+virtual SafeWebCore.Options.CspOptions.EqualityContract.get -> System.Type!
+virtual SafeWebCore.Options.CspOptions.Equals(SafeWebCore.Options.CspOptions? other) -> bool
+virtual SafeWebCore.Options.CspOptions.PrintMembers(System.Text.StringBuilder! builder) -> bool
+SafeWebCore.Infrastructure.CspReportMiddleware.CspReportMiddleware(Microsoft.Extensions.Logging.ILogger<SafeWebCore.Infrastructure.CspReportMiddleware!>! logger, System.Collections.Generic.IEnumerable<SafeWebCore.Abstractions.ICspReportSink!>! sinks, SafeWebCore.Infrastructure.SecurityEventDispatcher? eventDispatcher, SafeWebCore.Infrastructure.SafeWebCoreMetrics? metrics) -> void
+SafeWebCore.Infrastructure.SafeWebCoreMetrics
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.CspViolations.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.HeadersApplied.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.Meter.get -> System.Diagnostics.Metrics.Meter!
+const SafeWebCore.Infrastructure.SafeWebCoreMetrics.MeterName = "SafeWebCore" -> string!
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.PathPolicyMatches.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.SafeWebCoreMetrics() -> void
+SafeWebCore.Middleware.NetSecureHeadersMiddleware.NetSecureHeadersMiddleware(SafeWebCore.INonceService! nonceService, Microsoft.Extensions.Options.IOptions<SafeWebCore.Options.NetSecureHeadersOptions!>! options, SafeWebCore.Infrastructure.SecurityEventDispatcher! eventDispatcher, SafeWebCore.Infrastructure.SafeWebCoreMetrics? metrics) -> void

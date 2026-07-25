@@ -1,7 +1,11 @@
+using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using SafeWebCore.Extensions;
+using SafeWebCore.Infrastructure;
 using SafeWebCore.Metadata;
 using SafeWebCore.Options;
+using SafeWebCore.Presets;
 
 namespace SafeWebCore.Tests;
 
@@ -179,6 +183,60 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
         Assert.Equal("no-referrer", apiResponse.Headers.GetValues("Referrer-Policy").First());
         Assert.True(apiResponse.Headers.Contains("Content-Security-Policy-Report-Only"));
         Assert.False(apiResponse.Headers.Contains("Content-Security-Policy"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task GetRequestOnApiPathWithApiMinimalPresetEmitsOnlyApiRelevantHeaders()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.PathPolicies.Add(SecurePresets.ApiPath("/api"));
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Root");
+                        endpoints.MapGet("/api/ping", () => "Pong");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var rootResponse = await client.GetAsync("/", TestContext.Current.CancellationToken);
+        var apiResponse = await client.GetAsync("/api/ping", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(rootResponse.Headers.Contains("Content-Security-Policy"));
+
+        Assert.True(apiResponse.Headers.Contains("Strict-Transport-Security"));
+        Assert.True(apiResponse.Headers.Contains("X-Content-Type-Options"));
+        Assert.True(apiResponse.Headers.Contains("Referrer-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Content-Security-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Content-Security-Policy-Report-Only"));
+        Assert.False(apiResponse.Headers.Contains("X-Frame-Options"));
+        Assert.False(apiResponse.Headers.Contains("Permissions-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Cross-Origin-Embedder-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Cross-Origin-Opener-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Cross-Origin-Resource-Policy"));
+        Assert.False(apiResponse.Headers.Contains("X-DNS-Prefetch-Control"));
+        Assert.False(apiResponse.Headers.Contains("X-Permitted-Cross-Domain-Policies"));
 
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
@@ -459,6 +517,62 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
 
         // Assert
         Assert.Equal("default=\"https://reports.example.com/default\"", response.Headers.GetValues("Reporting-Endpoints").First());
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task MetricsHeadersAppliedIncrementsOnRequest()
+    {
+        // Arrange
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(_ => { });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Hello");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        var metrics = host.Services.GetRequiredService<SafeWebCoreMetrics>();
+        long headersApplied = 0;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == SafeWebCoreMetrics.MeterName &&
+                instrument.Name == "safewebcore.headers_applied_total")
+            {
+                meterListener.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
+        {
+            if (instrument.Name == "safewebcore.headers_applied_total")
+                headersApplied += measurement;
+        });
+        listener.Start();
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var response = await client.GetAsync("/", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.True(headersApplied >= 1, $"Expected headers_applied_total >= 1, was {headersApplied}");
 
         await host.StopAsync(TestContext.Current.CancellationToken);
     }

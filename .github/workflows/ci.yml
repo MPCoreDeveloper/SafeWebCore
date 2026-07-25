@@ -1,0 +1,51 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  Configuration: Release
+
+jobs:
+  build-test-pack:
+    name: Build, test, and pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore SafeWebCore.slnx
+
+      - name: Build
+        run: dotnet build SafeWebCore.slnx -c ${{ env.Configuration }} --no-restore
+
+      - name: Test
+        run: dotnet test SafeWebCore.slnx -c ${{ env.Configuration }} --no-build --verbosity normal
+
+      - name: Pack
+        run: |
+          mkdir -p artifacts/nupkg
+          dotnet pack src/SafeWebCore/SafeWebCore.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+          dotnet pack src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+          dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+          dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkgs
+          path: artifacts/nupkg/*
+          if-no-files-found: error

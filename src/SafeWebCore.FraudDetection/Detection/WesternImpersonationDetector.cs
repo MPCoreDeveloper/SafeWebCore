@@ -54,6 +54,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
     private readonly WesternDetectorOptions? _legacyOptions;
     private readonly IGeoIpService? _geoIpService;
     private readonly IPenTestAuthorizationNotificationSender _notificationSender;
+    private readonly IFraudEventDispatcher _fraudEventDispatcher;
     private readonly ILogger<WesternImpersonationDetector> _logger;
     private readonly TimeProvider _timeProvider;
 
@@ -82,6 +83,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
             new LoggingPenTestAuthorizationNotificationSender(
                 NullLogger<LoggingPenTestAuthorizationNotificationSender>.Instance)
         ]);
+        _fraudEventDispatcher = new NoOpFraudEventDispatcher();
         _timeProvider = TimeProvider.System;
     }
 
@@ -93,12 +95,14 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
     /// <param name="notificationSender">Authorization-check notification sender.</param>
     /// <param name="geoIpService">Optional geo-IP service.</param>
     /// <param name="timeProvider">Optional time provider for burst and cooldown checks.</param>
+    /// <param name="fraudEventDispatcher">Optional dispatcher for fraud events to sinks (additive).</param>
     internal WesternImpersonationDetector(
         IFraudDetectionOptionsResolver optionsResolver,
         ILogger<WesternImpersonationDetector> logger,
         IPenTestAuthorizationNotificationSender notificationSender,
         IGeoIpService? geoIpService = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IFraudEventDispatcher? fraudEventDispatcher = null)
     {
         ArgumentNullException.ThrowIfNull(optionsResolver);
         ArgumentNullException.ThrowIfNull(logger);
@@ -108,6 +112,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         _logger = logger;
         _notificationSender = notificationSender;
         _geoIpService = geoIpService;
+        _fraudEventDispatcher = fraudEventDispatcher ?? new NoOpFraudEventDispatcher();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -130,6 +135,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
                 IsPenTestScannerDetected = false,
                 PenTestAuthorizationEmailSent = false,
                 SuspicionScore = 0,
+                Risk = RiskScore.FromScoreAndVerdict(0, FraudVerdict.Clean),
                 Verdict = FraudVerdict.Clean,
                 RecommendedAction = RecommendedAction.NoAction,
                 Triggers = triggers,
@@ -204,7 +210,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
                 triggers.Count);
         }
 
-        return new FraudReport
+        var report = new FraudReport
         {
             IsFakeWestern = verdict is FraudVerdict.RegionImpersonation,
             IsNotInWesternCountry = isNotWesternCountry,
@@ -213,11 +219,21 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
             IsDetectionBypassed = false,
             PenTestAuthorizationEmailSent = emailSent,
             SuspicionScore = finalScore,
+            Risk = RiskScore.FromScoreAndVerdict(finalScore, verdict),
             Triggers = triggers,
             Verdict = verdict,
             RecommendedAction = action,
             TenantId = data.TenantId
         };
+
+        _fraudEventDispatcher.Dispatch(new FraudEvent
+        {
+            Report = report,
+            Fingerprint = null,
+            Timestamp = _timeProvider.GetUtcNow()
+        });
+
+        return report;
     }
 
     private FraudDetectionOptions ResolveOptions(string? tenantId)

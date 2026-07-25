@@ -47,7 +47,9 @@ public class MiddlewarePipelineBenchmarks
         // Default: strict A+ options with all headers enabled
         _defaultMiddleware = new NetSecureHeadersMiddleware(
             nonceService,
-            ExtOptions.Create(new NetSecureHeadersOptions()));
+            ExtOptions.Create(new NetSecureHeadersOptions()),
+            new SafeWebCore.Infrastructure.SecurityEventDispatcher([]),
+            new SafeWebCore.Infrastructure.SafeWebCoreMetrics());
 
         // Path policies: adds three prefix policies so the path-matching loop runs
         var withPathPolicies = new NetSecureHeadersOptions();
@@ -68,13 +70,17 @@ public class MiddlewarePipelineBenchmarks
         });
         _pathPoliciesMiddleware = new NetSecureHeadersMiddleware(
             nonceService,
-            ExtOptions.Create(withPathPolicies));
+            ExtOptions.Create(withPathPolicies),
+            new SafeWebCore.Infrastructure.SecurityEventDispatcher([]),
+            new SafeWebCore.Infrastructure.SafeWebCoreMetrics());
 
         // Report-only: CSP sent via Content-Security-Policy-Report-Only
         var reportOnly = new NetSecureHeadersOptions { UseCspReportOnly = true };
         _reportOnlyMiddleware = new NetSecureHeadersMiddleware(
             nonceService,
-            ExtOptions.Create(reportOnly));
+            ExtOptions.Create(reportOnly),
+            new SafeWebCore.Infrastructure.SecurityEventDispatcher([]),
+            new SafeWebCore.Infrastructure.SafeWebCoreMetrics());
     }
 
     /// <summary>

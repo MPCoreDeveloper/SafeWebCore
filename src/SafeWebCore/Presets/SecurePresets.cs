@@ -169,6 +169,56 @@ public static class SecurePresets
     }
 
     /// <summary>
+    /// Returns a minimal preset for API endpoints.
+    /// Emits only API-relevant hardening headers and disables browser document headers
+    /// that add little value for JSON or non-HTML responses.
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> for API paths.</returns>
+    public static NetSecureHeadersOptions ApiMinimal()
+    {
+        return new NetSecureHeadersOptions
+        {
+            EnableHsts = true,
+            HstsValue = "max-age=63072000; includeSubDomains; preload",
+            EnableXContentTypeOptions = true,
+            XContentTypeOptionsValue = "nosniff",
+            EnableReferrerPolicy = true,
+            ReferrerPolicyValue = "no-referrer",
+            EnableXFrameOptions = false,
+            EnablePermissionsPolicy = false,
+            EnableCoep = false,
+            EnableCoop = false,
+            EnableCorp = false,
+            EnableXDnsPrefetchControl = false,
+            EnableXPermittedCrossDomainPolicies = false,
+            EnableCsp = false,
+            UseCspReportOnly = false,
+            RemoveServerHeader = true,
+            RemoveXPoweredBy = true,
+            CustomPolicies = []
+        };
+    }
+
+    /// <summary>
+    /// Creates a path policy with API-minimal headers for a specific path prefix.
+    /// Useful when serving UI pages and APIs from the same host.
+    /// </summary>
+    /// <param name="pathPrefix">Path prefix to match (for example <c>/api</c>).</param>
+    /// <param name="customize">Optional action to override values in the API-minimal preset.</param>
+    /// <returns>A configured <see cref="PathPolicyOptions"/> instance for <see cref="NetSecureHeadersOptions.PathPolicies"/>.</returns>
+    public static PathPolicyOptions ApiPath(string pathPrefix = "/api", Action<NetSecureHeadersOptions>? customize = null)
+    {
+        var options = ApiMinimal();
+        customize?.Invoke(options);
+
+        return new PathPolicyOptions
+        {
+            PathPrefix = pathPrefix,
+            Options = options
+        };
+    }
+
+    /// <summary>
     /// Returns a profile-oriented preset for MVC applications.
     /// Uses nonce-based CSP with practical defaults for same-origin page assets.
     /// </summary>
@@ -215,7 +265,7 @@ public static class SecurePresets
             StyleSrc = "'self' 'nonce-{nonce}'",
             ImgSrc = "'self' https: data:",
             FontSrc = "'self' https://fonts.gstatic.com data:",
-            ConnectSrc = "'self' wss:",
+            ConnectSrc = "'self' wss: ws:",
             MediaSrc = "'self' blob:",
             ObjectSrc = "'none'",
             WorkerSrc = "'self' blob:",
@@ -226,6 +276,22 @@ public static class SecurePresets
             RequireTrustedTypesFor = "'script'",
             TrustedTypes = "'none'",
             EnableUpgradeInsecureRequests = true
+        };
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a Blazor-focused preset with explicit strong support for WebSockets and SignalR.
+    /// Use this when your Blazor application relies heavily on real-time WebSocket connections.
+    /// </summary>
+    public static NetSecureHeadersOptions BlazorWebSocket()
+    {
+        var options = Blazor();
+        // Explicitly ensure both secure and non-secure WebSocket schemes are allowed
+        // (ws: is often needed during initial upgrade before wss:)
+        options.Csp = options.Csp with
+        {
+            ConnectSrc = "'self' wss: ws:"
         };
         return options;
     }
@@ -258,6 +324,69 @@ public static class SecurePresets
             TrustedTypes = "'none'",
             EnableUpgradeInsecureRequests = true
         };
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a preset optimized for applications running behind a reverse proxy (YARP, nginx, Azure Front Door, etc.).
+    /// This preset is slightly more permissive on connect sources to accommodate proxied APIs and WebSocket upgrades
+    /// while keeping strong security headers.
+    /// </summary>
+    public static NetSecureHeadersOptions ReverseProxy()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
+            StyleSrc = "'self' 'nonce-{nonce}'",
+            ImgSrc = "'self' https: data:",
+            FontSrc = "'self' https:",
+            ConnectSrc = "'self' https: wss:",
+            MediaSrc = "'self' https:",
+            ObjectSrc = "'none'",
+            WorkerSrc = "'self'",
+            ManifestSrc = "'self'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            RequireTrustedTypesFor = "'script'",
+            TrustedTypes = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a preset suitable for applications that expose Swagger / OpenAPI UI.
+    /// Swagger UI often requires specific CDN sources and some inline styles.
+    /// Other security headers remain strong.
+    /// </summary>
+    public static NetSecureHeadersOptions Swagger()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            // Swagger UI frequently needs unsafe-inline for styles and loads assets from jsdelivr
+            ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https://cdn.jsdelivr.net",
+            StyleSrc = "'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+            ImgSrc = "'self' data: https:",
+            FontSrc = "'self' https://cdn.jsdelivr.net",
+            ConnectSrc = "'self' https: wss:",
+            WorkerSrc = "'self' blob:",
+            ObjectSrc = "'none'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+
         return options;
     }
 

@@ -36,6 +36,24 @@ dotnet test
 - Follow the conventions in `.editorconfig`
 - Async methods must end with `Async` suffix
 - All public APIs must have XML documentation
+- All roadmap work must preserve 100% backward compatibility unless an explicit exception is approved
+
+## Backward Compatibility Policy
+
+This repository treats backward compatibility as a hard requirement for normal releases.
+
+- Read [docs/development/backward-compatibility-policy.md](docs/development/backward-compatibility-policy.md) before changing public APIs, defaults, presets, or configuration behavior.
+- Prefer additive, opt-in changes over behavioral changes to existing consumers.
+- Keep existing registration methods, presets, and configuration paths working.
+
+### Public API surface changes
+
+We use `Microsoft.CodeAnalysis.PublicApiAnalyzers` to track public surface via `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`.
+
+- Removing or renaming a symbol listed in `PublicAPI.Shipped.txt` is a hard error (`RS0037`).
+- During the initial adoption phase, new undeclared public symbols (`RS0016`) and symbols listed but not found (`RS0017`) are warnings.
+- Add intentional new public API to `PublicAPI.Unshipped.txt` and promote it to `Shipped.txt` on release.
+- See the library `.csproj` files for the current analyzer configuration.
 
 ## Reporting Issues
 

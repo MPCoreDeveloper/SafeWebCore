@@ -2,14 +2,16 @@
 
 A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
-**Current version:** 1.3.5
+**Current version:** 1.6.0
 
-New in 1.3.5:
-- `RemoveXPoweredBy` (enabled in Strict A+ presets) — removes `X-Powered-By` header.
-- First-class `NEL` (Network Error Logging) support.
-- More reliable `Server` / `X-Powered-By` removal via `OnStarting`.
-- Permissions-Policy now only emits scanner-safe directives (no more "invalid directive" warnings on securityheaders.com).
-- Improved documentation for IIS and reverse proxy hosting scenarios.
+New in 1.6.0:
+- AddNetSecureHeadersFromConfiguration(...) for direct appsettings.json binding.
+- AddNetSecureHeadersForEnvironment(...) and AddNetSecureHeadersStrictAPlusForEnvironment(...) for safer non-production CSP rollout.
+- MapSafeWebCoreDiagnostics(...) for opt-in effective header and path-policy preview.
+- Opt-in System.Diagnostics.Metrics counters (SafeWebCore meter).
+- New companion packages: SafeWebCore.FraudDetection (1.0.0), SafeWebCore.Analyzers (preview), and SafeWebCore.Testing (preview).
+- Practical recipe docs under docs/recipes/.
+- More actionable startup validation messages with concrete remediation guidance.
 
 ## Backward Compatibility Goal
 

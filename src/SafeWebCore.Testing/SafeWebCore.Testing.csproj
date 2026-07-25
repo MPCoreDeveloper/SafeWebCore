@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Package metadata -->
+    <PackageId>SafeWebCore.Testing</PackageId>
+    <Version>1.0.0-preview.1</Version>
+    <Authors>MPCoreDeveloper</Authors>
+    <Company>Posseth Software</Company>
+    <Product>SafeWebCore.Testing</Product>
+    <Description>Testing helpers for SafeWebCore. Includes header assertions, CSP/nonce assertions, and bootstrap helpers for integration tests.</Description>
+    <PackageTags>safewebcore;testing;xunit;aspnetcore;security</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.*" />
+    <!-- Use xunit assert for writing nice assertion helpers -->
+    <PackageReference Include="xunit.v3.assert" Version="3.2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SafeWebCore\SafeWebCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\icon.png" Link="icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>true</Pack>
+    </None>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

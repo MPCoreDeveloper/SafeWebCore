@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using SafeWebCore.Abstractions;
 using SafeWebCore.Infrastructure;
@@ -78,14 +80,99 @@ public static class ServiceCollectionExtensions
             .Configure(configure)
             .ValidateOnStart();
 
-        services.AddSingleton<IValidateOptions<NetSecureHeadersOptions>, NetSecureHeadersOptionsValidator>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICspReportSink, CspLoggingReportSink>());
-        services.AddSingleton<INonceService, NonceService>();
-        services.AddTransient<NetSecureHeadersMiddleware>();
-        services.AddTransient<CspReportMiddleware>();
-        services.AddHttpContextAccessor();
+        return AddNetSecureHeadersCore(services);
+    }
 
-        return services;
+    /// <summary>
+    /// Adds NetSecureHeaders services by binding <see cref="NetSecureHeadersOptions"/> from configuration.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The application configuration root.</param>
+    /// <param name="sectionName">The configuration section name. Default: <c>NetSecureHeaders</c>.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddNetSecureHeadersFromConfiguration(builder.Configuration);
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddNetSecureHeadersFromConfiguration(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string sectionName = "NetSecureHeaders")
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sectionName);
+
+        return AddNetSecureHeadersFromConfiguration(services, configuration.GetSection(sectionName));
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services by binding <see cref="NetSecureHeadersOptions"/> from the specified configuration section.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="section">The configuration section to bind.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersFromConfiguration(
+        this IServiceCollection services,
+        IConfigurationSection section)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(section);
+
+        services
+            .AddOptions<NetSecureHeadersOptions>()
+            .Bind(section)
+            .ValidateOnStart();
+
+        return AddNetSecureHeadersCore(services);
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with environment-aware rollout defaults.
+    /// In non-production environments, CSP defaults to report-only mode unless the caller overrides it.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="environment">The current host environment.</param>
+    /// <param name="configure">Optional action to customize the options after environment defaults are applied.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersForEnvironment(
+        this IServiceCollection services,
+        IHostEnvironment environment,
+        Action<NetSecureHeadersOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            ApplyEnvironmentRolloutDefaults(opts, environment);
+            configure?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with the <b>Strict A+</b> preset and environment-aware rollout defaults.
+    /// In non-production environments, CSP defaults to report-only mode unless the caller overrides it.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="environment">The current host environment.</param>
+    /// <param name="customize">Optional action to override individual preset values after environment defaults are applied.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddNetSecureHeadersStrictAPlusForEnvironment(
+        this IServiceCollection services,
+        IHostEnvironment environment,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.StrictAPlus());
+            ApplyEnvironmentRolloutDefaults(opts, environment);
+            customize?.Invoke(opts);
+        });
     }
 
     /// <summary>
@@ -146,6 +233,22 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds NetSecureHeaders services with a Blazor preset optimized for heavy WebSocket / SignalR usage.
+    /// </summary>
+    public static IServiceCollection AddNetSecureHeadersBlazorWebSocketPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.BlazorWebSocket());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
     /// Adds NetSecureHeaders services with the SPA reverse-proxy preset.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -162,5 +265,73 @@ public static class ServiceCollectionExtensions
             opts.ApplyPreset(SecurePresets.SpaReverseProxy());
             customize?.Invoke(opts);
         });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with a preset suitable for Swagger / OpenAPI UI.
+    /// </summary>
+    public static IServiceCollection AddNetSecureHeadersSwagger(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.Swagger());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with a preset suitable for applications behind a reverse proxy or YARP.
+    /// </summary>
+    public static IServiceCollection AddNetSecureHeadersReverseProxyPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.ReverseProxy());
+            customize?.Invoke(opts);
+        });
+    }
+
+    private static IServiceCollection AddNetSecureHeadersCore(IServiceCollection services)
+    {
+        services.AddSingleton<IValidateOptions<NetSecureHeadersOptions>, NetSecureHeadersOptionsValidator>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICspReportSink, CspLoggingReportSink>());
+        services.AddSingleton<INonceService, NonceService>();
+        services.AddTransient<NetSecureHeadersMiddleware>();
+        services.AddTransient<CspReportMiddleware>();
+        services.AddSingleton<INetSecureHeadersDiagnosticsService, NetSecureHeadersDiagnosticsService>();
+        services.AddSingleton<SecurityEventDispatcher>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISecurityEventSink, LoggingSecurityEventSink>());
+        services.AddSingleton<SafeWebCoreMetrics>();
+        services.AddHttpContextAccessor();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a custom <see cref="ISecurityEventSink"/> for SafeWebCore security events.
+    /// This is additive and opt-in.
+    /// </summary>
+    public static IServiceCollection AddSafeWebCoreSecurityEventSink<T>(this IServiceCollection services)
+        where T : class, ISecurityEventSink
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISecurityEventSink, T>());
+        return services;
+    }
+
+    private static void ApplyEnvironmentRolloutDefaults(NetSecureHeadersOptions options, IHostEnvironment environment)
+    {
+        if (!environment.IsProduction() && options.EnableCsp)
+        {
+            options.UseCspReportOnly = true;
+        }
     }
 }

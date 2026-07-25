@@ -242,6 +242,49 @@ public sealed class SecurePresetsTests
     }
 
     [Fact]
+    public void ApiMinimalPresetDisablesBrowserDocumentHeaders()
+    {
+        // Arrange
+        var options = SecurePresets.ApiMinimal();
+
+        // Assert
+        Assert.False(options.EnableCsp);
+        Assert.False(options.EnableXFrameOptions);
+        Assert.False(options.EnablePermissionsPolicy);
+        Assert.False(options.EnableCoep);
+        Assert.False(options.EnableCoop);
+        Assert.False(options.EnableCorp);
+        Assert.False(options.EnableXDnsPrefetchControl);
+        Assert.False(options.EnableXPermittedCrossDomainPolicies);
+    }
+
+    [Fact]
+    public void ApiMinimalPresetKeepsApiRelevantHardening()
+    {
+        // Arrange
+        var options = SecurePresets.ApiMinimal();
+
+        // Assert
+        Assert.True(options.EnableHsts);
+        Assert.True(options.EnableXContentTypeOptions);
+        Assert.True(options.EnableReferrerPolicy);
+        Assert.True(options.RemoveServerHeader);
+        Assert.True(options.RemoveXPoweredBy);
+    }
+
+    [Fact]
+    public void ApiPathPresetUsesDefaultApiPrefix()
+    {
+        // Arrange
+        var policy = SecurePresets.ApiPath();
+
+        // Assert
+        Assert.Equal("/api", policy.PathPrefix);
+        Assert.False(policy.Options.EnableCsp);
+        Assert.False(policy.Options.EnableXFrameOptions);
+    }
+
+    [Fact]
     public void MvcPresetUsesBalancedReferrerPolicy()
     {
         // Arrange
@@ -300,5 +343,53 @@ public sealed class SecurePresetsTests
 
         // Assert
         Assert.Contains("blob:", options.Csp.ImgSrc);
+    }
+
+    [Fact]
+    public void SwaggerPresetAllowsUnsafeInlineForStylesAndCdn()
+    {
+        // Arrange
+        var options = SecurePresets.Swagger();
+
+        // Assert
+        Assert.Contains("'unsafe-inline'", options.Csp.StyleSrc);
+        Assert.Contains("https://cdn.jsdelivr.net", options.Csp.ScriptSrc);
+        Assert.Contains("https://cdn.jsdelivr.net", options.Csp.StyleSrc);
+        Assert.Equal("strict-origin-when-cross-origin", options.ReferrerPolicyValue);
+    }
+
+    [Fact]
+    public void SwaggerPresetKeepsStrongBaseHeaders()
+    {
+        // Arrange
+        var options = SecurePresets.Swagger();
+
+        // Assert
+        Assert.True(options.EnableHsts);
+        Assert.True(options.EnableXContentTypeOptions);
+        Assert.True(options.RemoveServerHeader);
+    }
+
+    [Fact]
+    public void ReverseProxyPresetAllowsHttpsAndWebSocket()
+    {
+        // Arrange
+        var options = SecurePresets.ReverseProxy();
+
+        // Assert
+        Assert.Contains("https:", options.Csp.ConnectSrc);
+        Assert.Contains("wss:", options.Csp.ConnectSrc);
+        Assert.Equal("strict-origin-when-cross-origin", options.ReferrerPolicyValue);
+    }
+
+    [Fact]
+    public void BlazorWebSocketPresetExplicitlyAllowsWsAndWss()
+    {
+        // Arrange
+        var options = SecurePresets.BlazorWebSocket();
+
+        // Assert
+        Assert.Contains("wss:", options.Csp.ConnectSrc);
+        Assert.Contains("ws:", options.Csp.ConnectSrc);
     }
 }

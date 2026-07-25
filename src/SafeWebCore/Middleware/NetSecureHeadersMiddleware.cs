@@ -1,7 +1,9 @@
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using SafeWebCore.Abstractions;
 using SafeWebCore.Attributes;
+using SafeWebCore.Infrastructure;
 using SafeWebCore.Metadata;
 using SafeWebCore.Options;
 
@@ -12,11 +14,7 @@ namespace SafeWebCore.Middleware;
 /// Generates a per-request CSP nonce and stores it in <see cref="HttpContext.Items"/>
 /// under <see cref="NetSecureHeaders.CspNonceKey"/>.
 /// </summary>
-/// <param name="nonceService">The nonce service for generating CSP nonces.</param>
-/// <param name="options">The options for configuring security headers.</param>
-public sealed class NetSecureHeadersMiddleware(
-    INonceService nonceService,
-    IOptions<NetSecureHeadersOptions> options) : IMiddleware
+public sealed class NetSecureHeadersMiddleware : IMiddleware
 {
     private sealed record ResolvedPathPolicy(
         PathString Prefix,
@@ -24,15 +22,54 @@ public sealed class NetSecureHeadersMiddleware(
         string? CspTemplate,
         string? ReportingEndpointsValue);
 
-    private readonly NetSecureHeadersOptions _defaultOptions = options.Value;
+    private readonly INonceService _nonceService;
+    private readonly NetSecureHeadersOptions _defaultOptions;
+    private readonly string? _defaultCspTemplate;
+    private readonly string? _defaultReportingEndpointsValue;
+    private readonly List<ResolvedPathPolicy> _pathPolicies;
+    private readonly SecurityEventDispatcher _eventDispatcher;
+    private readonly SafeWebCoreMetrics _metrics;
 
-    // PERF: Pre-build the CSP template once — avoids StringBuilder work on every request
-    private readonly string? _defaultCspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
+    /// <summary>
+    /// Backward-compatible constructor that creates the middleware
+    /// with only the originally shipped dependencies.
+    /// </summary>
+    /// <param name="nonceService">The nonce service for generating CSP nonces.</param>
+    /// <param name="options">The options for configuring security headers.</param>
+    /// <param name="eventDispatcher">Dispatcher for security telemetry events.</param>
+    public NetSecureHeadersMiddleware(
+        INonceService nonceService,
+        IOptions<NetSecureHeadersOptions> options,
+        SecurityEventDispatcher eventDispatcher)
+        : this(nonceService, options, eventDispatcher, null)
+    {
+    }
 
-    // PERF: Pre-build Reporting-Endpoints once for the default policy
-    private readonly string? _defaultReportingEndpointsValue = BuildReportingEndpointsValue(options.Value.ReportingEndpoints);
+    /// <summary>
+    /// Creates the middleware with optional observability integrations.
+    /// </summary>
+    /// <param name="nonceService">The nonce service for generating CSP nonces.</param>
+    /// <param name="options">The options for configuring security headers.</param>
+    /// <param name="eventDispatcher">Dispatcher for security telemetry events.</param>
+    /// <param name="metrics">Optional metrics instance for opt-in counters.</param>
+    public NetSecureHeadersMiddleware(
+        INonceService nonceService,
+        IOptions<NetSecureHeadersOptions> options,
+        SecurityEventDispatcher eventDispatcher,
+        SafeWebCoreMetrics? metrics)
+    {
+        ArgumentNullException.ThrowIfNull(nonceService);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(eventDispatcher);
 
-    private readonly List<ResolvedPathPolicy> _pathPolicies = BuildPathPolicies(options.Value.PathPolicies);
+        _nonceService = nonceService;
+        _defaultOptions = options.Value;
+        _defaultCspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
+        _defaultReportingEndpointsValue = BuildReportingEndpointsValue(options.Value.ReportingEndpoints);
+        _pathPolicies = BuildPathPolicies(options.Value.PathPolicies);
+        _eventDispatcher = eventDispatcher;
+        _metrics = metrics ?? new SafeWebCoreMetrics();
+    }
 
     /// <summary>
     /// Invokes the middleware to add security headers to the response.
@@ -53,14 +90,44 @@ public sealed class NetSecureHeadersMiddleware(
         }
 
         var endpointCspMode = endpoint?.Metadata.GetMetadata<CspModeAttribute>()?.Mode;
-        var (effectiveOptions, cspTemplate, reportingEndpointsValue) = ResolvePolicy(context.Request.Path);
+        var (effectiveOptions, matchedPathPolicy, cspTemplate, reportingEndpointsValue) = ResolvePolicy(context.Request.Path);
 
         // Generate per-request nonce and expose via HttpContext.Items
-        var nonce = nonceService.GenerateNonce();
+        var nonce = _nonceService.GenerateNonce();
         context.Items[NetSecureHeaders.CspNonceKey] = nonce;
 
         // Set security headers before the response body is written
         AddSecurityHeaders(context.Response, nonce, effectiveOptions, cspTemplate, reportingEndpointsValue, endpointCspMode);
+
+        // Emit additive telemetry events + metrics (opt-in consumption)
+        _ = _eventDispatcher.EmitAsync(new SecurityEvent
+        {
+            EventType = SecurityEventType.HeadersApplied,
+            Path = context.Request.Path,
+            Properties = new Dictionary<string, object?>
+            {
+                ["HasCsp"] = effectiveOptions.EnableCsp,
+                ["UseReportOnly"] = effectiveOptions.UseCspReportOnly || endpointCspMode == CspEndpointMode.ReportOnly,
+                ["MatchedPathPolicy"] = matchedPathPolicy
+            }
+        }, context.RequestAborted);
+
+        _metrics.HeadersApplied.Add(1);
+
+        if (!string.IsNullOrEmpty(matchedPathPolicy))
+        {
+            _ = _eventDispatcher.EmitAsync(new SecurityEvent
+            {
+                EventType = SecurityEventType.PathPolicyMatched,
+                Path = context.Request.Path,
+                Properties = new Dictionary<string, object?>
+                {
+                    ["MatchedPathPolicy"] = matchedPathPolicy
+                }
+            }, context.RequestAborted);
+
+            _metrics.PathPolicyMatches.Add(1);
+        }
 
         // Remove Server and/or X-Powered-By just before headers are flushed to the client.
         // Using OnStarting to ensure we catch headers added by later components (e.g. Kestrel, IIS modules).
@@ -115,17 +182,17 @@ public sealed class NetSecureHeadersMiddleware(
         return resolvedPolicies;
     }
 
-    private (NetSecureHeadersOptions Options, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
+    private (NetSecureHeadersOptions Options, string? MatchedPathPolicy, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
     {
         foreach (var policy in _pathPolicies)
         {
             if (!requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            return (policy.Options, policy.CspTemplate, policy.ReportingEndpointsValue);
+            return (policy.Options, policy.Prefix.Value, policy.CspTemplate, policy.ReportingEndpointsValue);
         }
 
-        return (_defaultOptions, _defaultCspTemplate, _defaultReportingEndpointsValue);
+        return (_defaultOptions, null, _defaultCspTemplate, _defaultReportingEndpointsValue);
     }
 
     private static string? BuildReportingEndpointsValue(List<ReportingEndpointOptions> endpoints)
@@ -157,44 +224,19 @@ public sealed class NetSecureHeadersMiddleware(
     {
         var headers = response.Headers;
 
-        if (options.EnableHsts)
-            headers.Append(HeaderNames.StrictTransportSecurity, options.HstsValue);
-
-        if (options.EnableXFrameOptions)
-            headers.Append(HeaderNames.XFrameOptions, options.XFrameOptionsValue);
-
-        if (options.EnableXContentTypeOptions)
-            headers.Append(HeaderNames.XContentTypeOptions, options.XContentTypeOptionsValue);
-
-        if (options.EnableReferrerPolicy)
-            headers.Append(HeaderNames.ReferrerPolicy, options.ReferrerPolicyValue);
-
-        if (options.EnablePermissionsPolicy)
-            headers.Append(HeaderNames.PermissionsPolicy, options.PermissionsPolicyValue);
-
-        if (options.EnableCoep)
-            headers.Append(HeaderNames.CrossOriginEmbedderPolicy, options.CoepValue);
-
-        if (options.EnableCoop)
-            headers.Append(HeaderNames.CrossOriginOpenerPolicy, options.CoopValue);
-
-        if (options.EnableCorp)
-            headers.Append(HeaderNames.CrossOriginResourcePolicy, options.CorpValue);
-
-        if (options.EnableXDnsPrefetchControl)
-            headers.Append(HeaderNames.XDnsPrefetchControl, options.XDnsPrefetchControlValue);
-
-        if (options.EnableXPermittedCrossDomainPolicies)
-            headers.Append(HeaderNames.XPermittedCrossDomainPolicies, options.XPermittedCrossDomainPoliciesValue);
-
-        if (options.EnableOriginAgentCluster)
-            headers.Append(HeaderNames.OriginAgentCluster, options.OriginAgentClusterValue);
-
-        if (options.EnableXRobotsTag)
-            headers.Append(HeaderNames.XRobotsTag, options.XRobotsTagValue);
-
-        if (options.EnableClearSiteData)
-            headers.Append(HeaderNames.ClearSiteData, options.ClearSiteDataValue);
+        AddIfEnabled(headers, options.EnableHsts, HeaderNames.StrictTransportSecurity, options.HstsValue);
+        AddIfEnabled(headers, options.EnableXFrameOptions, HeaderNames.XFrameOptions, options.XFrameOptionsValue);
+        AddIfEnabled(headers, options.EnableXContentTypeOptions, HeaderNames.XContentTypeOptions, options.XContentTypeOptionsValue);
+        AddIfEnabled(headers, options.EnableReferrerPolicy, HeaderNames.ReferrerPolicy, options.ReferrerPolicyValue);
+        AddIfEnabled(headers, options.EnablePermissionsPolicy, HeaderNames.PermissionsPolicy, options.PermissionsPolicyValue);
+        AddIfEnabled(headers, options.EnableCoep, HeaderNames.CrossOriginEmbedderPolicy, options.CoepValue);
+        AddIfEnabled(headers, options.EnableCoop, HeaderNames.CrossOriginOpenerPolicy, options.CoopValue);
+        AddIfEnabled(headers, options.EnableCorp, HeaderNames.CrossOriginResourcePolicy, options.CorpValue);
+        AddIfEnabled(headers, options.EnableXDnsPrefetchControl, HeaderNames.XDnsPrefetchControl, options.XDnsPrefetchControlValue);
+        AddIfEnabled(headers, options.EnableXPermittedCrossDomainPolicies, HeaderNames.XPermittedCrossDomainPolicies, options.XPermittedCrossDomainPoliciesValue);
+        AddIfEnabled(headers, options.EnableOriginAgentCluster, HeaderNames.OriginAgentCluster, options.OriginAgentClusterValue);
+        AddIfEnabled(headers, options.EnableXRobotsTag, HeaderNames.XRobotsTag, options.XRobotsTagValue);
+        AddIfEnabled(headers, options.EnableClearSiteData, HeaderNames.ClearSiteData, options.ClearSiteDataValue);
 
         if (options.EnableNel && !string.IsNullOrWhiteSpace(options.NelValue))
             headers.Append(HeaderNames.NetworkErrorLogging, options.NelValue);
@@ -224,10 +266,15 @@ public sealed class NetSecureHeadersMiddleware(
             headers[additionalHeader.Name] = additionalHeader.Value;
         }
 
-        // Apply custom policies
         foreach (var policy in options.CustomPolicies)
         {
             policy.Apply(response);
         }
+    }
+
+    private static void AddIfEnabled(Microsoft.AspNetCore.Http.IHeaderDictionary headers, bool enabled, string name, string value)
+    {
+        if (enabled)
+            headers.Append(name, value);
     }
 }

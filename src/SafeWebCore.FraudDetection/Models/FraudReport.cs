@@ -49,6 +49,14 @@ public sealed record FraudReport
     public int SuspicionScore { get; init; }
 
     /// <summary>
+    /// Structured risk assessment (additive metadata).
+    /// This provides a typed <see cref="RiskLevel"/> in addition to the raw <see cref="SuspicionScore"/>.
+    /// Existing <see cref="SuspicionScore"/>, <see cref="Verdict"/>, and <see cref="RecommendedAction"/>
+    /// behavior is unchanged.
+    /// </summary>
+    public RiskScore Risk { get; init; } = RiskScore.None;
+
+    /// <summary>
     /// Individual trigger keys that contributed to the suspicion score.
     /// See <see cref="FraudTrigger"/> for the full set of well-known values.
     /// </summary>

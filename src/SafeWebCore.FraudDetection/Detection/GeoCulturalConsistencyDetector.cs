@@ -54,6 +54,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
     private readonly GeoCulturalConsistencyOptions? _directOptions;
     private readonly IGeoIpService? _geoIpService;
     private readonly IPenTestAuthorizationNotificationSender _notificationSender;
+    private readonly IFraudEventDispatcher _fraudEventDispatcher;
     private readonly ILogger<GeoCulturalConsistencyDetector> _logger;
     private readonly TimeProvider _timeProvider;
 
@@ -77,6 +78,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
         _logger = logger;
         _geoIpService = geoIpService;
         _notificationSender = notificationSender ?? new NoOpNotificationSender();
+        _fraudEventDispatcher = new NoOpFraudEventDispatcher();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -88,7 +90,8 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
         ILogger<GeoCulturalConsistencyDetector> logger,
         IPenTestAuthorizationNotificationSender notificationSender,
         IGeoIpService? geoIpService = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IFraudEventDispatcher? fraudEventDispatcher = null)
     {
         ArgumentNullException.ThrowIfNull(optionsResolver);
         ArgumentNullException.ThrowIfNull(logger);
@@ -98,6 +101,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
         _logger = logger;
         _notificationSender = notificationSender;
         _geoIpService = geoIpService;
+        _fraudEventDispatcher = fraudEventDispatcher ?? new NoOpFraudEventDispatcher();
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -133,6 +137,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
                 IsPenTestScannerDetected = false,
                 PenTestAuthorizationEmailSent = false,
                 SuspicionScore = 0,
+                Risk = RiskScore.FromScoreAndVerdict(0, FraudVerdict.Clean),
                 Verdict = FraudVerdict.Clean,
                 RecommendedAction = RecommendedAction.NoAction,
                 Triggers = triggers,
@@ -207,7 +212,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
                 triggers.Count);
         }
 
-        return new FraudReport
+        var report = new FraudReport
         {
             // Neutral properties (new)
             IsRegionImpersonation = verdict is FraudVerdict.RegionImpersonation,
@@ -222,11 +227,25 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
             IsDetectionBypassed = false,
             PenTestAuthorizationEmailSent = emailSent,
             SuspicionScore = finalScore,
+            Risk = RiskScore.FromScoreAndVerdict(finalScore, verdict),
             Triggers = triggers,
             Verdict = verdict,
             RecommendedAction = action,
             TenantId = data.TenantId
         };
+
+        DispatchFraudEvent(report);
+        return report;
+    }
+
+    private void DispatchFraudEvent(FraudReport report)
+    {
+        _fraudEventDispatcher.Dispatch(new FraudEvent
+        {
+            Report = report,
+            Fingerprint = null, // do not include raw fingerprint by default (privacy)
+            Timestamp = _timeProvider.GetUtcNow()
+        });
     }
 
     private FraudDetectionOptions ResolveGeoOptions(string? tenantId)

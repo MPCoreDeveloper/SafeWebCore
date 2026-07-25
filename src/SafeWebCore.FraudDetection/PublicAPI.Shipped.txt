@@ -1,0 +1,251 @@
+const SafeWebCore.FraudDetection.Models.FraudTrigger.AcceptLanguageNonWestern = "accept_language_non_western" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.BrowserLanguageNonWestern = "browser_language_non_western" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.FontArabic = "font_arabic" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.FontCjk = "font_cjk" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.FontCyrillic = "font_cyrillic" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.FontDevanagari = "font_devanagari" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.InconsistencyIpLanguageAndTimezone = "inconsistency_ip_language_and_timezone" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.InconsistencyIpLanguageOnly = "inconsistency_ip_language_only" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.InconsistencyIpTimezone = "inconsistency_ip_timezone" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.IpNonWestern = "ip_non_western" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.IpVacationCountry = "ip_vacation_country" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.PenTestBypassAuthorized = "pentest_bypass_authorized" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.ScannerBurstRate = "scanner_burst_rate" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.ScannerHeader = "scanner_header" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.ScannerPathProbe = "scanner_path_probe" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.ScannerUserAgent = "scanner_user_agent" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.ScannerZapHeader = "scanner_zap_header" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.TimezoneNonWestern = "timezone_non_western" -> string!
+const SafeWebCore.FraudDetection.Models.FraudTrigger.TimezoneVacation = "timezone_vacation" -> string!
+const SafeWebCore.FraudDetection.Options.FraudDetectionOptions.DefaultSectionName = "SafeWebCore:FraudDetection" -> string!
+override SafeWebCore.FraudDetection.Models.ClientFingerprintData.Equals(object? obj) -> bool
+override SafeWebCore.FraudDetection.Models.ClientFingerprintData.GetHashCode() -> int
+override SafeWebCore.FraudDetection.Models.ClientFingerprintData.ToString() -> string!
+override SafeWebCore.FraudDetection.Models.FraudReport.Equals(object? obj) -> bool
+override SafeWebCore.FraudDetection.Models.FraudReport.GetHashCode() -> int
+override SafeWebCore.FraudDetection.Models.FraudReport.ToString() -> string!
+override SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Equals(object? obj) -> bool
+override SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.GetHashCode() -> int
+override SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.ToString() -> string!
+SafeWebCore.FraudDetection.Abstractions.IFraudDetectionConfigurationStore
+SafeWebCore.FraudDetection.Abstractions.IFraudDetectionConfigurationStore.GetOptions(string? tenantId) -> SafeWebCore.FraudDetection.Options.FraudDetectionOptions?
+SafeWebCore.FraudDetection.Abstractions.IFraudDetectionConfigurationStore.GetReloadToken() -> Microsoft.Extensions.Primitives.IChangeToken!
+SafeWebCore.FraudDetection.Abstractions.IFraudDetector
+SafeWebCore.FraudDetection.Abstractions.IFraudDetector.Analyze(SafeWebCore.FraudDetection.Models.ClientFingerprintData! data) -> SafeWebCore.FraudDetection.Models.FraudReport!
+SafeWebCore.FraudDetection.Abstractions.IGeoIpService
+SafeWebCore.FraudDetection.Abstractions.IGeoIpService.GetCountryCode(string! ipAddress) -> string?
+SafeWebCore.FraudDetection.Abstractions.IGeoIpService.GetTimezone(string! ipAddress) -> string?
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationConsumer
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationConsumer.OnAuthorizationCheck(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification! notification) -> void
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationMailClient
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationMailClient.SendAuthorizationCheck(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification! notification) -> void
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationSender
+SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationSender.SendAuthorizationCheck(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification! notification) -> void
+SafeWebCore.FraudDetection.Detection.GeoCulturalConsistencyDetector
+SafeWebCore.FraudDetection.Detection.GeoCulturalConsistencyDetector.Analyze(SafeWebCore.FraudDetection.Models.ClientFingerprintData! data) -> SafeWebCore.FraudDetection.Models.FraudReport!
+SafeWebCore.FraudDetection.Detection.GeoCulturalConsistencyDetector.GeoCulturalConsistencyDetector(SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions! options, Microsoft.Extensions.Logging.ILogger<SafeWebCore.FraudDetection.Detection.GeoCulturalConsistencyDetector!>! logger, SafeWebCore.FraudDetection.Abstractions.IGeoIpService? geoIpService = null, SafeWebCore.FraudDetection.Abstractions.IPenTestAuthorizationNotificationSender? notificationSender = null, System.TimeProvider? timeProvider = null) -> void
+SafeWebCore.FraudDetection.Detection.WesternImpersonationDetector
+SafeWebCore.FraudDetection.Detection.WesternImpersonationDetector.Analyze(SafeWebCore.FraudDetection.Models.ClientFingerprintData! data) -> SafeWebCore.FraudDetection.Models.FraudReport!
+SafeWebCore.FraudDetection.Detection.WesternImpersonationDetector.WesternImpersonationDetector(Microsoft.Extensions.Options.IOptions<SafeWebCore.FraudDetection.Options.WesternDetectorOptions!>! options, Microsoft.Extensions.Logging.ILogger<SafeWebCore.FraudDetection.Detection.WesternImpersonationDetector!>! logger, SafeWebCore.FraudDetection.Abstractions.IGeoIpService? geoIpService = null) -> void
+SafeWebCore.FraudDetection.Extensions.ClientFingerprintDataExtensions
+SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions
+SafeWebCore.FraudDetection.Models.ClientFingerprintData
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.<Clone>$() -> SafeWebCore.FraudDetection.Models.ClientFingerprintData!
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.AcceptLanguage.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.AcceptLanguage.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.BrowserLanguages.get -> System.Collections.Generic.IReadOnlyList<string!>!
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.BrowserLanguages.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.ClientFingerprintData() -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.Equals(SafeWebCore.FraudDetection.Models.ClientFingerprintData? other) -> bool
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.FingerprintVisitorId.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.FingerprintVisitorId.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasArabicFontSupport.get -> bool
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasArabicFontSupport.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasCjkFontSupport.get -> bool
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasCjkFontSupport.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasCyrillicFontSupport.get -> bool
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasCyrillicFontSupport.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasDevanagariSupport.get -> bool
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.HasDevanagariSupport.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.InstalledFonts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.InstalledFonts.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.IpAddress.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.IpAddress.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestHeaders.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestHeaders.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestMethod.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestMethod.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestPath.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestPath.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestTimestampUtc.get -> System.DateTimeOffset?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.RequestTimestampUtc.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.ResolvedCountryCode.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.ResolvedCountryCode.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.ScreenResolution.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.ScreenResolution.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.SystemTimezone.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.SystemTimezone.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.TenantId.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.TenantId.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.TimezoneOffsetMinutes.get -> int?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.TimezoneOffsetMinutes.init -> void
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.UserAgent.get -> string?
+SafeWebCore.FraudDetection.Models.ClientFingerprintData.UserAgent.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport
+SafeWebCore.FraudDetection.Models.FraudReport.<Clone>$() -> SafeWebCore.FraudDetection.Models.FraudReport!
+SafeWebCore.FraudDetection.Models.FraudReport.Equals(SafeWebCore.FraudDetection.Models.FraudReport? other) -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.FraudReport() -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsAuthorizedPenTest.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsAuthorizedPenTest.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsDetectionBypassed.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsDetectionBypassed.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsFakeWestern.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsFakeWestern.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsNotInExpectedRegion.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsNotInExpectedRegion.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsNotInWesternCountry.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsNotInWesternCountry.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsPenTestScannerDetected.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsPenTestScannerDetected.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.IsRegionImpersonation.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.IsRegionImpersonation.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.PenTestAuthorizationEmailSent.get -> bool
+SafeWebCore.FraudDetection.Models.FraudReport.PenTestAuthorizationEmailSent.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.RecommendedAction.get -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Models.FraudReport.RecommendedAction.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.SuspicionScore.get -> int
+SafeWebCore.FraudDetection.Models.FraudReport.SuspicionScore.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.TenantId.get -> string?
+SafeWebCore.FraudDetection.Models.FraudReport.TenantId.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.Triggers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+SafeWebCore.FraudDetection.Models.FraudReport.Triggers.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.Verdict.get -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudReport.Verdict.init -> void
+SafeWebCore.FraudDetection.Models.FraudTrigger
+SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudVerdict.Clean = 0 -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudVerdict.FakeWestern = 3 -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudVerdict.HighlySuspicious = 2 -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudVerdict.RegionImpersonation = 3 -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.FraudVerdict.Suspicious = 1 -> SafeWebCore.FraudDetection.Models.FraudVerdict
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.<Clone>$() -> SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification!
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Equals(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification? other) -> bool
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.IpAddress.get -> string?
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.IpAddress.init -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.PenTestAuthorizationNotification() -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Recipients.get -> System.Collections.Generic.IReadOnlyList<string!>!
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Recipients.init -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.RequestPath.get -> string?
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.RequestPath.init -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Subject.get -> string!
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Subject.init -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.TenantId.get -> string?
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.TenantId.init -> void
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Triggers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.Triggers.init -> void
+SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Models.RecommendedAction.BlockRequest = 3 -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Models.RecommendedAction.Monitor = 1 -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Models.RecommendedAction.NoAction = 0 -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Models.RecommendedAction.StepUpAuthentication = 2 -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnableGeoCulturalConsistency.get -> bool
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnableGeoCulturalConsistency.set -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnablePenTestDetection.get -> bool
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnablePenTestDetection.set -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnableWesternImpersonation.get -> bool
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.EnableWesternImpersonation.set -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.FraudDetectionOptions() -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.GeoCulturalConsistency.get -> SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions!
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.GeoCulturalConsistency.set -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.PenTestDetection.get -> SafeWebCore.FraudDetection.Options.PenTestDetectionOptions!
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.PenTestDetection.set -> void
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.WesternImpersonation.get -> SafeWebCore.FraudDetection.Options.WesternDetectorOptions!
+SafeWebCore.FraudDetection.Options.FraudDetectionOptions.WesternImpersonation.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.EnableDeviceFingerprinting.get -> bool
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.EnableDeviceFingerprinting.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.EnableTravelMode.get -> bool
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.EnableTravelMode.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.ExpectedCountries.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.ExpectedCountries.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.GeoCulturalConsistencyOptions() -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.HighInconsistencyThreshold.get -> int
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.HighInconsistencyThreshold.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.HighSuspicionThreshold.get -> int
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.HighSuspicionThreshold.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.InconsistentLanguageCodes.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.InconsistentLanguageCodes.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.InconsistentTimezones.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.InconsistentTimezones.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.KnownTravelCountries.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.KnownTravelCountries.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.MediumSuspicionThreshold.get -> int
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.MediumSuspicionThreshold.set -> void
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.TravelTimezones.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.GeoCulturalConsistencyOptions.TravelTimezones.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationCheckRecipients.get -> System.Collections.Generic.List<string!>!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationCheckRecipients.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationCheckSubject.get -> string!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationCheckSubject.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationHeaderName.get -> string!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationHeaderName.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationHeaderSecret.get -> string?
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.AuthorizationHeaderSecret.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.BurstRequestThreshold.get -> int
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.BurstRequestThreshold.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.BurstWindow.get -> System.TimeSpan
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.BurstWindow.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.NotificationCooldown.get -> System.TimeSpan
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.NotificationCooldown.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.PenTestDetectionOptions() -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerHeaders.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerHeaders.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerPathFragments.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerPathFragments.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerRecommendedAction.get -> SafeWebCore.FraudDetection.Models.RecommendedAction
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerRecommendedAction.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerScoreThreshold.get -> int
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerScoreThreshold.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerUserAgentTokens.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.ScannerUserAgentTokens.set -> void
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.SendAuthorizationCheckEmail.get -> bool
+SafeWebCore.FraudDetection.Options.PenTestDetectionOptions.SendAuthorizationCheckEmail.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.AllowedCountries.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.AllowedCountries.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.EnableDeviceFingerprinting.get -> bool
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.EnableDeviceFingerprinting.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.EnableTravelMode.get -> bool
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.EnableTravelMode.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.FakeWesternThreshold.get -> int
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.FakeWesternThreshold.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.HighSuspicionThreshold.get -> int
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.HighSuspicionThreshold.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.KnownVacationCountries.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.KnownVacationCountries.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.MediumSuspicionThreshold.get -> int
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.MediumSuspicionThreshold.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.NonWesternLanguageCodes.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.NonWesternLanguageCodes.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.SuspiciousTimezones.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.SuspiciousTimezones.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.VacationTimezones.get -> System.Collections.Generic.HashSet<string!>!
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.VacationTimezones.set -> void
+SafeWebCore.FraudDetection.Options.WesternDetectorOptions.WesternDetectorOptions() -> void
+static SafeWebCore.FraudDetection.Extensions.ClientFingerprintDataExtensions.EnrichGeoIp(this SafeWebCore.FraudDetection.Models.ClientFingerprintData! data, SafeWebCore.FraudDetection.Abstractions.IGeoIpService? geoIpService) -> SafeWebCore.FraudDetection.Models.ClientFingerprintData!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddPenTestAuthorizationNotificationConsumer<TConsumer>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddPenTestAuthorizationNotificationMailClient<TMailClient>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddSafeWebCoreFraudDetection(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration, string! sectionName = "SafeWebCore:FraudDetection") -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddSafeWebCoreFraudDetection(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! name, System.Action<SafeWebCore.FraudDetection.Options.WesternDetectorOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddSafeWebCoreFraudDetection(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.FraudDetection.Options.FraudDetectionOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddSafeWebCoreFraudDetection(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.FraudDetection.Options.WesternDetectorOptions!>? configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddSafeWebCoreFraudDetection(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.FraudDetection.Models.ClientFingerprintData.operator !=(SafeWebCore.FraudDetection.Models.ClientFingerprintData? left, SafeWebCore.FraudDetection.Models.ClientFingerprintData? right) -> bool
+static SafeWebCore.FraudDetection.Models.ClientFingerprintData.operator ==(SafeWebCore.FraudDetection.Models.ClientFingerprintData? left, SafeWebCore.FraudDetection.Models.ClientFingerprintData? right) -> bool
+static SafeWebCore.FraudDetection.Models.FraudReport.operator !=(SafeWebCore.FraudDetection.Models.FraudReport? left, SafeWebCore.FraudDetection.Models.FraudReport? right) -> bool
+static SafeWebCore.FraudDetection.Models.FraudReport.operator ==(SafeWebCore.FraudDetection.Models.FraudReport? left, SafeWebCore.FraudDetection.Models.FraudReport? right) -> bool
+static SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.operator !=(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification? left, SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification? right) -> bool
+static SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification.operator ==(SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification? left, SafeWebCore.FraudDetection.Models.PenTestAuthorizationNotification? right) -> bool

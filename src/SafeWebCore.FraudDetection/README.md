@@ -289,7 +289,44 @@ To move to the neutral model:
 3. Optionally set `EnableWesternImpersonation = false` if you no longer need the legacy path.
 4. Consume the neutral report properties (`IsRegionImpersonation`, `IsNotInExpectedRegion`, `Verdict == RegionImpersonation`).
 
+## Reacting to Fraud Results (v1.6+)
+
+You can observe every fraud analysis result without changing detection logic by registering one or more `IFraudEventSink` implementations.
+
+```csharp
+using SafeWebCore.FraudDetection.Abstractions;
+
+public sealed class FraudTelemetrySink : IFraudEventSink
+{
+    private readonly ILogger<FraudTelemetrySink> _logger;
+
+    public FraudTelemetrySink(ILogger<FraudTelemetrySink> logger) => _logger = logger;
+
+    public void OnFraudEvent(FraudEvent fraudEvent)
+    {
+        var r = fraudEvent.Report;
+        _logger.LogInformation("Fraud verdict {Verdict} score={Score} action={Action} tenant={Tenant}",
+            r.Verdict, r.SuspicionScore, r.RecommendedAction, r.TenantId);
+
+        // Example: send metrics, call a webhook, trigger step-up auth, etc.
+    }
+}
+
+// Registration (additive, opt-in)
+builder.Services.AddFraudEventSink<FraudTelemetrySink>();
+```
+
+A default `LoggingFraudEventSink` is registered automatically (emits at `Information` level when enabled).
+
+`FraudEvent` contains:
+- `Report` — the full `FraudReport`
+- `Timestamp`
+- `Fingerprint` — intentionally `null` by default for privacy (you can enrich inside your own sink if needed)
+
+This mechanism is the foundation for custom action pipelines (log, notify, webhook, step-up, block, etc.).
+
 ## Notes
 
 - Existing Western-only registration overloads remain supported for backward compatibility.
 - The module remains fully optional and only activates when registered.
+- `IFraudEventSink` is additive — it does not change `IFraudDetector.Analyze(...)` behavior or the shape of `FraudReport`.

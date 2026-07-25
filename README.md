@@ -17,6 +17,8 @@
 - 🔒 **A+ in one line** — `AddNetSecureHeadersStrictAPlus()` configures the strictest security headers instantly
 - 🧭 **App-profile presets** — ready-made profiles for API, MVC, Blazor, and SPA reverse-proxy apps
 - 🛠️ **Fully custom** — `AddNetSecureHeaders(opts => { ... })` gives you complete control over every header
+- ⚙️ **Configuration binding** — `AddNetSecureHeadersFromConfiguration(...)` binds `NetSecureHeadersOptions` directly from configuration
+- 🌦️ **Environment-aware rollout** — opt-in helpers can default CSP to report-only outside production for safer rollout
 - 🧩 **Nonce-based CSP** — per-request cryptographic nonces for `script-src` and `style-src`
 - 🧷 **Razor nonce TagHelpers** — auto-inject nonce attributes on `<script>` and `<style>` when available
 - 🛣️ **Path-based policies** — apply different security profiles per route prefix with longest-prefix matching
@@ -88,19 +90,22 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.3.5
+## 🆕 What's New in v1.6.0
 
-v1.3.5 is a **security headers hardening and scanner compliance** release — fully backwards compatible with v1.3.0 and earlier.
+v1.6.0 is a **developer experience, tooling, and observability** release — fully backwards compatible with v1.3.5 and earlier.
 
 | Improvement | Detail |
 |-------------|--------|
-| **X-Powered-By removal** | New `RemoveXPoweredBy` option (enabled by default in all Strict A+ presets) |
-| **NEL support** | First-class `EnableNel` + `NelValue` for Network Error Logging |
-| **More reliable header removal** | `Server` and `X-Powered-By` now removed via `OnStarting` (latest possible pipeline hook) |
-| **Permissions-Policy scanner fix** | Removed 4 invalid directives (`identity-credentials-get`, `otp-credentials`, `publickey-credentials-create`, `window-management`) that securityheaders.com flagged |
-| **Better IIS / proxy documentation** | Clear guidance + `web.config` example for complete removal when hosting behind IIS or reverse proxies |
+| **Configuration-based setup** | `AddNetSecureHeadersFromConfiguration(...)` binds `NetSecureHeadersOptions` from `IConfiguration` or a specific section |
+| **Environment-aware rollout** | `AddNetSecureHeadersForEnvironment(...)` and `AddNetSecureHeadersStrictAPlusForEnvironment(...)` can default CSP to report-only outside production |
+| **Diagnostics preview** | `MapSafeWebCoreDiagnostics(...)` exposes an opt-in JSON preview of effective headers, path-policy resolution, and CSP mode |
+| **Metrics** | Opt-in `System.Diagnostics.Metrics` counters for core middleware and fraud detection |
+| **Fraud action pipeline** | `IFraudEventSink` / `FraudEvent` for reacting to fraud analysis results (logging, webhooks, custom actions) |
+| **New companion packages** | `SafeWebCore.FraudDetection` 1.0.0, `SafeWebCore.Analyzers` preview, and `SafeWebCore.Testing` preview |
+| **Better startup validation** | Validation messages now include concrete remediation guidance for CSP mode, path prefixes, additional headers, and reporting endpoints |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
+
 
 ---
 
@@ -206,6 +211,28 @@ builder.Services.AddNetSecureHeaders(opts =>
         .Build();
 });
 ```
+
+---
+
+## 🧭 v1.5 Tooling (Current Workspace)
+
+The current workspace includes the completed `v1.5` tooling features (additive, opt-in, 100% backward compatible):
+
+### Analyzers (`SafeWebCore.Analyzers`)
+
+- **SWC001**: Registration without `UseNetSecureHeaders()`
+- **SWC002**: Permanent `UseCspReportOnly = true`
+- **SWC003**: `'unsafe-inline'` without nonce
+- **SWC004**: Overly broad CSP sources
+
+### Testing Helpers (`SafeWebCore.Testing`)
+
+- `AssertHasSecurityHeaders()`
+- `AssertHasCspEnforceMode()` / `AssertHasCspReportOnlyMode()`
+- `AssertHasNonceInCsp()` / `AssertHasNoNonceInCsp()`
+- Bootstrap helpers for `TestServer`
+
+See `docs/recipes/` for practical examples.
 
 ---
 

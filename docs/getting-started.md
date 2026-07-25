@@ -139,6 +139,67 @@ app.Run();
 
 Both methods are defined in `SafeWebCore.Extensions.ServiceCollectionExtensions`.
 
+## Configuration-Based Setup
+
+Prefer `appsettings.json` over inline registration code? SafeWebCore now supports binding `NetSecureHeadersOptions` directly from configuration.
+
+### `appsettings.json`
+
+```json
+{
+  "NetSecureHeaders": {
+    "EnableHsts": true,
+    "ReferrerPolicyValue": "strict-origin-when-cross-origin",
+    "RemoveXPoweredBy": true,
+    "UseCspReportOnly": true,
+    "Csp": {
+      "DefaultSrc": "'none'",
+      "ScriptSrc": "'nonce-{nonce}' 'strict-dynamic' https:",
+      "StyleSrc": "'nonce-{nonce}'"
+    }
+  }
+}
+```
+
+### Registration
+
+```csharp
+using SafeWebCore.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddNetSecureHeadersFromConfiguration(builder.Configuration);
+
+var app = builder.Build();
+app.UseNetSecureHeaders();
+app.Run();
+```
+
+By default, SafeWebCore reads the `NetSecureHeaders` section. To bind a different section, pass a custom section name or a specific `IConfigurationSection`.
+
+## Environment-Aware Rollout Setup
+
+For safer CSP rollout, use the environment-aware helpers. These are opt-in and do **not** change the behavior of the existing registration APIs.
+
+```csharp
+using SafeWebCore.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddNetSecureHeadersStrictAPlusForEnvironment(builder.Environment, opts =>
+{
+    opts.Csp = opts.Csp with { ConnectSrc = "'self' https://api.example.com" };
+});
+```
+
+Behavior:
+
+- **Production** keeps normal enforcement mode
+- **Development** and **Staging** default CSP to `Report-Only`
+- your customization callback still runs last, so you can explicitly override `UseCspReportOnly`
+
+Use `AddNetSecureHeadersForEnvironment(...)` if you want environment-aware behavior without starting from the Strict A+ preset.
+
 ## Verifying Your Headers
 
 ### Option A: Browser DevTools

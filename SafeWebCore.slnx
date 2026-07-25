@@ -1,4 +1,20 @@
-<Solution>
-  <Project Path="src\SafeWebCore\SafeWebCore.csproj" />
-  <Project Path="src\SafeWebCore.FraudDetection\SafeWebCore.FraudDetection.csproj" />
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SafeWebCore/SafeWebCore.csproj" />
+    <Project Path="src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj" />
+    <Project Path="src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj" />
+    <Project Path="src/SafeWebCore.Testing/SafeWebCore.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SafeWebCore.Tests/SafeWebCore.Tests.csproj" />
+    <Project Path="tests/SafeWebCore.FraudDetection.Tests/SafeWebCore.FraudDetection.Tests.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/MinimalApi/MinimalApi.csproj" />
+    <Project Path="examples/MvcApp/MvcApp.csproj" />
+    <Project Path="examples/ApiService/ApiService.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/SafeWebCore.Benchmarks/SafeWebCore.Benchmarks.csproj" />
+  </Folder>
 </Solution>

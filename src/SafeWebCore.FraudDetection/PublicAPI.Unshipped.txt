@@ -1,0 +1,49 @@
+#nullable enable
+
+SafeWebCore.FraudDetection.Abstractions.IFraudEventSink
+SafeWebCore.FraudDetection.Abstractions.IFraudEventSink.OnFraudEvent(SafeWebCore.FraudDetection.Abstractions.FraudEvent! fraudEvent) -> void
+SafeWebCore.FraudDetection.Abstractions.FraudEvent
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.<Clone>$() -> SafeWebCore.FraudDetection.Abstractions.FraudEvent!
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Equals(SafeWebCore.FraudDetection.Abstractions.FraudEvent? other) -> bool
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Equals(object? obj) -> bool
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Fingerprint.get -> SafeWebCore.FraudDetection.Models.ClientFingerprintData?
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Fingerprint.init -> void
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.FraudEvent() -> void
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.GetHashCode() -> int
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Report.get -> SafeWebCore.FraudDetection.Models.FraudReport!
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Report.init -> void
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Timestamp.get -> System.DateTimeOffset
+SafeWebCore.FraudDetection.Abstractions.FraudEvent.Timestamp.init -> void
+SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddFraudEventSink<TSink>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskLevel.Critical = 3 -> SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskLevel.High = 2 -> SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskLevel.Low = 0 -> SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskLevel.Medium = 1 -> SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskScore
+SafeWebCore.FraudDetection.Models.RiskScore.<Clone>$() -> SafeWebCore.FraudDetection.Models.RiskScore!
+SafeWebCore.FraudDetection.Models.RiskScore.Equals(SafeWebCore.FraudDetection.Models.RiskScore? other) -> bool
+SafeWebCore.FraudDetection.Models.RiskScore.Equals(object? obj) -> bool
+SafeWebCore.FraudDetection.Models.RiskScore.FromScoreAndVerdict(int score, SafeWebCore.FraudDetection.Models.FraudVerdict verdict, string? summary = null) -> SafeWebCore.FraudDetection.Models.RiskScore!
+SafeWebCore.FraudDetection.Models.RiskScore.GetHashCode() -> int
+SafeWebCore.FraudDetection.Models.RiskScore.Level.get -> SafeWebCore.FraudDetection.Models.RiskLevel
+SafeWebCore.FraudDetection.Models.RiskScore.Level.init -> void
+SafeWebCore.FraudDetection.Models.RiskScore.None.get -> SafeWebCore.FraudDetection.Models.RiskScore!
+SafeWebCore.FraudDetection.Models.RiskScore.RiskScore() -> void
+SafeWebCore.FraudDetection.Models.RiskScore.Score.get -> int
+SafeWebCore.FraudDetection.Models.RiskScore.Score.init -> void
+SafeWebCore.FraudDetection.Models.RiskScore.Summary.get -> string?
+SafeWebCore.FraudDetection.Models.RiskScore.Summary.init -> void
+SafeWebCore.FraudDetection.Models.FraudReport.Risk.get -> SafeWebCore.FraudDetection.Models.RiskScore!
+SafeWebCore.FraudDetection.Models.FraudReport.Risk.init -> void
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.FraudAnalyses.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.FraudEventsByRisk.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.FraudEventsByVerdict.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.Meter.get -> System.Diagnostics.Metrics.Meter!
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.MeterName -> string
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.SafeWebCoreFraudMetrics() -> void
+SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink
+SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink.OnFraudEvent(SafeWebCore.FraudDetection.Abstractions.FraudEvent! fraudEvent) -> void
+SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink.WebhookFraudEventSink(System.Net.Http.IHttpClientFactory! httpClientFactory, string! httpClientName, string! webhookUrl) -> void
+SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddFraudWebhookSink(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! webhookUrl, string httpClientName = "FraudWebhook") -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

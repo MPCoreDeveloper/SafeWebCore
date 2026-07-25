@@ -93,18 +93,58 @@ SafeWebCore validates options at startup and fails fast. This prevents silent mi
 | `UseCspReportOnly = true` with `EnableCsp = false` | CSP report-only without CSP enabled |
 | Duplicate path prefixes (normalized) | `"/api"` and `"api"` both registered |
 | Empty path policy prefix | `PathPrefix = ""` |
-| CSP report endpoint without CSP | `UseCspReport()` but `EnableCsp = false` |
+| Relative reporting endpoint URL | `"/reports"` instead of `"https://reports.example.com/csp"` |
 
 ### Validation at Startup
 
-If you have an invalid configuration, the application **fails immediately** with a clear error message:
+If you have an invalid configuration, the application **fails immediately** with an actionable error message:
 
 ```
 OptionsValidationException: SafeWebCore options validation failed:
-- UseCspReportOnly cannot be true when EnableCsp is false
+- Global policy: UseCspReportOnly requires EnableCsp to be true. Either enable CSP or set UseCspReportOnly to false.
 ```
 
-This is better than silent failures or runtime errors in production.
+SafeWebCore now includes fix-oriented guidance for common failures such as normalized path collisions, duplicate additional headers, and invalid reporting endpoint URLs.
+
+## Diagnostics Endpoint Preview *(v1.4+)*
+
+SafeWebCore includes an opt-in diagnostics endpoint that previews the **effective** policy for a path without changing runtime behavior.
+
+```csharp
+using SafeWebCore.Extensions;
+
+var app = builder.Build();
+
+app.UseRouting();
+app.UseNetSecureHeaders();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapSafeWebCoreDiagnostics();
+    endpoints.MapControllers();
+});
+```
+
+By default, the endpoint is exposed at `/safewebcore/diagnostics` and returns a JSON snapshot containing:
+
+- the preview path
+- the matched path policy (if any)
+- the effective CSP mode
+- the effective response headers
+- rollout and hosting warnings
+
+### Preview examples
+
+```text
+/safewebcore/diagnostics
+/safewebcore/diagnostics?path=/api/orders
+/safewebcore/diagnostics?path=/legacy&cspMode=ReportOnly
+/safewebcore/diagnostics?path=/admin&cspMode=Enforce
+```
+
+Use this endpoint to verify path-policy resolution, confirm whether CSP is in enforce or report-only mode, and preview headers before you run an external scanner.
+
+> ⚠️ The diagnostics endpoint is intended for local development, staging, or protected internal environments. Do not expose it publicly without access control.
 
 ---
 
@@ -262,6 +302,52 @@ builder.Services.AddNetSecureHeadersStrictAPlus(opts =>
 });
 ```
 
+### Observability (v1.6)
+
+SafeWebCore emits two kinds of opt-in telemetry:
+
+1. **Structured events** via `ISecurityEventSink` / `SecurityEventDispatcher` and `IFraudEventSink` / `FraudEventDispatcher`.
+2. **Standard .NET metrics** via `System.Diagnostics.Metrics` (no dependency on any observability library).
+
+#### Metrics
+
+When you call `AddNetSecureHeaders*` or `AddSafeWebCoreFraudDetection`, the following meters are registered automatically:
+
+- **SafeWebCore**
+  - `safewebcore.headers_applied_total`
+  - `safewebcore.csp_violations_total`
+  - `safewebcore.path_policy_matches_total`
+
+- **SafeWebCore.FraudDetection**
+  - `safewebcore.fraud_analyses_total`
+  - `safewebcore.fraud_events_by_risk_total` (tag: `risk_level`)
+  - `safewebcore.fraud_events_by_verdict_total` (tag: `verdict`)
+
+These counters are **always created** but only produce data when observed (OpenTelemetry, Prometheus, Application Insights, etc.). No configuration is required to enable them.
+
+Example (OpenTelemetry):
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(m => m
+        .AddMeter("SafeWebCore")
+        .AddMeter("SafeWebCore.FraudDetection")
+        .AddPrometheusExporter());
+```
+
+#### Security & Fraud Events
+
+Register custom sinks to receive structured events:
+
+```csharp
+builder.Services.AddSafeWebCoreSecurityEventSink<MySecurityEventSink>();
+builder.Services.AddFraudEventSink<MyFraudEventSink>();
+```
+
+`FraudEvent.Report` now includes the additive `Risk` property (`RiskScore` + `RiskLevel`).
+
+This is purely additive — existing behavior is unchanged if you do not register any sinks or metric readers.
+
 ### Custom Sinks
 
 Implement `ICspReportSink` to forward violations to your monitoring system (SIEM, logging, analytics, etc.):
@@ -306,6 +392,48 @@ builder.Services.AddSingleton<ICspReportSink, DatabaseSink>();
 ```
 
 > 💡 A default logging sink remains active; custom sinks are **in addition** to logging.
+
+### Security Events (v1.6+)
+
+In addition to `ICspReportSink`, SafeWebCore emits structured `SecurityEvent` records for observability consumers.
+
+When a valid CSP violation report is received, a `SecurityEvent` with `EventType = CspViolation` is dispatched to all registered `ISecurityEventSink` implementations.
+
+Other events already emitted:
+- `HeadersApplied` — after security headers are written for a response.
+- `PathPolicyMatched` — when a request matches a configured path policy.
+
+Example consumer:
+
+```csharp
+using SafeWebCore.Abstractions;
+
+public sealed class TelemetrySecurityEventSink : ISecurityEventSink
+{
+    private readonly ILogger<TelemetrySecurityEventSink> _logger;
+
+    public TelemetrySecurityEventSink(ILogger<TelemetrySecurityEventSink> logger) => _logger = logger;
+
+    public Task WriteAsync(SecurityEvent securityEvent, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("SecurityEvent {Type} Path={Path}", securityEvent.EventType, securityEvent.Path);
+
+        if (securityEvent.EventType == SecurityEventType.CspViolation)
+        {
+            // Forward violation metrics/counters here
+            var directive = securityEvent.Properties.GetValueOrDefault("ViolatedDirective");
+            // ...
+        }
+
+        return Task.CompletedTask;
+    }
+}
+
+// Registration (additive, opt-in)
+builder.Services.AddSafeWebCoreSecurityEventSink<TelemetrySecurityEventSink>();
+```
+
+Registering `ISecurityEventSink` instances is fully additive and does not affect runtime header behavior or `ICspReportSink` delivery.
 
 ### Report Structure
 
@@ -563,5 +691,17 @@ public class SecurityHeadersTests
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| **Inline scripts blocked** | Missing nonce on `<script>` | Add `nonce="@ViewData["CspNonce"]"` or use TagHelpers |
-| **Styles not loading** | Missing nonce on `<style>` | Add `nonce="@ViewData["CspNonce"]`
+| **Inline scripts blocked** | Missing nonce on `<script>` | Add `nonce="@ViewData["CspNonce"]"` or enable the SafeWebCore TagHelpers |
+| **Styles not loading** | Missing nonce on `<style>` | Add `nonce="@ViewData["CspNonce"]"` or enable the SafeWebCore TagHelpers |
+| **Expected CSP enforce header is missing** | CSP is currently running in report-only mode | Check `UseCspReportOnly`, environment-aware rollout helpers, and `/safewebcore/diagnostics` preview output |
+| **`/api` path is using the wrong policy** | Another configured path prefix matched first | Preview `/safewebcore/diagnostics?path=/api/...` and remember that the longest matching prefix wins |
+| **`Server` or `X-Powered-By` still appears** | Upstream host, reverse proxy, or IIS module re-added the header | Keep SafeWebCore removal enabled and also remove headers at the hosting layer (IIS, reverse proxy, CDN) |
+| **Reporting endpoint validation fails** | URL is relative or malformed | Use an absolute URL such as `https://reports.example.com/csp` |
+
+### IIS / reverse proxy note
+
+SafeWebCore removes `Server` and `X-Powered-By` as late as possible with `OnStarting`, but reverse proxies, IIS modules, and CDNs can still append or reintroduce headers after the ASP.NET Core pipeline. If a scanner still reports those headers, validate the response at the public edge and configure the host or proxy to remove them there as well.
+
+### Report-only rollout note
+
+If you use `AddNetSecureHeadersForEnvironment(...)` or `AddNetSecureHeadersStrictAPlusForEnvironment(...)`, non-production environments default CSP to report-only mode. This is intentional for safer rollout and can be overridden explicitly by setting `UseCspReportOnly = false` in your customization callback.

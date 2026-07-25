@@ -11,7 +11,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore.FraudDetection</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.0.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore.FraudDetection</Product>
@@ -27,13 +27,46 @@
     <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!-- Public API surface tracking for backward compatibility (additive, build-time only) -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Explicitly register the baseline files so the analyzer picks them up reliably -->
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+
+  <!-- Public API baseline enforcement (roadmap v1.4 item 1.2) -->
+  <PropertyGroup>
+    <GeneratePublicApiFiles>true</GeneratePublicApiFiles>
+    <!-- RS0037 = removal or rename of a symbol listed in PublicAPI.Shipped.txt is a hard error.
+         This is the primary safeguard for 100% backward compatibility. -->
+    <WarningsAsErrors>$(WarningsAsErrors);RS0037</WarningsAsErrors>
+    <!-- During initial rollout of public API tracking (v1.4 item 1.2):
+         - RS0016 (public symbol not declared in the txt files) → warning
+         - RS0017 (symbol listed in txt files but not found / not public) → warning
+         This lets us introduce the mechanism without a perfect baseline on day one.
+         After the baseline is curated and stable, remove these from WarningsNotAsErrors / NoWarn
+         to enforce a clean public surface. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);RS0016;RS0017</WarningsNotAsErrors>
+    <!-- RS0027 = we intentionally keep overloads with optional parameters for backward compatibility. -->
+    <NoWarn>$(NoWarn);RS0027</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\icon.png" Link="icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>true</Pack>
+    </None>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 

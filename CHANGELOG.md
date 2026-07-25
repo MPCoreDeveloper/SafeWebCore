@@ -7,7 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.6.0] — 2026-07-25
+
+### Added
+- `AddNetSecureHeadersFromConfiguration(IConfiguration, string sectionName = "NetSecureHeaders")` and `AddNetSecureHeadersFromConfiguration(IConfigurationSection)` for direct configuration binding into `NetSecureHeadersOptions`.
+- `AddNetSecureHeadersForEnvironment(...)` and `AddNetSecureHeadersStrictAPlusForEnvironment(...)` as opt-in rollout helpers that default CSP to report-only mode outside production unless the caller overrides it.
+- `MapSafeWebCoreDiagnostics(...)` as an opt-in endpoint for previewing effective headers, matched path policies, and CSP mode.
+- Internal diagnostics service infrastructure to compute effective SafeWebCore policy output without changing runtime behavior.
+- `SafeWebCore.Analyzers` package (initial preview) to start the `v1.5` tooling roadmap.
+
+### Observability (v1.6)
+- Added opt-in metrics using `System.Diagnostics.Metrics` (meter names: `SafeWebCore` and `SafeWebCore.FraudDetection`).
+  - Core counters: `headers_applied_total`, `csp_violations_total`, `path_policy_matches_total`.
+  - Fraud counters: `fraud_analyses_total`, `fraud_events_by_risk_total` (tagged `risk_level`), `fraud_events_by_verdict_total` (tagged `verdict`).
+  - Metrics are registered automatically but only produce data when observed (OpenTelemetry, Prometheus, etc.).
+- `FraudEvent.Report` now includes the additive `Risk` (`RiskScore` + `RiskLevel`) property.
+- `LoggingFraudEventSink` now includes `RiskLevel` in the default log message.
+- Existing `ISecurityEventSink` / `SecurityEventDispatcher` and `IFraudEventSink` / `FraudEventDispatcher` remain the primary event extensibility points.
+- Tests added using `MeterListener` (unit + integration through real middleware).
+
+### Fraud action pipeline (v1.6 Epic 9.2)
+- Added additive `IFraudEventSink` + `FraudEvent` for reacting to fraud analysis results (logging, metrics, webhooks, custom actions).
+  - Register sinks with `AddFraudEventSink<T>()`.
+  - A default `LoggingFraudEventSink` is registered automatically (emits at Information level when enabled).
+  - Both `GeoCulturalConsistencyDetector` and the legacy `WesternImpersonationDetector` dispatch events after producing a `FraudReport`.
+  - `FraudReport` and `Analyze(...)` contract are unchanged — this is purely additive.
+  - This delivers the first concrete part of Epic 9.2 (fraud action pipeline abstractions).
+
+### Tooling (v1.5)
+- Added `SafeWebCore.Analyzers` package (initial preview) for build-time diagnostics.
+  - **SWC001**: Registration without `UseNetSecureHeaders()`
+  - **SWC002**: Permanent `UseCspReportOnly = true`
+  - **SWC003**: `'unsafe-inline'` without nonce
+  - **SWC004**: Overly broad CSP sources (`*`, bare `https:`, `unsafe-eval`)
+- Added `SafeWebCore.Testing` package (preview) with:
+  - Header assertions (`AssertHasSecurityHeaders`, `AssertHasCspEnforceMode`, etc.)
+  - CSP and nonce assertions
+  - Test host / bootstrap helpers for quick integration test setup
+- Added practical recipe documentation under `docs/recipes/` (MVC+CDN, Swagger, Blazor, Report-Only rollout, Reverse Proxy/IIS).
+
+### Changed
+- Startup validation messages now include concrete remediation guidance for CSP report-only misuse, normalized path-prefix collisions, duplicate additional headers, and invalid reporting endpoint URLs.
+
+### Tests
+- Added coverage for configuration binding, environment-aware registration helpers, improved validation messages, and diagnostics endpoint behavior.
+
+### Documentation
+- Expanded `docs/getting-started.md` with configuration-based setup and environment-aware rollout guidance.
+- Expanded `docs/advanced-configuration.md` with diagnostics endpoint usage, actionable validation examples, and updated troubleshooting guidance.
+- Updated `README.md`, `PACKAGE.md`, and `docs/README.md` to surface the completed `v1.4` feature set clearly.
+
+### Compatibility
+- ✅ **100% backwards compatible** — all new registration helpers, diagnostics features, and validation improvements are additive and opt-in.
 
 ---
 

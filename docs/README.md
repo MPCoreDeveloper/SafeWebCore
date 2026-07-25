@@ -24,6 +24,15 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 ### Performance & Reference
 
 - **[Benchmarks](benchmarks.md)** — Running BenchmarkDotNet suites, result interpretation, creating new benchmarks
+- **[Recipes](recipes/README.md)** — Practical guides for common scenarios (MVC+CDN, Swagger, Blazor, Report-Only, Reverse Proxy, etc.)
+- **[Roadmap](roadmap.md)** — Planned work for `v1.4` through `v1.6`, focused on DX, diagnostics, tooling, and observability
+- **[Backward Compatibility Policy](development/backward-compatibility-policy.md)** — Rules for additive-only changes, stable defaults, and supported upgrade paths
+
+### Repository, packages & release
+
+- **[Project Catalog](projects.md)** — Every project documented (libraries, tests, examples, benchmarks)
+- **[NuGet Packages & Candidates](nuget-packages.md)** — Packable packages, nuget.org status, readiness, publish order
+- **[Release Readiness](release-readiness.md)** — Audit results, go/no-go matrix, blockers, release checklist
 
 ### Archived
 
@@ -47,7 +56,14 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 | **Debug CSP violations** | [Advanced Configuration](advanced-configuration.md#troubleshooting) |
 | **Create custom headers** | [Advanced Configuration](advanced-configuration.md#custom-header-policies) |
 | **Add endpoint overrides** | [Advanced Configuration](advanced-configuration.md#endpoint-level-overrides) |
+| **Preview effective headers and path-policy behavior** | [Advanced Configuration](advanced-configuration.md#diagnostics-endpoint-preview-v14) |
 | **Test security headers** | [Advanced Configuration](advanced-configuration.md#testing-security-headers) |
+| **Use testing helpers** | [SafeWebCore.Testing package](https://www.nuget.org/packages/SafeWebCore.Testing) (preview) |
+| **Understand planned roadmap work** | [Roadmap](roadmap.md) |
+| **Review compatibility rules before contributing** | [Backward Compatibility Policy](development/backward-compatibility-policy.md) |
+| **See all projects in the repo** | [Project Catalog](projects.md) |
+| **Understand NuGet candidates** | [NuGet Packages & Candidates](nuget-packages.md) |
+| **Check if ready to release** | [Release Readiness](release-readiness.md) |
 
 ---
 

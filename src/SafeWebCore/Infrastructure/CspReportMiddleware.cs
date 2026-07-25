@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SafeWebCore.Abstractions;
+using SafeWebCore.Infrastructure;
 using SafeWebCore.Models;
 
 namespace SafeWebCore.Infrastructure;
@@ -10,11 +11,49 @@ namespace SafeWebCore.Infrastructure;
 /// <summary>
 /// Middleware to handle CSP violation reports.
 /// </summary>
-public sealed partial class CspReportMiddleware(
-    ILogger<CspReportMiddleware> logger,
-    IEnumerable<ICspReportSink> sinks) : IMiddleware
+public sealed partial class CspReportMiddleware : IMiddleware
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly ILogger<CspReportMiddleware> _logger;
+    private readonly IEnumerable<ICspReportSink> _sinks;
+    private readonly SecurityEventDispatcher _eventDispatcher;
+    private readonly SafeWebCoreMetrics _metrics;
+
+    /// <summary>
+    /// Backward-compatible constructor that creates the CSP report middleware
+    /// with only the originally shipped dependencies.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="sinks">The report sinks.</param>
+    public CspReportMiddleware(
+        ILogger<CspReportMiddleware> logger,
+        IEnumerable<ICspReportSink> sinks)
+        : this(logger, sinks, null, null)
+    {
+    }
+
+    /// <summary>
+    /// Creates the CSP report middleware with optional observability integrations.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="sinks">The report sinks.</param>
+    /// <param name="eventDispatcher">Optional dispatcher for security telemetry events.</param>
+    /// <param name="metrics">Optional metrics instance for opt-in counters.</param>
+    public CspReportMiddleware(
+        ILogger<CspReportMiddleware> logger,
+        IEnumerable<ICspReportSink> sinks,
+        SecurityEventDispatcher? eventDispatcher,
+        SafeWebCoreMetrics? metrics)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(sinks);
+
+        _logger = logger;
+        _sinks = sinks;
+        _eventDispatcher = eventDispatcher ?? new SecurityEventDispatcher([]);
+        _metrics = metrics ?? new SafeWebCoreMetrics();
+    }
 
     /// <summary>
     /// Invokes the middleware to handle CSP reports.
@@ -32,7 +71,7 @@ public sealed partial class CspReportMiddleware(
             var report = await ParseReportAsync(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
             if (report is null)
             {
-                LogInvalidCspViolationPayload(logger);
+                LogInvalidCspViolationPayload(_logger);
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 return;
             }
@@ -40,15 +79,30 @@ public sealed partial class CspReportMiddleware(
             if (string.IsNullOrWhiteSpace(report.ViolatedDirective)
                 && string.IsNullOrWhiteSpace(report.EffectiveDirective))
             {
-                LogInvalidCspViolationPayload(logger);
+                LogInvalidCspViolationPayload(_logger);
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 return;
             }
 
-            foreach (var sink in sinks)
+            foreach (var sink in _sinks)
             {
                 await sink.WriteAsync(report, context.RequestAborted).ConfigureAwait(false);
             }
+
+            // Emit additive security event for telemetry (v1.6 observability)
+            _ = _eventDispatcher.EmitAsync(new SecurityEvent
+            {
+                EventType = SecurityEventType.CspViolation,
+                Path = report.DocumentUri,
+                Properties = new Dictionary<string, object?>
+                {
+                    ["ViolatedDirective"] = report.ViolatedDirective ?? report.EffectiveDirective,
+                    ["BlockedUri"] = report.BlockedUri,
+                    ["Disposition"] = report.Disposition
+                }
+            }, context.RequestAborted);
+
+            _metrics.CspViolations.Add(1);
 
             context.Response.StatusCode = StatusCodes.Status204NoContent;
             return;
