@@ -211,6 +211,90 @@ public sealed class ServiceCollectionExtensionsTests
         Assert.Contains("wss:", options.Csp.ConnectSrc);
     }
 
+    [Fact]
+    public void AddNetSecureHeadersOwaspApiPresetRegistersOwaspApiPreset()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddNetSecureHeadersOwaspApiPreset();
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<NetSecureHeadersOptions>>().Value;
+
+        // Assert
+        Assert.True(options.EnableHsts);
+        Assert.True(options.EnableXContentTypeOptions);
+        Assert.True(options.EnableXPermittedCrossDomainPolicies);
+        Assert.True(options.EnableXDnsPrefetchControl);
+        Assert.False(options.EnableCsp);
+        Assert.False(options.EnableXFrameOptions);
+        Assert.True(options.RemoveServerHeader);
+        Assert.True(options.RemoveXPoweredBy);
+    }
+
+    [Fact]
+    public void AddNetSecureHeadersOwaspApiPresetAllowsCustomization()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddNetSecureHeadersOwaspApiPreset(opts =>
+        {
+            opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+            opts.EnableHsts = false;
+        });
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<NetSecureHeadersOptions>>().Value;
+
+        // Assert
+        Assert.Equal("strict-origin-when-cross-origin", options.ReferrerPolicyValue);
+        Assert.False(options.EnableHsts);
+    }
+
+    [Fact]
+    public void AddNetSecureHeadersNSwagPresetRegistersNSwagPreset()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddNetSecureHeadersNSwagPreset();
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<NetSecureHeadersOptions>>().Value;
+
+        // Assert
+        Assert.Contains("https://unpkg.com", options.Csp.ScriptSrc);
+        Assert.Contains("https://unpkg.com", options.Csp.StyleSrc);
+        Assert.Contains("'nonce-{nonce}'", options.Csp.ScriptSrc);
+        Assert.Contains("'strict-dynamic'", options.Csp.ScriptSrc);
+    }
+
+    [Fact]
+    public void AddNetSecureHeadersNSwagPresetAllowsCustomization()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddNetSecureHeadersNSwagPreset(opts =>
+        {
+            opts.ReferrerPolicyValue = "no-referrer";
+            opts.EnableHsts = false;
+        });
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<NetSecureHeadersOptions>>().Value;
+
+        // Assert
+        Assert.Equal("no-referrer", options.ReferrerPolicyValue);
+        Assert.False(options.EnableHsts);
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public string EnvironmentName { get; set; } = Environments.Production;

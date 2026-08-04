@@ -2,16 +2,13 @@
 
 A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
-**Current version:** 1.6.0
+**Current version:** 1.7.0
 
-New in 1.6.0:
-- AddNetSecureHeadersFromConfiguration(...) for direct appsettings.json binding.
-- AddNetSecureHeadersForEnvironment(...) and AddNetSecureHeadersStrictAPlusForEnvironment(...) for safer non-production CSP rollout.
-- MapSafeWebCoreDiagnostics(...) for opt-in effective header and path-policy preview.
-- Opt-in System.Diagnostics.Metrics counters (SafeWebCore meter).
-- New companion packages: SafeWebCore.FraudDetection (1.0.0), SafeWebCore.Analyzers (preview), and SafeWebCore.Testing (preview).
-- Practical recipe docs under docs/recipes/.
-- More actionable startup validation messages with concrete remediation guidance.
+New in 1.7.0:
+- **Path policy inheritance** — `PathPolicy(...)` now inherits the global configuration and only overrides explicitly set values (resolves issue #3, prevents HSTS/CSP downgrades on path-specific endpoints).
+- **OWASP API preset** — `AddNetSecureHeadersOwaspApiPreset()` aligned with the OWASP API Security Top 10 response-header hardening.
+- **NSwag preset** — `AddNetSecureHeadersNSwagPreset()` for Rico Sutter's NSwag UI with nonce-based CSP and no `'unsafe-inline'` (stricter than Swagger).
+- `ApplyPreset(...)` and `Clone()` are now public — official inheritance mechanism for path policies and custom presets.
 
 ## Backward Compatibility Goal
 

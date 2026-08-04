@@ -219,6 +219,57 @@ public static class SecurePresets
     }
 
     /// <summary>
+    /// Returns a preset aligned with the <b>OWASP API Security Top 10</b>
+    /// recommended response-header hardening for API paths.
+    /// <para>
+    /// OWASP emphasizes transport security, content-type sniffing protection,
+    /// referrer control, and server identity hiding for API endpoints.
+    /// Browser-document headers (CSP, X-Frame-Options, Permissions-Policy,
+    /// cross-origin isolation) are disabled because APIs return JSON, not HTML,
+    /// and enabling them can break legitimate cross-origin API consumers.
+    /// </para>
+    /// <para><b>Headers configured:</b></para>
+    /// <list type="bullet">
+    ///   <item><c>Strict-Transport-Security</c> — 2 years, includeSubDomains, preload (OWASP API1, API2)</item>
+    ///   <item><c>X-Content-Type-Options</c> — nosniff (OWASP API8)</item>
+    ///   <item><c>Referrer-Policy</c> — no-referrer (prevents token leakage via referrer header)</item>
+    ///   <item><c>X-Permitted-Cross-Domain-Policies</c> — none (OWASP API8)</item>
+    ///   <item><c>Server</c> header — removed (OWASP API2 — reduce attack surface)</item>
+    ///   <item><c>X-Powered-By</c> header — removed (OWASP API2 — reduce attack surface)</item>
+    /// </list>
+    /// </summary>
+    /// <returns>A configured <see cref="NetSecureHeadersOptions"/> aligned with OWASP API Security Top 10.</returns>
+    public static NetSecureHeadersOptions OwaspApi()
+    {
+        var options = ApiMinimal();
+        options.EnableXPermittedCrossDomainPolicies = true;
+        options.XPermittedCrossDomainPoliciesValue = "none";
+        options.EnableXDnsPrefetchControl = true;
+        options.XDnsPrefetchControlValue = "off";
+        return options;
+    }
+
+    /// <summary>
+    /// Creates a path policy with OWASP API Security Top 10 aligned headers
+    /// for a specific path prefix.
+    /// Useful when serving UI pages and APIs from the same host.
+    /// </summary>
+    /// <param name="pathPrefix">Path prefix to match (for example <c>/api</c>).</param>
+    /// <param name="customize">Optional action to override values in the OWASP API preset.</param>
+    /// <returns>A configured <see cref="PathPolicyOptions"/> instance for <see cref="NetSecureHeadersOptions.PathPolicies"/>.</returns>
+    public static PathPolicyOptions OwaspApiPath(string pathPrefix = "/api", Action<NetSecureHeadersOptions>? customize = null)
+    {
+        var options = OwaspApi();
+        customize?.Invoke(options);
+
+        return new PathPolicyOptions
+        {
+            PathPrefix = pathPrefix,
+            Options = options
+        };
+    }
+
+    /// <summary>
     /// Returns a profile-oriented preset for MVC applications.
     /// Uses nonce-based CSP with practical defaults for same-origin page assets.
     /// </summary>
@@ -379,6 +430,48 @@ public static class SecurePresets
             ImgSrc = "'self' data: https:",
             FontSrc = "'self' https://cdn.jsdelivr.net",
             ConnectSrc = "'self' https: wss:",
+            WorkerSrc = "'self' blob:",
+            ObjectSrc = "'none'",
+            BaseUri = "'none'",
+            FormAction = "'self'",
+            FrameAncestors = "'none'",
+            EnableUpgradeInsecureRequests = true
+        };
+
+        return options;
+    }
+
+    /// <summary>
+    /// Returns a preset suitable for applications that expose the <b>NSwag</b> UI
+    /// (Rico Sutter's NSwag / NSwagStudio).
+    /// <para>
+    /// NSwag UI is stricter than the classic Swagger UI because its assets are
+    /// typically served from the application's own <c>/swagger</c> path, so the
+    /// preset avoids <c>'unsafe-inline'</c> for styles where possible and relies
+    /// on nonce-based CSP plus the NSwag asset CDN.
+    /// </para>
+    /// <para>
+    /// NSwag loads its assets from <c>https://unpkg.com/nswag/</c> (the official
+    /// NSwag client package). Scripts and styles are loaded via the nonce and
+    /// <c>'strict-dynamic'</c> so no <c>'unsafe-inline'</c> is required.
+    /// </para>
+    /// </summary>
+    public static NetSecureHeadersOptions NSwag()
+    {
+        var options = CreateFromStrictAPlus();
+        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+
+        options.Csp = new CspOptions
+        {
+            DefaultSrc = "'none'",
+            // NSwag UI loads assets from unpkg (official NSwag client package).
+            // Scripts use nonce + strict-dynamic → no unsafe-inline needed for scripts.
+            ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https://unpkg.com",
+            // NSwag UI may still inject some inline styles; nonce covers the main document.
+            StyleSrc = "'self' 'nonce-{nonce}' https://unpkg.com",
+            ImgSrc = "'self' data: https:",
+            FontSrc = "'self' https://unpkg.com",
+            ConnectSrc = "'self' https:",
             WorkerSrc = "'self' blob:",
             ObjectSrc = "'none'",
             BaseUri = "'none'",

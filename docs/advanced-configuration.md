@@ -29,48 +29,83 @@ Apply different security headers to specific route prefixes. Useful for:
 - Relaxed policies for `/public` routes
 - Different headers for `/api` vs web pages
 
-```csharp
-using SafeWebCore.Options;
+### Recommended: `PathPolicy(...)` with inheritance *(v1.7+)*
 
+The `PathPolicy` extension method creates a path policy that **inherits** all settings
+from the global configuration and only overrides the values you explicitly change.
+This prevents accidental security header downgrades (for example a weaker
+`Strict-Transport-Security` value on `/api`).
+
+```csharp
 builder.Services.AddNetSecureHeaders(opts =>
 {
     // Base configuration for all routes
-    opts.EnableHsts = true;
+    opts.HstsValue = "max-age=63072000; includeSubDomains; preload";
     opts.RemoveServerHeader = true;
 
-    // Stricter policy for admin
-    opts.PathPolicies.Add(new PathPolicyOptions
+    // /api inherits the global HSTS, CSP, and all other settings.
+    // Only X-Frame-Options is overridden.
+    opts.PathPolicy("/api", api =>
     {
-        PathPrefix = "/admin",
-        Options = new NetSecureHeadersOptions
-        {
-            ReferrerPolicyValue = "no-referrer",
-            XFrameOptionsValue = "DENY",
-            UseCspReportOnly = false
-        }
+        api.XFrameOptionsValue = "SAMEORIGIN";
     });
 
-    // Report-only for experimental routes
-    opts.PathPolicies.Add(new PathPolicyOptions
+    // Stricter policy for admin — inherits global defaults,
+    // then overrides only the values that differ.
+    opts.PathPolicy("/admin", admin =>
     {
-        PathPrefix = "/experimental",
-        Options = new NetSecureHeadersOptions
-        {
-            UseCspReportOnly = true
-        }
+        admin.ReferrerPolicyValue = "no-referrer";
+        admin.XFrameOptionsValue = "DENY";
     });
 
-    // Even stricter for sensitive data
-    opts.PathPolicies.Add(new PathPolicyOptions
+    // Report-only CSP for experimental routes (everything else inherits global).
+    opts.PathPolicy("/experimental", experimental =>
     {
-        PathPrefix = "/admin/users",
-        Options = new NetSecureHeadersOptions
-        {
-            ReferrerPolicyValue = "no-referrer",
-            UseCspReportOnly = false,
-            EnableCoep = true
-        }
+        experimental.UseCspReportOnly = true;
     });
+
+    // Even stricter for sensitive data.
+    opts.PathPolicy("/admin/users", users =>
+    {
+        users.ReferrerPolicyValue = "no-referrer";
+        users.EnableCoep = true;
+    });
+});
+```
+
+> ⚠️ **Important:** When using `PathPolicy(...)`, values you do **not** explicitly set
+> **inherit from the global configuration**. They do *not* fall back to library defaults.
+> This is the safe default and prevents unintended weakening of security headers.
+
+### Alternative: Manual `PathPolicyOptions` (replacement semantics)
+
+If you register a path policy manually with `PathPolicies.Add(...)`, the policy
+**completely replaces** the global configuration — any setting not explicitly assigned
+falls back to library defaults. Use this when you intentionally want a clean slate:
+
+```csharp
+opts.PathPolicies.Add(new PathPolicyOptions
+{
+    PathPrefix = "/admin",
+    Options = new NetSecureHeadersOptions
+    {
+        ReferrerPolicyValue = "no-referrer",
+        XFrameOptionsValue = "DENY"
+    }
+});
+```
+
+To combine manual registration with inheritance, use `ApplyPreset(...)`:
+
+```csharp
+var admin = new NetSecureHeadersOptions();
+admin.ApplyPreset(opts);           // Inherits all global values
+admin.XFrameOptionsValue = "DENY"; // Override only what differs
+
+opts.PathPolicies.Add(new PathPolicyOptions
+{
+    PathPrefix = "/admin",
+    Options = admin
 });
 ```
 

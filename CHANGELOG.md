@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- `NetSecureHeadersOptions.PathPolicy(pathPrefix, customize)` extension method — creates a path policy that **inherits** the global configuration and only overrides explicitly set values. This prevents accidental security header downgrades (for example a weaker HSTS value on `/api`).
+- `NetSecureHeadersOptions.ApplyPreset(...)` is now **public** — the official inheritance mechanism to copy all values from another options instance (for example the global options) before applying overrides.
+- `NetSecureHeadersOptions.Clone()` — creates an independent copy of an options instance for safe mutation.
+
+### Security
+- Path policies created with `PathPolicy(...)` now inherit all unspecified settings from the global configuration instead of falling back to library defaults. This addresses the security footgun where a path-specific policy could unintentionally weaken `Strict-Transport-Security`, CSP, or other security headers.
+
+### Compatibility
+- ✅ **100% backwards compatible** — existing `PathPolicies.Add(new PathPolicyOptions { ... })` behavior (replacement semantics) is unchanged. The new inheritance API is purely additive.
+
+---
+
+## [1.7.0] — 2026-08-04
+
+### Added
+- `SecurePresets.OwaspApi()` and `AddNetSecureHeadersOwaspApiPreset(...)` — preset aligned with the **OWASP API Security Top 10** recommended response-header hardening for API endpoints (HSTS, nosniff, no-referrer, no cross-domain policies, server/X-Powered-By removal, browser-document headers disabled).
+- `SecurePresets.OwaspApiPath(...)` — path policy helper for OWASP API-aligned headers on specific prefixes (default `/api`).
+- `SecurePresets.NSwag()` and `AddNetSecureHeadersNSwagPreset(...)` — preset for the **NSwag UI** (Rico Sutter's NSwag / NSwagStudio). NSwag is stricter than classic Swagger UI: assets load from `https://unpkg.com/nswag/` and CSP uses nonces + `'strict-dynamic'` with **no `'unsafe-inline'`**.
+
+### Security
+- Resolved issue #3: `NetSecureHeadersOptions.PathPolicy(...)` now inherits all unspecified settings from the global configuration instead of falling back to library defaults — preventing accidental security header downgrades (e.g. a weaker HSTS on `/api`).
+- `ApplyPreset(...)` and `Clone()` are now public — the official inheritance mechanism for building path policies and custom presets from an existing options instance.
+
+### Compatibility
+- ✅ **100% backwards compatible** — all new presets, path-policy inheritance APIs, and registration helpers are additive and opt-in. Existing `PathPolicies.Add(new PathPolicyOptions { ... })` replacement semantics are unchanged.
+
+---
+
 ## [1.6.0] — 2026-07-25
 
 ### Added
@@ -190,7 +221,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server header removal
 - Comprehensive documentation and test suite
 
-[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.5...HEAD
+[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.5...v1.6.0
 [1.3.5]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.0...v1.3.5
 [1.3.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.1.0...v1.2.0

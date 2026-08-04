@@ -188,6 +188,118 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task PathPolicyInheritsGlobalConfigurationAndOnlyOverridesSpecifiedValues()
+    {
+        // Arrange — this is the exact scenario from issue #3
+        const string GlobalHsts = "max-age=63072000; includeSubDomains; preload";
+
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.HstsValue = GlobalHsts;
+                        opts.XFrameOptionsValue = "DENY";
+
+                        // Path policy that only overrides X-Frame-Options.
+                        // Must inherit HSTS and all other global settings.
+                        opts.PathPolicy("/api", api =>
+                        {
+                            api.XFrameOptionsValue = "SAMEORIGIN";
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Root");
+                        endpoints.MapGet("/api/ping", () => "Pong");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var rootResponse = await client.GetAsync("/", TestContext.Current.CancellationToken);
+        var apiResponse = await client.GetAsync("/api/ping", TestContext.Current.CancellationToken);
+
+        // Assert — the path policy inherits the global HSTS value
+        Assert.Equal(GlobalHsts, rootResponse.Headers.GetValues("Strict-Transport-Security").First());
+        Assert.Equal("DENY", rootResponse.Headers.GetValues("X-Frame-Options").First());
+
+        // The path policy must inherit the global HSTS (not fall back to the library default)
+        Assert.Equal(GlobalHsts, apiResponse.Headers.GetValues("Strict-Transport-Security").First());
+        Assert.Equal("SAMEORIGIN", apiResponse.Headers.GetValues("X-Frame-Options").First());
+
+        // Additional headers that were not overridden must also be inherited from global
+        Assert.Equal("nosniff", rootResponse.Headers.GetValues("X-Content-Type-Options").First());
+        Assert.Equal("nosniff", apiResponse.Headers.GetValues("X-Content-Type-Options").First());
+        Assert.True(apiResponse.Headers.Contains("Content-Security-Policy"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task PathPolicyCanDisableHeaderThatGlobalEnables()
+    {
+        // Arrange — issue #3 proposes `api.ContentSecurityPolicy = null` to disable CSP,
+        // but our equivalent is `api.EnableCsp = false`.
+        using var host = await new HostBuilder()
+            .ConfigureWebHost(webBuilder =>
+            {
+                webBuilder.UseTestServer();
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddRouting();
+                    services.AddNetSecureHeaders(opts =>
+                    {
+                        opts.EnableHsts = true;
+                        opts.EnableCsp = true;
+
+                        opts.PathPolicy("/api", api =>
+                        {
+                            api.EnableCsp = false;
+                        });
+                    });
+                });
+                webBuilder.Configure(app =>
+                {
+                    app.UseNetSecureHeaders();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "Root");
+                        endpoints.MapGet("/api/ping", () => "Pong");
+                    });
+                });
+            })
+            .StartAsync(TestContext.Current.CancellationToken);
+
+        using var client = host.GetTestClient();
+
+        // Act
+        var rootResponse = await client.GetAsync("/", TestContext.Current.CancellationToken);
+        var apiResponse = await client.GetAsync("/api/ping", TestContext.Current.CancellationToken);
+
+        // Assert — API path keeps HSTS (inherited) but disables CSP
+        Assert.True(rootResponse.Headers.Contains("Content-Security-Policy"));
+        Assert.True(apiResponse.Headers.Contains("Strict-Transport-Security"));
+        Assert.False(apiResponse.Headers.Contains("Content-Security-Policy"));
+        Assert.False(apiResponse.Headers.Contains("Content-Security-Policy-Report-Only"));
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task GetRequestOnApiPathWithApiMinimalPresetEmitsOnlyApiRelevantHeaders()
     {
         // Arrange

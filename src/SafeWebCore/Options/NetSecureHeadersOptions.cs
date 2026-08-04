@@ -167,11 +167,21 @@ public sealed class NetSecureHeadersOptions
 
     /// <summary>
     /// Copies all property values from the specified preset into this instance.
-    /// Used internally by preset-based configuration methods to avoid repetitive property assignments.
+    /// This is the official inheritance mechanism: start from an existing
+    /// <see cref="NetSecureHeadersOptions"/> instance (for example the global options
+    /// or a preset from <see cref="SafeWebCore.Presets.SecurePresets"/>) and then
+    /// override only the values that should differ.
     /// </summary>
     /// <param name="preset">The source options to copy values from.</param>
-    internal void ApplyPreset(NetSecureHeadersOptions preset)
+    /// <remarks>
+    /// Collection properties (<see cref="AdditionalHeaders"/>, <see cref="ReportingEndpoints"/>,
+    /// <see cref="CustomPolicies"/>) and <see cref="PathPolicies"/> are assigned by reference.
+    /// Use <see cref="Clone"/> when you need an independent copy that can be mutated safely.
+    /// </remarks>
+    public void ApplyPreset(NetSecureHeadersOptions preset)
     {
+        ArgumentNullException.ThrowIfNull(preset);
+
         EnableHsts = preset.EnableHsts;
         HstsValue = preset.HstsValue;
         EnableXFrameOptions = preset.EnableXFrameOptions;
@@ -204,10 +214,24 @@ public sealed class NetSecureHeadersOptions
         NelValue = preset.NelValue;
         EnableCsp = preset.EnableCsp;
         UseCspReportOnly = preset.UseCspReportOnly;
-        Csp = preset.Csp;
-        PathPolicies = preset.PathPolicies;
-        AdditionalHeaders = preset.AdditionalHeaders;
-        ReportingEndpoints = preset.ReportingEndpoints;
-        CustomPolicies = preset.CustomPolicies;
+        Csp = preset.Csp is null ? new() : preset.Csp with { };
+        PathPolicies = [.. preset.PathPolicies];
+        AdditionalHeaders = [.. preset.AdditionalHeaders];
+        ReportingEndpoints = [.. preset.ReportingEndpoints];
+        CustomPolicies = [.. preset.CustomPolicies];
+    }
+
+    /// <summary>
+    /// Creates an independent copy of this options instance.
+    /// The copy is a deep clone of all scalar values and a shallow copy of the
+    /// collection properties (<see cref="AdditionalHeaders"/>, <see cref="PathPolicies"/>,
+    /// <see cref="ReportingEndpoints"/>, <see cref="CustomPolicies"/>).
+    /// </summary>
+    /// <returns>A new <see cref="NetSecureHeadersOptions"/> with the same values as this instance.</returns>
+    public NetSecureHeadersOptions Clone()
+    {
+        var clone = new NetSecureHeadersOptions();
+        clone.ApplyPreset(this);
+        return clone;
     }
 }

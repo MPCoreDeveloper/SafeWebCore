@@ -1,1 +1,10 @@
 #nullable enable
+SafeWebCore.Options.NetSecureHeadersOptions.ApplyPreset(SafeWebCore.Options.NetSecureHeadersOptions! preset) -> void
+SafeWebCore.Options.NetSecureHeadersOptions.Clone() -> SafeWebCore.Options.NetSecureHeadersOptions!
+SafeWebCore.Options.NetSecureHeadersOptionsExtensions
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersNSwagPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Extensions.ServiceCollectionExtensions.AddNetSecureHeadersOwaspApiPreset(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.Options.NetSecureHeadersOptionsExtensions.PathPolicy(this SafeWebCore.Options.NetSecureHeadersOptions! options, string! pathPrefix, System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>! customize) -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.NSwag() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.OwaspApi() -> SafeWebCore.Options.NetSecureHeadersOptions!
+static SafeWebCore.Presets.SecurePresets.OwaspApiPath(string! pathPrefix = "/api", System.Action<SafeWebCore.Options.NetSecureHeadersOptions!>? customize = null) -> SafeWebCore.Options.PathPolicyOptions!

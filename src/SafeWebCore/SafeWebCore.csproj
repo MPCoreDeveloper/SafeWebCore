@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,24 +23,19 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
         <PackageReleaseNotes>
-## v1.6.0 — DX, tooling, and observability
+## v1.7.0 — Path policy inheritance, OWASP API + NSwag presets
 
-**Developer experience (v1.4):**
-- AddNetSecureHeadersFromConfiguration(...) for direct configuration binding
-- AddNetSecureHeadersForEnvironment / StrictAPlusForEnvironment helpers (CSP report-only outside production by default)
-- MapSafeWebCoreDiagnostics(...) opt-in effective header / path-policy preview
-- Actionable startup validation messages with concrete remediation guidance
-- Public API baseline tracking (PublicApiAnalyzers)
+**Security (issue #3):**
+- New `PathPolicy(...)` extension method: path policies now inherit the global configuration and only override explicitly set values — prevents accidental security header downgrades (e.g. weaker HSTS on /api)
+- `ApplyPreset(...)` and `Clone()` are now public — official inheritance mechanism for path policies and custom presets
+- `NetSecureHeadersOptions.PathPolicy("...")` with global inheritance is the recommended path policy API
 
-**Tooling (v1.5):**
-- Companion packages: SafeWebCore.Analyzers (preview) and SafeWebCore.Testing (preview)
-- Practical recipe docs under docs/recipes/
+**New presets:**
+- `SecurePresets.OwaspApi()` / `AddNetSecureHeadersOwaspApiPreset(...)` — OWASP API Security Top 10 aligned response-header hardening for API endpoints
+- `SecurePresets.NSwag()` / `AddNetSecureHeadersNSwagPreset(...)` — NSwag UI (Rico Sutter) preset with nonce-based CSP and unpkg CDN assets
+- `SecurePresets.OwaspApiPath()` — path policy helper for OWASP API preset
 
-**Observability (v1.6):**
-- Opt-in System.Diagnostics.Metrics (meter SafeWebCore): headers_applied_total, csp_violations_total, path_policy_matches_total
-- ISecurityEventSink / SecurityEventDispatcher extensibility remains supported
-
-**Breaking Changes:** None — 100% backward compatible. All new APIs are additive and opt-in.
+**Compatibility:** 100% backward compatible. All new APIs are additive and opt-in.
 
 See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>

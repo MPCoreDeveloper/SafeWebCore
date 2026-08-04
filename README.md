@@ -10,7 +10,7 @@
 
 **SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
-**Current version:** 1.6.0
+**Current version:** 1.7.0
 
 ---
 
@@ -98,19 +98,16 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.6.0
+## 🆕 What's New in v1.7.0
 
-v1.6.0 is a **developer experience, tooling, and observability** release — fully backwards compatible with v1.3.5 and earlier.
+v1.7.0 is a **security hardening and presets** release — fully backwards compatible with v1.6.0 and earlier.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Configuration-based setup** | `AddNetSecureHeadersFromConfiguration(...)` binds `NetSecureHeadersOptions` from `IConfiguration` or a specific section |
-| **Environment-aware rollout** | `AddNetSecureHeadersForEnvironment(...)` and `AddNetSecureHeadersStrictAPlusForEnvironment(...)` can default CSP to report-only outside production |
-| **Diagnostics preview** | `MapSafeWebCoreDiagnostics(...)` exposes an opt-in JSON preview of effective headers, path-policy resolution, and CSP mode |
-| **Metrics** | Opt-in `System.Diagnostics.Metrics` counters for core middleware and fraud detection |
-| **Fraud action pipeline** | `IFraudEventSink` / `FraudEvent` for reacting to fraud analysis results (logging, webhooks, custom actions) |
-| **New companion packages** | `SafeWebCore.FraudDetection` 1.0.0, `SafeWebCore.Analyzers` preview, and `SafeWebCore.Testing` preview |
-| **Better startup validation** | Validation messages now include concrete remediation guidance for CSP mode, path prefixes, additional headers, and reporting endpoints |
+| **Path policy inheritance** | `PathPolicy(...)` now inherits the global configuration — only explicitly set values override (resolves issue #3, prevents HSTS/CSP downgrades on path-specific endpoints) |
+| **Public inheritance API** | `ApplyPreset(...)` and `Clone()` are now public — build path policies and custom presets from an existing options instance |
+| **OWASP API preset** | `AddNetSecureHeadersOwaspApiPreset()` aligned with the OWASP API Security Top 10 response-header hardening |
+| **NSwag preset** | `AddNetSecureHeadersNSwagPreset()` for Rico Sutter's NSwag UI with nonce-based CSP and no `'unsafe-inline'` (stricter than Swagger) |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 

@@ -284,6 +284,74 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds NetSecureHeaders services with a preset aligned with the
+    /// <b>OWASP API Security Top 10</b> recommended response-header hardening
+    /// for API endpoints.
+    /// <para>
+    /// This preset keeps strong transport security, content-type sniffing
+    /// protection, referrer control, and server identity hiding while disabling
+    /// browser-document headers that are irrelevant for JSON responses.
+    /// </para>
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddNetSecureHeadersOwaspApiPreset(opts =>
+    /// {
+    ///     opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+    /// });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddNetSecureHeadersOwaspApiPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.OwaspApi());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
+    /// Adds NetSecureHeaders services with a preset suitable for applications that
+    /// expose the <b>NSwag</b> UI (Rico Sutter's NSwag / NSwagStudio).
+    /// <para>
+    /// NSwag UI is stricter than classic Swagger UI: assets load from the
+    /// official <c>https://unpkg.com/nswag/</c> package and scripts/styles use
+    /// nonce-based CSP with <c>'strict-dynamic'</c> — no <c>'unsafe-inline'</c>
+    /// required.
+    /// </para>
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="customize">Optional action to override individual preset values.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddNetSecureHeadersNSwagPreset(opts =>
+    /// {
+    ///     opts.ReferrerPolicyValue = "no-referrer";
+    /// });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddNetSecureHeadersNSwagPreset(
+        this IServiceCollection services,
+        Action<NetSecureHeadersOptions>? customize = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return AddNetSecureHeaders(services, opts =>
+        {
+            opts.ApplyPreset(SecurePresets.NSwag());
+            customize?.Invoke(opts);
+        });
+    }
+
+    /// <summary>
     /// Adds NetSecureHeaders services with a preset suitable for applications behind a reverse proxy or YARP.
     /// </summary>
     public static IServiceCollection AddNetSecureHeadersReverseProxyPreset(

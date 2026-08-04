@@ -10,6 +10,9 @@ SafeWebCore includes pre-configured security presets for common use cases. Prese
 |--------|----------|---------------------|
 | `StrictAPlus` | Maximum lockdown / A+ target | `AddNetSecureHeadersStrictAPlus()` |
 | `Api` | API-only services | `AddNetSecureHeadersApiPreset()` |
+| `OwaspApi` | OWASP API Security Top 10 aligned hardening for API endpoints | `AddNetSecureHeadersOwaspApiPreset()` |
+| `NSwag` | NSwag UI (Rico Sutter's NSwag / NSwagStudio) | `AddNetSecureHeadersNSwagPreset()` |
+| `Swagger` | Swagger / OpenAPI UI | `AddNetSecureHeadersSwagger()` |
 | `Mvc` | MVC + Razor server-rendered apps | `AddNetSecureHeadersMvcPreset()` |
 | `Blazor` | Blazor Server/WebAssembly hybrid hosting | `AddNetSecureHeadersBlazorPreset()` |
 | `SpaReverseProxy` | SPA frontend behind ASP.NET Core reverse proxy | `AddNetSecureHeadersSpaReverseProxyPreset()` |
@@ -263,6 +266,84 @@ builder.Services.AddNetSecureHeadersApiPreset(opts =>
 
 ---
 
+## OWASP API Preset
+
+The `OwaspApi` preset follows the **OWASP API Security Top 10** recommended response-header hardening for API endpoints.
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersOwaspApiPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersOwaspApiPreset(opts =>
+{
+    opts.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+});
+```
+
+### What It Configures
+
+- **HSTS enabled** — 2-year HTTPS enforcement (OWASP API1/API2)
+- **`X-Content-Type-Options: nosniff`** — No MIME sniffing (OWASP API8)
+- **`Referrer-Policy: no-referrer`** — Prevents token leakage via the referrer header
+- **`X-Permitted-Cross-Domain-Policies: none`** — No Flash/Acrobat policies (OWASP API8)
+- **`X-DNS-Prefetch-Control: off`** — No DNS leak
+- **Server header removed** — Reduces attack surface (OWASP API2)
+- **`X-Powered-By` removed** — Hides framework details (OWASP API2)
+- **Browser-document headers disabled** — CSP, X-Frame-Options, Permissions-Policy, and cross-origin isolation are off because APIs return JSON, not HTML
+
+### Path policy helper
+
+```csharp
+// API + UI on same host — use OWASP API preset for /api paths
+builder.Services.AddNetSecureHeaders(opts =>
+{
+    opts.PathPolicies.Add(SecurePresets.OwaspApiPath("/api"));
+});
+```
+
+### When to use
+
+- REST/GraphQL APIs with explicit OWASP API Security Top 10 alignment
+- Microservices that must comply with OWASP API security review checklists
+- Backend services where browser-document headers add noise or break cross-origin consumers
+
+---
+
+## NSwag Preset
+
+The `NSwag` preset is for applications that expose the **NSwag UI** (Rico Sutter's NSwag / NSwagStudio).
+
+### Usage
+
+```csharp
+builder.Services.AddNetSecureHeadersNSwagPreset();
+
+// With customization
+builder.Services.AddNetSecureHeadersNSwagPreset(opts =>
+{
+    opts.ReferrerPolicyValue = "no-referrer";
+});
+```
+
+### What It Configures
+
+- **Nonce-based CSP** — Per-request nonce for scripts and styles
+- **`scripts-src`** — `'self' 'nonce-{nonce}' 'strict-dynamic' https://unpkg.com`
+- **`style-src`** — `'self' 'nonce-{nonce}' https://unpkg.com`
+- **No `'unsafe-inline'`** — Unlike the Swagger preset, NSwag UI works with nonces and `'strict-dynamic'` so `'unsafe-inline'` is **not** required
+- **HSTS enabled** — 2-year HTTPS enforcement
+- **Strict referrer policy** — `strict-origin-when-cross-origin`
+
+### Why it is stricter than Swagger
+
+NSwag UI loads its assets from the official `https://unpkg.com/nswag/` package and works with nonce-based CSP, so this preset avoids `'unsafe-inline'` — giving a stronger CSP posture than the Swagger preset, which still requires it for older Swagger UI versions.
+
+Run the diagnostics endpoint (`/safewebcore/diagnostics`) to preview the effective CSP while developing.
+
+---
+
 ## MVC Preset
 
 The `Mvc` preset is for **server-rendered MVC + Razor Views** applications.
@@ -462,6 +543,9 @@ This is useful for:
 | Your Application | Recommended Preset | Why |
 |------------------|-------------------|-----|
 | REST/GraphQL API | `Api` | No HTML = no CSP needed; focus on transport & CORS |
+| REST/GraphQL API (OWASP-aligned) | `OwaspApi` | Explicit OWASP API Security Top 10 response-header hardening |
+| NSwag UI/NSwagStudio | `NSwag` | Nonce-based CSP, unpkg assets, no `'unsafe-inline'` |
+| Swagger / OpenAPI UI | `Swagger` | CDN assets + `unsafe-inline` styles for older Swagger UI |
 | MVC + Razor Pages | `Mvc` | Server-rendered HTML with practical asset allowances |
 | Blazor Server | `Blazor` | WebSocket + Blazor runtime support |
 | Blazor WASM hosted | `Blazor` | Worker/blob support for WASM + nonce for Server interop |

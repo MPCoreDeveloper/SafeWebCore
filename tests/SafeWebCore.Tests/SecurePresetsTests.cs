@@ -392,4 +392,114 @@ public sealed class SecurePresetsTests
         Assert.Contains("wss:", options.Csp.ConnectSrc);
         Assert.Contains("ws:", options.Csp.ConnectSrc);
     }
+
+    // ── OWASP API preset ──────────────────────────────────────────────────
+
+    [Fact]
+    public void OwaspApiPresetKeepsTransportSecurityAndSniffingProtection()
+    {
+        // Arrange
+        var options = SecurePresets.OwaspApi();
+
+        // Assert
+        Assert.True(options.EnableHsts);
+        Assert.Contains("max-age=63072000", options.HstsValue);
+        Assert.True(options.EnableXContentTypeOptions);
+        Assert.Equal("nosniff", options.XContentTypeOptionsValue);
+        Assert.True(options.EnableReferrerPolicy);
+        Assert.Equal("no-referrer", options.ReferrerPolicyValue);
+    }
+
+    [Fact]
+    public void OwaspApiPresetHidesServerIdentity()
+    {
+        // Arrange
+        var options = SecurePresets.OwaspApi();
+
+        // Assert
+        Assert.True(options.RemoveServerHeader);
+        Assert.True(options.RemoveXPoweredBy);
+    }
+
+    [Fact]
+    public void OwaspApiPresetDisablesBrowserDocumentHeaders()
+    {
+        // Arrange
+        var options = SecurePresets.OwaspApi();
+
+        // Assert
+        Assert.False(options.EnableCsp);
+        Assert.False(options.EnableXFrameOptions);
+        Assert.False(options.EnablePermissionsPolicy);
+        Assert.False(options.EnableCoep);
+        Assert.False(options.EnableCoop);
+        Assert.False(options.EnableCorp);
+    }
+
+    [Fact]
+    public void OwaspApiPresetEnablesCrossDomainPolicyAndDnsPrefetchControl()
+    {
+        // Arrange
+        var options = SecurePresets.OwaspApi();
+
+        // Assert
+        Assert.True(options.EnableXPermittedCrossDomainPolicies);
+        Assert.Equal("none", options.XPermittedCrossDomainPoliciesValue);
+        Assert.True(options.EnableXDnsPrefetchControl);
+        Assert.Equal("off", options.XDnsPrefetchControlValue);
+    }
+
+    [Fact]
+    public void OwaspApiPathPresetUsesDefaultApiPrefix()
+    {
+        // Arrange
+        var policy = SecurePresets.OwaspApiPath();
+
+        // Assert
+        Assert.Equal("/api", policy.PathPrefix);
+        Assert.True(policy.Options.EnableHsts);
+        Assert.True(policy.Options.EnableXContentTypeOptions);
+        Assert.False(policy.Options.EnableCsp);
+    }
+
+    // ── NSwag preset ──────────────────────────────────────────────────────
+
+    [Fact]
+    public void NSwagPresetAllowsUnpkgCdnAndNonceBasedCsp()
+    {
+        // Arrange
+        var options = SecurePresets.NSwag();
+
+        // Assert
+        Assert.Contains("https://unpkg.com", options.Csp.ScriptSrc);
+        Assert.Contains("https://unpkg.com", options.Csp.StyleSrc);
+        Assert.Contains("'nonce-{nonce}'", options.Csp.ScriptSrc);
+        Assert.Contains("'strict-dynamic'", options.Csp.ScriptSrc);
+        Assert.DoesNotContain("'unsafe-inline'", options.Csp.ScriptSrc);
+    }
+
+    [Fact]
+    public void NSwagPresetUsesStrictReferrerPolicy()
+    {
+        // Arrange
+        var options = SecurePresets.NSwag();
+
+        // Assert
+        Assert.Equal("strict-origin-when-cross-origin", options.ReferrerPolicyValue);
+    }
+
+    [Fact]
+    public void NSwagPresetKeepsStrongBaseHeaders()
+    {
+        // Arrange
+        var options = SecurePresets.NSwag();
+
+        // Assert
+        Assert.True(options.EnableHsts);
+        Assert.True(options.EnableXContentTypeOptions);
+        Assert.True(options.RemoveServerHeader);
+        Assert.True(options.RemoveXPoweredBy);
+        Assert.True(options.EnableXFrameOptions);
+        Assert.Equal("DENY", options.XFrameOptionsValue);
+    }
 }
