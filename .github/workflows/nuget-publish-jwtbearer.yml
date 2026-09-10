@@ -1,0 +1,50 @@
+name: Publish SafeWebCore.JwtBearer
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/SafeWebCore.JwtBearer/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-pack-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore SafeWebCore.slnx
+
+      - name: Build
+        run: dotnet build SafeWebCore.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test SafeWebCore.slnx --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj --configuration Release --no-build --output artifacts/nuget
+
+      - name: Publish to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::warning::NUGET_API_KEY secret is not set. Skipping NuGet publish."
+            exit 0
+          fi
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
