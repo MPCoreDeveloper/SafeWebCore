@@ -160,13 +160,26 @@ public sealed class JwtAuthorityValidationGuardTests
     }
 
     private static FakeManager SuccessfulManager()
-        => new(() => Task.FromResult(new OpenIdConnectConfiguration
-        {
-            SigningKeys = { new SymmetricSecurityKey(new byte[32]) },
-        }));
+        => new(static () => Task.FromResult(ConfigurationWithPublicKeys()));
 
     private static FakeManager EmptySigningKeysManager()
         => new(() => Task.FromResult(new OpenIdConnectConfiguration()));
+
+    private static OpenIdConnectConfiguration ConfigurationWithPublicKeys()
+        => new()
+        {
+            SigningKeys =
+            {
+                new JsonWebKey
+                {
+                    Kty = "RSA",
+                    Use = "sig",
+                    Kid = "test-key",
+                    E = "AQAB",
+                    N = "0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw",
+                },
+            },
+        };
 
     private static FakeManager PermanentFailureManager()
     {
@@ -177,10 +190,7 @@ public sealed class JwtAuthorityValidationGuardTests
     }
 
     private static CountingManager CountingSuccessfulManager()
-        => new(() => Task.FromResult(new OpenIdConnectConfiguration
-        {
-            SigningKeys = { new SymmetricSecurityKey(new byte[32]) },
-        }));
+        => new(static () => Task.FromResult(ConfigurationWithPublicKeys()));
 
     private static CountingManager CountingTransientFailureManager()
         => new(() => Task.FromException<OpenIdConnectConfiguration>(new TimeoutException("IDX20807: timed out")));
