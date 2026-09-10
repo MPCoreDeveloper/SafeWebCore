@@ -40,6 +40,8 @@ jobs:
           mkdir -p artifacts/nupkg
           dotnet pack src/SafeWebCore/SafeWebCore.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
           dotnet pack src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+          dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
+
           dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
           dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj -c ${{ env.Configuration }} --no-build -o artifacts/nupkg
 

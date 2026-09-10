@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `NetSecureHeadersOptions.PathPolicy(pathPrefix, customize)` extension method — creates a path policy that **inherits** the global configuration and only overrides explicitly set values. This prevents accidental security header downgrades (for example a weaker HSTS value on `/api`).
+- **New companion module: `SafeWebCore.JwtBearer`** — makes a misconfigured JWT authority fail loud (or fail fast) at startup instead of silently returning `401` for everything. Solves dotnet/aspnetcore#67991 (reported by Stephan van Rooij) today, while the .NET team schedules the fix for .NET 12 Planning. Implements `AddJwtBearerAuthorityValidation`, `AddJwtBearerHardening`, and the one-liner `AddSafeWebCoreJwtBearer`.
+- `SafeWebCore.JwtBearer` token hardening — optional: require signed tokens / reject `alg: none`, algorithm allow-list, `typ` header checks (`JWT`/`at+jwt`), audience/issuer enforcement, maximum clock skew and token lifetime, `jti`/`nbf`/`iat` requirements.
+- `SafeWebCore.JwtBearer` runtime metadata logging — wraps the OpenID Connect configuration manager so metadata retrieval failures are logged at Error (4xx) / Warning level during runtime, not only at startup.
+- `examples/JwtBearerDemo` — runnable reproduction of issue #67991 (broken vs. fixed behavior) and `StephanReproIntegrationTests` proving both sides.
+
 - `NetSecureHeadersOptions.ApplyPreset(...)` is now **public** — the official inheritance mechanism to copy all values from another options instance (for example the global options) before applying overrides.
 - `NetSecureHeadersOptions.Clone()` — creates an independent copy of an options instance for safe mutation.
 

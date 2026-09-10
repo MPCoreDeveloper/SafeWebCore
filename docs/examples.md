@@ -140,6 +140,32 @@ CSP violations are logged to `csp-violations.jsonl` next to the binary.
 
 ---
 
+## 🔐 JWT Bearer Example (SafeWebCore.JwtBearer)
+
+**Location:** `examples/JwtBearerDemo/`
+
+### What it demonstrates
+
+This example is the reproduction of **dotnet/aspnetcore#67991** (reported by Stephan van Rooij,
+[@svrooij](https://github.com/svrooij)): a misspelled JWT authority
+(`organisations` instead of `organizations`) makes the app start normally while every request
+returns `401` — and the root cause is logged below the default `Microsoft.AspNetCore: Warning`
+threshold. The .NET team scheduled the fix for **.NET 12 Planning** only.
+
+With `SafeWebCore.JwtBearer` enabled, the same app **refuses to start** on a permanent (HTTP 4xx)
+authority failure — or logs a loud `Error` when `FailFast = false`.
+
+### Run
+
+```bash
+cd examples/JwtBearerDemo
+dotnet run
+```
+
+Flip `const bool enableFix` in `Program.cs` to switch between the broken and the fixed behavior.
+See `examples/JwtBearerDemo/README.md` for the full before/after walkthrough.
+
+
 ## 📊 Feature Matrix
 
 | Feature | MinimalApi | MvcApp | ApiService |

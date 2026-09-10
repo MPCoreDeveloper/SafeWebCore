@@ -1,8 +1,8 @@
 # SafeWebCore – Examples
 
-Three runnable ASP.NET Core applications that demonstrate different integration patterns for the [SafeWebCore](../README.md) security-header middleware library.
+Four runnable ASP.NET Core applications that demonstrate different integration patterns for [SafeWebCore](../README.md) — including a companion-module demo for `SafeWebCore.JwtBearer`.
 
-All examples reference the local `src/SafeWebCore` project directly so you can run them straight from a clone — no NuGet restore from the feed required.
+All examples reference the local source projects directly so you can run them straight from a clone — no NuGet restore from the feed required.
 
 ## Examples at a glance
 
@@ -11,6 +11,7 @@ All examples reference the local `src/SafeWebCore` project directly so you can r
 | [MinimalApi](MinimalApi/) | ASP.NET Core Minimal API | `AddNetSecureHeadersStrictAPlus`, `GetCspNonce()`, `SkipNetSecureHeaders()`, CSP report endpoint |
 | [MvcApp](MvcApp/) | ASP.NET Core MVC + Razor Views | MVC preset, typed policy builders, path policies, `[CspNonce]` attribute, nonce TagHelpers |
 | [ApiService](ApiService/) | Web API with controllers | API preset, custom `ICspReportSink`, `[SkipNetSecureHeaders]`, `[CspMode]` endpoint overrides |
+| [JwtBearerDemo](JwtBearerDemo/) | Minimal API + JWT | `SafeWebCore.JwtBearer`: broken JWT authority (dotnet/aspnetcore#67991) vs. fail-fast startup |
 
 ## Prerequisites
 
@@ -30,9 +31,19 @@ dotnet run
 # ApiService
 cd examples/ApiService
 dotnet run
+
+# JwtBearerDemo (read its README first: broken vs. fixed JWT authority)
+cd examples/JwtBearerDemo
+dotnet run
 ```
 
-Each example starts on `http://localhost:5000` by default. Open your browser, navigate to the root URL, and inspect the response headers in DevTools → Network to see the security headers in action.
+Each example starts on `http://localhost:5000` by default (JwtBearerDemo uses `http://localhost:5120`). Open your browser or HTTP client and inspect the response headers in DevTools → Network to see the security headers in action.
+
+> [!NOTE]
+> **JwtBearerDemo** is the reproduction of [dotnet/aspnetcore#67991](https://github.com/dotnet/aspnetcore/issues/67991)
+> (reported by Stephan van Rooij). It is not about security headers: it shows how a misspelled
+> JWT authority silently 401s every request, and how `SafeWebCore.JwtBearer` makes that a
+> fail-fast (or loud-log) startup event instead. See its [README](JwtBearerDemo/README.md).
 
 ## Feature matrix
 

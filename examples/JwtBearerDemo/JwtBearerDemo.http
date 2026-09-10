@@ -1,0 +1,8 @@
+@JwtBearerDemo_HostAddress = http://localhost:5120
+
+### Weather forecast (protected endpoint)
+### In the BROKEN setup this returns 401 UNAUTHORIZED with error="invalid_token"
+### and nothing useful in the logs. In the FIXED setup the app refuses to start.
+GET {{JwtBearerDemo_HostAddress}}/weatherforecast
+Authorization: Bearer eyJhbGciOiJub25lIn0.eyJzdWIiOiJkZW1vLXRva2VuIn0.sig
+Accept: application/json

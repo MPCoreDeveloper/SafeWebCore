@@ -1,13 +1,15 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/src/">
     <Project Path="src/SafeWebCore/SafeWebCore.csproj" />
     <Project Path="src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj" />
     <Project Path="src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj" />
     <Project Path="src/SafeWebCore.Testing/SafeWebCore.Testing.csproj" />
+    <Project Path="src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SafeWebCore.Tests/SafeWebCore.Tests.csproj" />
     <Project Path="tests/SafeWebCore.FraudDetection.Tests/SafeWebCore.FraudDetection.Tests.csproj" />
+    <Project Path="tests/SafeWebCore.JwtBearer.Tests/SafeWebCore.JwtBearer.Tests.csproj" />
   </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/MinimalApi/MinimalApi.csproj" />

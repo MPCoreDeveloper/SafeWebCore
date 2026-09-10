@@ -13,6 +13,8 @@ This document describes every packable project: identity, contents, publish stat
 |-----------|----------------|-----------|------------|----------------|
 | **SafeWebCore** | `1.3.5` | **Published** (`1.0.0`–`1.3.5`) | `SafeWebCore.1.3.5.nupkg` + `.snupkg` | Do **not** republish 1.3.5. Ship next as **1.4.0** (or later) after promoting Unreleased work |
 | **SafeWebCore.FraudDetection** | `1.0.0` | **Not published** | `SafeWebCore.FraudDetection.1.0.0.nupkg` | **Primary new package candidate** for first public release |
+| **SafeWebCore.JwtBearer** | `1.0.0` | **Not published** | `SafeWebCore.JwtBearer.1.0.0.nupkg` | **New package candidate** — JWT authority fail-fast + token hardening | 
+
 | **SafeWebCore.Analyzers** | `1.0.0-preview.1` | **Not published** | `SafeWebCore.Analyzers.1.0.0-preview.1.nupkg` | Publish as **preview** only |
 | **SafeWebCore.Testing** | `1.0.0-preview.1` | **Not published** | `SafeWebCore.Testing.1.0.0-preview.1.nupkg` | Publish as **preview** only |
 
@@ -27,6 +29,8 @@ From repo root:
 ```bash
 dotnet pack src/SafeWebCore/SafeWebCore.csproj -c Release -o artifacts/nupkg
 dotnet pack src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj -c Release -o artifacts/nupkg
+dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c Release -o artifacts/nupkg
+
 dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj -c Release -o artifacts/nupkg
 dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj -c Release -o artifacts/nupkg
 ```
@@ -196,6 +200,57 @@ Core is already at **1.3.5** while FraudDetection starts at **1.0.0**. That is n
 
 ---
 
+# Package 2b — SafeWebCore.JwtBearer (new companion, unpublished)
+
+## Identity
+
+| Field | Value |
+|-------|--------|
+| PackageId | `SafeWebCore.JwtBearer` |
+| Version | `1.0.0` (csproj) |
+| Authors / Company | MPCoreDeveloper / Posseth Software |
+| License | MIT |
+| Project URL | https://github.com/MPCoreDeveloper/SafeWebCore |
+| Readme in package | `src/SafeWebCore.JwtBearer/README.md` |
+| Icon | `icon.png` |
+| TFM | `net10.0` |
+
+## Purpose
+
+Solves [dotnet/aspnetcore#67991](https://github.com/dotnet/aspnetcore/issues/67991)
+(reported by **Stephan van Rooij**): a misspelled JWT authority silently 401s every request
+because the metadata failure is logged only at Information level, below the default log
+threshold. The module adds a startup authority guard (fail fast or loud Error), optional token
+hardening, and runtime metadata-failure logging — before the .NET team's planned fix in
+**.NET 12 Planning**.
+
+## What consumers get
+
+```bash
+dotnet add package SafeWebCore.JwtBearer
+```
+
+- `AddJwtBearerAuthorityValidation` — startup authority guard (Stephan's fix).
+- `AddJwtBearerHardening` — optional token-validation hardening (algorithms, typ, audience/issuer, max lifetime, ...).
+- `AddSafeWebCoreJwtBearer` — one-line registration (AddJwtBearer + hardening + guard).
+
+## Readiness scorecard
+
+| Check | Status |
+|-------|--------|
+| Builds in solution | ✅ |
+| Unit + integration tests (xUnit v3) | ✅ (33, incl. Stephan's reproduction) |
+| Public API baseline (`PublicAPI.*.txt`) | ✅ |
+| README + icon packed | ✅ (verified) |
+| `ci.yml` / `nuget-publish.yml` pack step | ✅ (added) |
+
+### Publish command
+
+```bash
+dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c Release -o artifacts/nupkg
+dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.0.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
+```
+
 # Package 3 — SafeWebCore.Analyzers (preview candidate)
 
 ## Identity
@@ -359,6 +414,8 @@ Publish **FraudDetection 1.0.0** alone (no core bump). Valid because packages ar
 # After version bumps, changelog, and tests
 dotnet pack src/SafeWebCore/SafeWebCore.csproj -c Release -o artifacts/nupkg
 dotnet pack src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj -c Release -o artifacts/nupkg
+dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c Release -o artifacts/nupkg
+
 dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj -c Release -o artifacts/nupkg
 dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj -c Release -o artifacts/nupkg
 
