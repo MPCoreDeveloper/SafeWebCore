@@ -1,4 +1,9 @@
 # SafeWebCore.JwtBearer
+[![NuGet](https://img.shields.io/nuget/v/SafeWebCore.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore.JwtBearer)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/SafeWebCore.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore.JwtBearer)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/quality_gate?project=MPCoreDeveloper_SafeWebCore)](https://sonarcloud.io/dashboard?id=MPCoreDeveloper_SafeWebCore)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/LICENSE)
 
 Optional companion module for **SafeWebCore** that makes a misconfigured or unreachable
 **JWT authority fail loud before your users ever see a 401** — and optionally hardens
