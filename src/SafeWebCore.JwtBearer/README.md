@@ -135,18 +135,22 @@ one line per refresh interval. Requires `AddJwtBearerHardening`/`AddSafeWebCoreJ
    - success → `Information`. Nothing else changes.
 2. **`JwtBearerHardeningApplication`** applies the token-validation defaults and chains claim checks
    (`typ`, `jti`, `nbf`, `iat`, maximum lifetime) onto your existing `OnTokenValidated` handler.
-3. **`LoggingConfigurationManager`** decorates the manager so metadata failures stay loud after startup.
+3. **`LoggingConfigurationManager`** decorates the manager so metadata failures that actually surface
+   (no usable cached configuration) are logged at `Error`/`Warning` during runtime, not just at startup.
 
 ## Reproduce it yourself
 
 The repository includes [**`examples/JwtBearerDemo`**](../../examples/JwtBearerDemo/) — a copy of
 Stephan's exact reproduction (misspelled `organisations` authority, his exact token-validation
-settings) with a one-boolean switch between the broken and the fixed behavior.
+settings) with a `--broken` switch between the broken and the fixed behavior.
 
 ## Limitations
 
-- The guard validates the authority **once at startup**. If the identity provider goes down *after*
-  startup, the runtime metadata logging (Option 2/3) keeps you informed; requests fail closed regardless.
+- The guard validates the authority **once at startup**; requests keep failing closed (401) whenever
+  tokens cannot be validated. The runtime metadata logging (Option 2/3) reports retrieval failures
+  that **surface** — once IdentityModel has loaded a healthy configuration, its last-known-good
+  behavior serves the cached metadata without throwing, so an identity-provider outage *after* a
+  healthy start produces no Error log (requests are unaffected while the cached config is valid).
 - The metadata is fetched one extra time at startup (which also warms the configuration cache).
 - `AddJwtBearerHardening` must be registered **after** `AddJwtBearer`.
 
