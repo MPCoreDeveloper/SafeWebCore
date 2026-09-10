@@ -69,15 +69,10 @@ internal static class JwtBearerConfigurationValidator
             issues.Add("Issuer validation is enabled but no ValidIssuer(s) are configured and no authority metadata is used to resolve the issuer.");
         }
 
-        if (parameters.ValidAlgorithms is { } algorithms)
+        if (parameters.ValidAlgorithms is { } algorithms
+            && algorithms.Any(algorithm => string.Equals(algorithm, "none", StringComparison.OrdinalIgnoreCase)))
         {
-            foreach (var algorithm in algorithms)
-            {
-                if (string.Equals(algorithm, "none", StringComparison.OrdinalIgnoreCase))
-                {
-                    issues.Add("The algorithm 'none' must not be allowed in ValidAlgorithms.");
-                }
-            }
+            issues.Add("The algorithm 'none' must not be allowed in ValidAlgorithms.");
         }
     }
 }

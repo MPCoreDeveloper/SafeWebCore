@@ -25,6 +25,16 @@ internal static class JwtBearerHardeningApplication
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(hardening);
 
+        ApplyDefaultValidationRules(options, hardening);
+        ApplyAlgorithmRestrictions(options, hardening);
+        ApplyIssuerAndAudience(options, hardening);
+
+        var existing = options.Events.OnTokenValidated;
+        options.Events.OnTokenValidated = context => OnTokenValidatedAsync(context, existing, hardening);
+    }
+
+    private static void ApplyDefaultValidationRules(JwtBearerOptions options, JwtBearerHardeningOptions hardening)
+    {
         var parameters = options.TokenValidationParameters;
 
         if (hardening.RequireSignedTokens)
@@ -48,20 +58,29 @@ internal static class JwtBearerHardeningApplication
                 ? hardening.MaximumClockSkew
                 : TimeSpan.FromTicks(Math.Min(parameters.ClockSkew.Ticks, hardening.MaximumClockSkew.Ticks));
         }
+    }
 
-        if (hardening.AllowedAlgorithms.Count > 0)
+    private static void ApplyAlgorithmRestrictions(JwtBearerOptions options, JwtBearerHardeningOptions hardening)
+    {
+        if (hardening.AllowedAlgorithms.Count == 0)
         {
-            foreach (var algorithm in hardening.AllowedAlgorithms)
-            {
-                if (string.Equals(algorithm, "none", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException(
-                        "The algorithm 'none' must not be allowed in JwtBearerHardeningOptions.AllowedAlgorithms.");
-                }
-            }
-
-            parameters.ValidAlgorithms = hardening.AllowedAlgorithms.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return;
         }
+
+        if (hardening.AllowedAlgorithms.Any(algorithm => string.Equals(algorithm, "none", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                "The algorithm 'none' must not be allowed in JwtBearerHardeningOptions.AllowedAlgorithms.");
+        }
+
+        options.TokenValidationParameters.ValidAlgorithms = hardening.AllowedAlgorithms
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static void ApplyIssuerAndAudience(JwtBearerOptions options, JwtBearerHardeningOptions hardening)
+    {
+        var parameters = options.TokenValidationParameters;
 
         if (hardening.ValidateIssuer)
         {
@@ -81,9 +100,6 @@ internal static class JwtBearerHardeningApplication
                 parameters.ValidAudiences = Merge(parameters.ValidAudiences, hardening.ValidAudiences);
             }
         }
-
-        var existing = options.Events.OnTokenValidated;
-        options.Events.OnTokenValidated = context => OnTokenValidatedAsync(context, existing, hardening);
     }
 
     /// <summary>
@@ -113,33 +129,38 @@ internal static class JwtBearerHardeningApplication
             return;
         }
 
+        var failure = FindConstraintViolation(token, hardening);
+        if (failure is not null)
+        {
+            context.Fail(failure);
+        }
+    }
+
+    private static string? FindConstraintViolation(SecurityToken token, JwtBearerHardeningOptions hardening)
+    {
         if (hardening.RequireTokenType)
         {
             var type = GetHeaderValue(token, TypHeader);
             if (string.IsNullOrWhiteSpace(type)
                 || !hardening.AllowedTokenTypes.Any(candidate => string.Equals(candidate, type, StringComparison.OrdinalIgnoreCase)))
             {
-                context.Fail($"The JWT typ header '{type}' is not allowed by SafeWebCore.JwtBearer hardening.");
-                return;
+                return $"The JWT typ header '{type}' is not allowed by SafeWebCore.JwtBearer hardening.";
             }
         }
 
         if (hardening.RequireJwtId && string.IsNullOrWhiteSpace(token.Id))
         {
-            context.Fail("The JWT does not contain a jti (JWT ID) claim required by SafeWebCore.JwtBearer hardening.");
-            return;
+            return "The JWT does not contain a jti (JWT ID) claim required by SafeWebCore.JwtBearer hardening.";
         }
 
         if (hardening.RequireNotBefore && token.ValidFrom == default)
         {
-            context.Fail("The JWT does not contain an nbf (not-before) claim required by SafeWebCore.JwtBearer hardening.");
-            return;
+            return "The JWT does not contain an nbf (not-before) claim required by SafeWebCore.JwtBearer hardening.";
         }
 
         if (hardening.RequireIssuedAt && GetIssuedAt(token) == default)
         {
-            context.Fail("The JWT does not contain an iat (issued-at) claim required by SafeWebCore.JwtBearer hardening.");
-            return;
+            return "The JWT does not contain an iat (issued-at) claim required by SafeWebCore.JwtBearer hardening.";
         }
 
         if (hardening.MaximumTokenLifetime is { } maximum
@@ -148,9 +169,10 @@ internal static class JwtBearerHardeningApplication
             && token.ValidTo != default
             && token.ValidTo - token.ValidFrom > maximum)
         {
-            context.Fail(
-                $"The JWT lifetime ({token.ValidTo - token.ValidFrom}) exceeds the maximum of {maximum} configured by SafeWebCore.JwtBearer hardening.");
+            return $"The JWT lifetime ({token.ValidTo - token.ValidFrom}) exceeds the maximum of {maximum} configured by SafeWebCore.JwtBearer hardening.";
         }
+
+        return null;
     }
 
     private static string[] Merge(IEnumerable<string>? existing, IList<string> additions)

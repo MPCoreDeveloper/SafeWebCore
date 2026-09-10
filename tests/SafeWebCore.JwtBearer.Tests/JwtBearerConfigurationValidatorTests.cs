@@ -32,7 +32,7 @@ public sealed class JwtBearerConfigurationValidatorTests
     [Fact]
     public void FindIssuesReportsRelativeAuthority()
     {
-        var options = new JwtBearerOptions { Authority = "/relative/metadata" };
+        var options = new JwtBearerOptions { Authority = "login.example.com/tenant/v2.0" };
 
         var issues = JwtBearerConfigurationValidator.FindIssues(options);
 

@@ -92,7 +92,7 @@ public sealed class JwtAuthorityValidationGuardTests
 
     private sealed class FakeManager(Func<Task<OpenIdConnectConfiguration>> get) : IConfigurationManager<OpenIdConnectConfiguration>
     {
-        public Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancellationToken) => get();
+        public Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancel) => get();
 
         public void RequestRefresh()
         {

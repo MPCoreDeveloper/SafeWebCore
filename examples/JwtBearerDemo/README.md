@@ -47,20 +47,24 @@ does not take the app down.
 
 ```bash
 cd examples/JwtBearerDemo
+
+# FIXED mode (default): the app refuses to start because the authority 400s
 dotnet run
+
+# BROKEN mode: the stock behavior from issue #67991 - app starts, everything 401s silently
+dotnet run -- --broken
 ```
 
 ### See the broken behavior first
 
-1. In [`Program.cs`](Program.cs) set `const bool enableFix = false;`.
-2. `dotnet run` — the app starts and logs `Application started`.
-3. Send the request from [`JwtBearerDemo.http`](JwtBearerDemo.http) (VS Code REST Client).  
+1. `dotnet run -- --broken` — the app starts and logs `Application started`.
+2. Send the request from [`JwtBearerDemo.http`](JwtBearerDemo.http) (VS Code REST Client).  
    → **`401`**, and no `Error`/`Warning` in the console.
 
 ### Then apply the fix
 
-1. Set `const bool enableFix = true;`.
-2. `dotnet run` — startup now hits the metadata endpoint, receives **HTTP 400**, and stops:
+1. `dotnet run` (default, guard enabled).
+2. Startup hits the metadata endpoint, receives **HTTP 400**, and stops:
 
 ```text
 Unhandled exception. System.InvalidOperationException: The JWT authority for scheme 'Bearer'
@@ -68,8 +72,9 @@ is misconfigured (HTTP 4xx from 'https://login.microsoftonline.com/organisations
 Fix the Authority/MetadataAddress before starting.
 ```
 
-You can also try `AddJwtBearerAuthorityValidation(o => o.FailFast = false)` to keep the app
-running while logging an `Error` with the same information.
+You can also try `AddJwtBearerAuthorityValidation(o => o.FailFast = false)` in
+[`Program.cs`](Program.cs) to keep the app running while logging an `Error` with the same
+information.
 
 ## What this demo teaches
 

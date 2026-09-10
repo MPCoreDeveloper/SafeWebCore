@@ -8,18 +8,17 @@ var builder = WebApplication.CreateBuilder(args);
 // reported by Stephan van Rooij (@svrooij)
 //     https://github.com/dotnet/aspnetcore/issues/67991
 //
-// BROKEN  (enableFix = false): the authority is misspelled
-//     (https://login.microsoftonline.com/organisations/v2.0). The app starts
-//     and runs normally, every request returns 401 invalid_token, and nothing
-//     rises above the default Microsoft.AspNetCore: Warning log level.
+// FIXED (default): the SafeWebCore guard eagerly validates the authority metadata
+//     at startup. HTTP 4xx from the metadata endpoint (the permanent
+//     misconfiguration) stops the application with a clear error, or logs an Error
+//     if you prefer to keep the app running so all requests fail closed until the
+//     authority is fixed.
 //
-// FIXED   (enableFix = true): the SafeWebCore guard eagerly validates the
-//     authority metadata at startup. HTTP 4xx from the metadata endpoint
-//     (the permanent misconfiguration) stops the application with a clear
-//     error, or logs an Error if you prefer to keep the app running so all
-//     requests fail closed until the authority is fixed.
+// BROKEN (dotnet run -- --broken): the guard is skipped. The misspelled authority
+//     lets the app start and run normally, every request returns 401 invalid_token,
+//     and nothing rises above the default Microsoft.AspNetCore: Warning log level.
 // ============================================================================
-const bool enableFix = true; // <-- flip to false to see the broken behavior
+var brokenMode = args.Contains("--broken");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -55,13 +54,13 @@ builder.Services
         };
     });
 
-if (enableFix)
+if (!brokenMode)
 {
     // SafeWebCore.JwtBearer fix
     // ------------------------
     // Eagerly loads the OpenID Connect metadata at startup so a broken authority is
     // never a silent availability incident. FailFast = true makes a permanent
-    // misconfiguration (HTTP 4xx) fail the startup, exactl as requested in #67991.
+    // misconfiguration (HTTP 4xx) fail the startup, exactly as requested in #67991.
     // Set FailFast = false to keep the app running with a loud Error log instead.
     builder.Services.AddJwtBearerAuthorityValidation(options => options.FailFast = true);
 }
@@ -76,4 +75,4 @@ app.UseAuthorization();
 app.MapGet("/weatherforecast", () => Results.Ok(new { forecast = "Sunny" }))
     .RequireAuthorization();
 
-app.Run();
+await app.RunAsync();

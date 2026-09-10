@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,7 +22,6 @@ public sealed class StephanReproIntegrationTests
 {
     private const string FaultyAuthority = "https://login.microsoftonline.com/organisations/v2.0";
     private const string CorrectAuthority = "https://login.microsoftonline.com/organizations/v2.0";
-    private const string FakeToken = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdGVwaGFuLXRva2VuIn0.abc";
 
     private const string FakeOpenIdConfiguration = """
         {
@@ -41,7 +41,7 @@ public sealed class StephanReproIntegrationTests
 
         var client = app.GetTestServer().CreateClient();
         var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", FakeToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", CreateFaultyToken());
 
         var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
@@ -133,6 +133,17 @@ public sealed class StephanReproIntegrationTests
         app.MapGet("/weatherforecast", () => Results.Ok(new { forecast = "sunny" })).RequireAuthorization();
         return app;
     }
+
+    private static string CreateFaultyToken()
+    {
+        var header = Base64Url(Encoding.UTF8.GetBytes("{\"alg\":\"RS256\"}"));
+        var payload = Base64Url(Encoding.UTF8.GetBytes("{\"sub\":\"stefan-token\"}"));
+        return $"{header}.{payload}.not-a-real-signature";
+    }
+
+    private static string Base64Url(byte[] bytes)
+        => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
 
     private sealed class StubHttpMessageHandler(HttpStatusCode statusCode, string content) : HttpMessageHandler
     {
