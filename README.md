@@ -42,7 +42,7 @@
 
 - 📈 **Opt-in metrics** — `System.Diagnostics.Metrics` counters for core middleware and fraud detection
 - 🚨 **Fraud action pipeline** — `IFraudEventSink` / `FraudEvent` for reacting to fraud analysis results (logging, webhooks, custom actions)
-- 📦 **Companion packages** — `SafeWebCore.FraudDetection`, `SafeWebCore.Analyzers` (preview), and `SafeWebCore.Testing` (preview)
+- 📦 **Companion packages** — `SafeWebCore.JwtBearer`, `SafeWebCore.FraudDetection`, `SafeWebCore.Analyzers` (preview), and `SafeWebCore.Testing` (preview)
 - 📖 **Recipe docs** — practical integration guides under `docs/recipes/`
 - ✅ **Actionable startup validation** — remediation guidance for CSP mode, path prefixes, additional headers, and reporting endpoints
 
@@ -390,6 +390,40 @@ cd examples/ApiService && dotnet run
 ```
 
 See **[examples/README.md](examples/README.md)** for a detailed overview and feature matrix.
+
+---
+
+## 🔐 SafeWebCore.JwtBearer (companion module)
+
+[![NuGet](https://img.shields.io/nuget/v/SafeWebCore.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore.JwtBearer)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/SafeWebCore.JwtBearer.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore.JwtBearer)
+
+Makes a **misconfigured or unreachable JWT authority fail loud before your users ever see a 401**,
+and optionally hardens your token validation. It solves [dotnet/aspnetcore#67991](https://github.com/dotnet/aspnetcore/issues/67991)
+(reported by **Stephan van Rooij**, milestone **".NET 12 Planning"**) today, on .NET 10:
+
+- ⚡ **Fail fast or fail loud at startup** — a broken OpenID Connect authority (HTTP 4xx) stops the
+  application with a clear error, or logs at `Error`, instead of silently returning `401` for
+  everything with nothing in the logs.
+- 🧪 **Static configuration checks** — HTTPS authority, audience/issuer consistency, `alg: none` rejected.
+- 🛡️ **Token hardening** — require signed tokens, algorithm allow-list, `typ` header checks, audience/issuer
+  enforcement, max clock skew / token lifetime, `jti`/`nbf`/`iat`.
+- 🔁 **Runtime metadata logging** with optional **periodic re-validation** and **empty-JWKS detection**
+  (`RequireSigningKeys`).
+
+```bash
+dotnet add package SafeWebCore.JwtBearer
+```
+
+```csharp
+// One-liner: AddJwtBearer + hardening + startup authority validation (fail fast by default)
+builder.Services.AddSafeWebCoreJwtBearer(
+    o => o.Authority = "https://login.microsoftonline.com/organizations/v2.0",
+    hardening => hardening.MaximumTokenLifetime = TimeSpan.FromHours(1));
+```
+
+Full API and options: **[`src/SafeWebCore.JwtBearer/README.md`](src/SafeWebCore.JwtBearer/README.md)** ·
+Try it live: [`examples/JwtBearerDemo/`](examples/JwtBearerDemo/)
 
 ---
 
