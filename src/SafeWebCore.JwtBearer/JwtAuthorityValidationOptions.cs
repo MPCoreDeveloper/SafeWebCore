@@ -17,6 +17,7 @@ public sealed class JwtAuthorityValidationOptions
     /// (requests still fail closed with 401 until the authority is fixed).
     /// </summary>
     public bool FailFast { get; set; }
+
     /// <summary>
     /// When true (default), the guard also runs deterministic, network-free configuration checks
     /// at startup: the authority/metadata address must be an absolute HTTPS Uri when
@@ -26,5 +27,21 @@ public sealed class JwtAuthorityValidationOptions
     /// is set, throw at startup.
     /// </summary>
     public bool EnforceStaticConfigurationChecks { get; set; } = true;
+
+    /// <summary>
+    /// When true (default), a successfully retrieved discovery document that contains **no signing
+    /// keys** (empty JWKS) is treated as a permanent configuration error: logged at Error and thrown
+    /// when <see cref="FailFast"/> is set. Set to false to downgrade this to a Warning for authorities
+    /// that intentionally publish no keys.
+    /// </summary>
+    public bool RequireSigningKeys { get; set; } = true;
+
+    /// <summary>
+    /// When set, the authority metadata is **re-validated on this interval** while the application is
+    /// running (a background timer probes the metadata endpoint). Periodic failures are logged at Error
+    /// (permanent, HTTP 4xx) or Warning (transient) and never throw, so a running server is never taken
+    /// down by a health check. Null (default) disables periodic re-validation.
+    /// </summary>
+    public TimeSpan? PeriodicValidationInterval { get; set; }
 
 }
