@@ -7,6 +7,10 @@ SafeWebCore.JwtBearer.JwtAuthorityValidationGuard.StopAsync(System.Threading.Can
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.EnforceStaticConfigurationChecks.get -> bool
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.EnforceStaticConfigurationChecks.set -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.PeriodicValidationInterval.get -> System.TimeSpan?
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.PeriodicValidationInterval.set -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.RequireSigningKeys.get -> bool
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.RequireSigningKeys.set -> void
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.FailFast.get -> bool
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.FailFast.set -> void
 SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.JwtAuthorityValidationOptions() -> void

@@ -94,10 +94,19 @@ builder.Services.AddSafeWebCoreJwtBearer(
 | `Scheme` | `Bearer` | The JWT bearer authentication scheme to validate. |
 | `FailFast` | `false` | When true, a permanent (HTTP 4xx) authority failure **throws at startup**. |
 | `EnforceStaticConfigurationChecks` | `true` | Runs deterministic, network-free checks: absolute HTTPS authority (when `RequireHttpsMetadata` is on), audience must be configured when validation is enabled, issuer required when no metadata resolves it, `none` algorithm rejected. |
+| `RequireSigningKeys` | `true` | A discovery document that loads but contains **no signing keys** (empty JWKS) is a permanent configuration error: `Error` log and (with `FailFast`) a startup throw. Set to `false` to only log a `Warning`. |
+| `PeriodicValidationInterval` | `null` | When set, the authority metadata is **re-validated on this interval** while the app runs. Periodic failures never throw — permanent ones log `Error`, transient ones `Warning` — so a running server is never killed by a health check. |
+
 
 **4xx is permanent** (typo, unknown tenant, revoked metadata) → `Error` log and, with `FailFast`,
 a startup crash. **Everything else** (5xx, timeout, DNS) is transient → `Warning` log, the app
 starts, and requests fail closed (401) until the identity provider is reachable.
+
+A **200 response without signing keys** (empty JWKS) is permanent too: logged at `Error` and, with
+`FailFast`, a startup throw. Set `RequireSigningKeys = false` to downgrade it to a `Warning`.
+Setting `PeriodicValidationInterval` re-probes the endpoint while the app runs — important because
+IdentityModel's last-known-good cache otherwise masks metadata failures once a healthy configuration
+was loaded.
 
 ## Token hardening (`JwtBearerHardeningOptions`)
 
@@ -149,8 +158,9 @@ settings) with a `--broken` switch between the broken and the fixed behavior.
 - The guard validates the authority **once at startup**; requests keep failing closed (401) whenever
   tokens cannot be validated. The runtime metadata logging (Option 2/3) reports retrieval failures
   that **surface** — once IdentityModel has loaded a healthy configuration, its last-known-good
-  behavior serves the cached metadata without throwing, so an identity-provider outage *after* a
-  healthy start produces no Error log (requests are unaffected while the cached config is valid).
+  behavior serves the cached metadata without throwing. To actively detect an identity-provider
+  outage after a healthy start, set `PeriodicValidationInterval` (background re-validation that
+  never throws; permanent failures log at `Error`, transient at `Warning`).
 - The metadata is fetched one extra time at startup (which also warms the configuration cache).
 - `AddJwtBearerHardening` must be registered **after** `AddJwtBearer`.
 
