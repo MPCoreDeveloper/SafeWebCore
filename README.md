@@ -38,6 +38,8 @@
 - 🔌 **Extensible** — add custom `IHeaderPolicy` implementations for any header
 - 📊 **CSP violation reporting** — built-in middleware for `/csp-report` endpoint using Reporting API v1
 - 🔍 **Diagnostics preview** — `MapSafeWebCoreDiagnostics(...)` for an opt-in JSON preview of effective headers, path-policy resolution, and CSP mode
+- 🔐 **JWT authority validation** — opt-in `SafeWebCore.JwtBearer` companion module turns a broken JWT authority into a fail-fast startup error or a loud Error log (solves [dotnet/aspnetcore#67991](https://github.com/dotnet/aspnetcore/issues/67991), reported by Stephan van Rooij), plus optional token hardening
+
 - 📈 **Opt-in metrics** — `System.Diagnostics.Metrics` counters for core middleware and fraud detection
 - 🚨 **Fraud action pipeline** — `IFraudEventSink` / `FraudEvent` for reacting to fraud analysis results (logging, webhooks, custom actions)
 - 📦 **Companion packages** — `SafeWebCore.FraudDetection`, `SafeWebCore.Analyzers` (preview), and `SafeWebCore.Testing` (preview)
@@ -375,6 +377,8 @@ Three complete, runnable ASP.NET Core applications demonstrating different integ
 | [**MinimalApi**](examples/MinimalApi/) | Minimal API | One-line A+ setup, inline nonce, CSP reporting, health probes |
 | [**MvcApp**](examples/MvcApp/) | MVC + Razor Views | Typed policy builders, path policies, nonce TagHelpers, controller attributes |
 | [**ApiService**](examples/ApiService/) | Web API Controllers | Custom CSP report sink, endpoint overrides, API preset |
+| [**JwtBearerDemo**](examples/JwtBearerDemo/) | Minimal API + JWT | Fixed the dotnet/aspnetcore#67991 silent-401 bug: broken vs. fail-fast authority startup |
+
 
 Each example is fully functional out of the box — just `dotnet run` from the example directory.
 

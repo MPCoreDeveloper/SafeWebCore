@@ -1,0 +1,47 @@
+#nullable enable
+SafeWebCore.JwtBearer.Extensions.JwtAuthorityValidationExtensions
+SafeWebCore.JwtBearer.JwtAuthorityValidationGuard
+SafeWebCore.JwtBearer.JwtAuthorityValidationGuard.JwtAuthorityValidationGuard(Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions!>! jwtOptions, Microsoft.Extensions.Options.IOptions<SafeWebCore.JwtBearer.JwtAuthorityValidationOptions!>! options, Microsoft.Extensions.Logging.ILogger<SafeWebCore.JwtBearer.JwtAuthorityValidationGuard!>! logger, Microsoft.Extensions.Options.IOptions<SafeWebCore.JwtBearer.JwtBearerHardeningOptions!>? hardeningOptions = null) -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationGuard.StartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+SafeWebCore.JwtBearer.JwtAuthorityValidationGuard.StopAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.EnforceStaticConfigurationChecks.get -> bool
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.EnforceStaticConfigurationChecks.set -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.FailFast.get -> bool
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.FailFast.set -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.JwtAuthorityValidationOptions() -> void
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.Scheme.get -> string?
+SafeWebCore.JwtBearer.JwtAuthorityValidationOptions.Scheme.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.AllowedAlgorithms.get -> System.Collections.Generic.IList<string!>!
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.AllowedTokenTypes.get -> System.Collections.Generic.IList<string!>!
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.EnableRuntimeMetadataLogging.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.EnableRuntimeMetadataLogging.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.JwtBearerHardeningOptions() -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.MaximumClockSkew.get -> System.TimeSpan
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.MaximumClockSkew.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.MaximumTokenLifetime.get -> System.TimeSpan?
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.MaximumTokenLifetime.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireExpirationTime.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireExpirationTime.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireIssuedAt.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireIssuedAt.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireJwtId.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireJwtId.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireNotBefore.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireNotBefore.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireSignedTokens.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireSignedTokens.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireTokenType.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.RequireTokenType.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateAudience.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateAudience.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateIssuer.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateIssuer.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateLifetime.get -> bool
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidateLifetime.set -> void
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidAudiences.get -> System.Collections.Generic.IList<string!>!
+SafeWebCore.JwtBearer.JwtBearerHardeningOptions.ValidIssuers.get -> System.Collections.Generic.IList<string!>!
+static SafeWebCore.JwtBearer.Extensions.JwtAuthorityValidationExtensions.AddJwtBearerAuthorityValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SafeWebCore.JwtBearer.JwtAuthorityValidationOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.JwtBearer.Extensions.JwtAuthorityValidationExtensions.AddJwtBearerHardening(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string? scheme = null, System.Action<SafeWebCore.JwtBearer.JwtBearerHardeningOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static SafeWebCore.JwtBearer.Extensions.JwtAuthorityValidationExtensions.AddSafeWebCoreJwtBearer(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions!>! configureJwt, System.Action<SafeWebCore.JwtBearer.JwtBearerHardeningOptions!>? configureHardening = null, System.Action<SafeWebCore.JwtBearer.JwtAuthorityValidationOptions!>? configureGuard = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -15,6 +15,8 @@ SafeWebCore/
 ├── src/                          # Shipable libraries
 │   ├── SafeWebCore/              # Core security-headers middleware (NuGet)
 │   ├── SafeWebCore.FraudDetection/  # Optional fraud module (NuGet candidate)
+│   ├── SafeWebCore.JwtBearer/    # Optional JWT authority validation + hardening module (NuGet)
+
 │   ├── SafeWebCore.Analyzers/    # Roslyn analyzers (NuGet preview candidate)
 │   └── SafeWebCore.Testing/      # Test helpers (NuGet preview candidate)
 ├── tests/                        # Unit / integration tests
@@ -37,6 +39,8 @@ SafeWebCore/
 |---------|------|
 | SafeWebCore | `src/SafeWebCore/SafeWebCore.csproj` |
 | SafeWebCore.FraudDetection | `src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj` |
+| SafeWebCore.JwtBearer | `src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj` |
+
 | SafeWebCore.Analyzers | `src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj` |
 | SafeWebCore.Testing | `src/SafeWebCore.Testing/SafeWebCore.Testing.csproj` |
 | SafeWebCore.Tests | `tests/SafeWebCore.Tests/SafeWebCore.Tests.csproj` |
@@ -475,16 +479,22 @@ SafeWebCore.Tests ──────────────► SafeWebCore
 SafeWebCore.Testing ────────────► SafeWebCore
 SafeWebCore.Benchmarks ─────────► SafeWebCore
 examples/* ─────────────────────► SafeWebCore
+SafeWebCore.JwtBearer.Tests ► SafeWebCore.JwtBearer
+
 
 SafeWebCore.FraudDetection.Tests ► SafeWebCore.FraudDetection
 
 SafeWebCore.Analyzers  (standalone Roslyn package)
 SafeWebCore.FraudDetection  (standalone; no dependency on SafeWebCore)
+SafeWebCore.JwtBearer  (standalone; depends on Microsoft.AspNetCore.Authentication.JwtBearer)
+
 ```
 
 ---
 
 # Project maturity matrix
+
+| SafeWebCore.JwtBearer | Production-ready code, unpublished | **Yes** (first release candidate) | `1.0.0` after checklist (packaging/CI) |
 
 | Project | Maturity | Ship as NuGet? | Recommended version policy |
 |---------|----------|----------------|----------------------------|

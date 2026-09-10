@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>SafeWebCore.JwtBearer</RootNamespace>
+  </PropertyGroup>
+
+  <!-- NuGet Package Metadata -->
+  <PropertyGroup>
+    <PackageId>SafeWebCore.JwtBearer</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>MPCoreDeveloper</Authors>
+    <Company>Posseth Software</Company>
+    <Product>SafeWebCore.JwtBearer</Product>
+    <Description>
+      Optional companion module for SafeWebCore that validates the JWT authentication
+      authority at startup. Detects a misconfigured or unreachable OpenID Connect authority
+      (for example a typo such as "organisations") with a loud log or a fail-fast startup,
+      instead of a silent 100% 401 availability incident.
+    </Description>
+    <PackageTags>jwt;bearer;oidc;authority;startup-validation;security;aspnetcore;safeweb</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MPCoreDeveloper/SafeWebCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MPCoreDeveloper/SafeWebCore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
+  </ItemGroup>
+
+  <!-- Public API surface tracking for backward compatibility (additive, build-time only) -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <InternalsVisibleTo Include="SafeWebCore.JwtBearer.Tests" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GeneratePublicApiFiles>true</GeneratePublicApiFiles>
+    <WarningsAsErrors>$(WarningsAsErrors);RS0037</WarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);RS0016;RS0017</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);RS0027</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\icon.png" Link="icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>true</Pack>
+    </None>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
