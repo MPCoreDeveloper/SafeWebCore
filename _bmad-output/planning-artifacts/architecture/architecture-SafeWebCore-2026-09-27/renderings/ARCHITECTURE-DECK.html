@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafeWebCore — Architecture Spine walkthrough</title>
+<style>
+  :root{
+    --bg:#0a0f1e; --panel:#121a33; --panel2:#0e1730; --line:#26355c;
+    --ink:#e9eefb; --muted:#9aa8c7; --accent:#5ad1ff; --accent2:#8b7dff;
+    --ok:#4ade80; --warn:#fbbf24; --bad:#fb7185; --chip:#1a2445;
+    --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  code,kbd{font-family:var(--mono);font-size:.88em;background:#18213c;border:1px solid var(--line);
+    border-radius:5px;padding:1px 5px;color:#cfe0ff}
+  h1,h2,h3{margin:0 0 .4rem}
+  h2{font-size:1.5rem;letter-spacing:-.01em}
+  h3{font-size:1.05rem}
+  .sub{color:var(--muted);margin:.1rem 0 1rem}
+  .bar{position:sticky;top:0;z-index:20;display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+    padding:10px 20px;background-color:#0b1224;border-bottom:1px solid var(--line)}
+  .bar .brand{font-weight:700;letter-spacing:.02em}
+  .bar .brand span{color:var(--accent)}
+  .bar .meta{color:var(--muted);font-size:.82rem;margin-left:auto;text-align:right}
+  .bar .meta b{color:var(--ink);font-weight:600}
+  .toc{display:flex;gap:6px;flex-wrap:wrap}
+  .toc button{background:var(--chip);color:var(--muted);border:1px solid var(--line);border-radius:999px;
+    padding:4px 11px;font-size:.78rem;cursor:pointer}
+  .toc button:hover{color:var(--ink);border-color:var(--accent)}
+  .toc button.on{background:var(--accent);color:#06203a;border-color:var(--accent);font-weight:600}
+  main{max-width:1180px;margin:0 auto;padding:26px 20px 120px}
+  .slide{display:none;animation:fade .18s ease-out}
+  .slide.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;margin:0 0 14px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .tag{display:inline-block;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);background:var(--chip)}
+  .tag.ok{color:#0b2c18;background:var(--ok);border-color:var(--ok)}
+  .tag.warn{color:#3a2a04;background:var(--warn);border-color:var(--warn)}
+  .tag.bad{color:#3d0714;background:var(--bad);border-color:var(--bad)}
+  .tag.core{color:#04283a;background:var(--accent);border-color:var(--accent)}
+  .tag.fraud{color:#20123d;background:var(--accent2);border-color:var(--accent2)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.9rem}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+  ul.tight{margin:.3rem 0 .3rem 1.1rem;padding:0}
+  ul.tight li{margin:.18rem 0}
+  svg{max-width:100%;height:auto;display:block}
+  svg text{font-family:inherit;fill:var(--ink)}
+  .note{border-left:3px solid var(--warn);background:#241d0a55;padding:10px 14px;border-radius:0 10px 10px 0;
+    font-size:.9rem;color:#f6e6bf}
+  .note.bad{border-color:var(--bad);background:#2a0f1a55;color:#ffd9e1}
+  .note.ok{border-color:var(--ok);background:#0c2a1a55;color:#d6ffe6}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}
+  tr:last-child td{border-bottom:0}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .chips button{background:var(--chip);border:1px solid var(--line);color:var(--muted);border-radius:999px;
+    padding:5px 13px;font-size:.82rem;cursor:pointer}
+  .chips button.on{background:var(--ink);color:#0a0f1e;border-color:var(--ink);font-weight:600}
+  .ad{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:14px 16px}
+  .ad h3{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:.98rem}
+  .ad .id{font-family:var(--mono);color:var(--accent);font-weight:700}
+  .ad .binds{color:var(--muted);font-size:.8rem;margin:.25rem 0 .5rem}
+  .ad .rule{font-size:.84rem;color:#dbe5fb}
+  .ad.hide{display:none}
+  .flow{counter-reset:s;list-style:none;margin:0;padding:0}
+  .flow li{position:relative;padding:10px 14px 10px 52px;border:1px solid var(--line);border-radius:11px;
+    background:var(--panel2);margin-bottom:8px;font-size:.88rem}
+  .flow li:before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:9px;width:24px;height:24px;
+    border-radius:50%;background:var(--accent);color:#06203a;font-weight:700;font-size:.8rem;
+    display:flex;align-items:center;justify-content:center}
+  .flow li small{display:block;color:var(--muted)}
+  details{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:11px 14px;margin-bottom:9px}
+  details[open]{background:linear-gradient(180deg,var(--panel),var(--panel2))}
+  summary{cursor:pointer;font-weight:600;font-size:.93rem}
+  summary::marker{color:var(--accent)}
+  details .body{margin-top:10px;font-size:.89rem;color:#dbe5fb}
+  .prec{display:grid;gap:8px}
+  .prec div{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;
+    border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:9px 12px;font-size:.86rem}
+  .prec b{color:var(--accent);font-family:var(--mono)}
+  .prec .win{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .footer{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;gap:12px;align-items:center;
+    padding:9px 20px;background:#0b1224f2;border-top:1px solid var(--line)}
+  .footer button{background:var(--chip);border:1px solid var(--line);color:var(--ink);border-radius:9px;
+    padding:6px 14px;cursor:pointer;font-size:.85rem}
+  .footer button:hover{border-color:var(--accent)}
+  .prog{flex:1;height:5px;border-radius:999px;background:#1a2445;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .18s}
+  .count{font-family:var(--mono);color:var(--muted);font-size:.82rem}
+  @media print{
+    .bar,.footer{position:static;background:none}
+    .slide{display:block!important;page-break-after:always}
+    .toc,.chips{display:none}
+    body{background:#fff;color:#111}
+    .card,.ad,.slide{background:#fff;border-color:#ccc}
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">SafeWebCore <span>/ architecture spine</span></div>
+  <nav class="toc" id="toc" aria-label="Slides"></nav>
+  <div class="meta">
+    <b>15 decisions</b> · 5 packages · ratified <b>2026-09-27</b><br>
+    source: <code>ARCHITECTURE-SPINE.md</code> (status: final)
+  </div>
+</header>
+
+<main id="deck">
+<section class="slide" data-title="Start">
+  <h1>What keeps five separately-built packages consistent</h1>
+  <p class="sub">A walkthrough of the ratified architecture spine. Every rule on the following slides is quoted
+    verbatim from <code>ARCHITECTURE-SPINE.md</code> — nothing here is new.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>The paradigm</h3>
+      <p><b>Layered, with ports and adapters.</b> Contracts are the ports, every implementation sits behind them,
+        and exactly one layer wires them together.</p>
+      <p class="sub" style="margin:0">The ASP.NET Core middleware pipeline is <i>one filter inside that model</i>,
+        not the organising idea. What stays consistent across the family is the contract surface, not the pipeline.</p>
+    </div>
+    <div class="card">
+      <h3>The one test that decides what belongs here</h3>
+      <p style="font-size:.94rem">If two units one level down built this independently, could they choose
+        incompatibly? Fix it in the spine only when the answer is yes, <b>and</b> the call is non-obvious,
+        <b>and</b> it is a real trade-off. Otherwise it is named under Deferred.</p>
+      <p class="sub" style="margin:0">15 decisions passed that test; 12 items did not and are listed by name.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The shape of the thing</h3>
+    <div class="grid g3">
+      <div><span class="tag core">SafeWebCore</span>
+        <p class="sub" style="margin:.4rem 0 0">Contracts, adapters, middleware, composition root, presets, tag helpers. The only package with symbols and SourceLink today.</p></div>
+      <div><span class="tag fraud">FraudDetection</span>
+        <p class="sub" style="margin:.4rem 0 0">Detectors, option groups, dispatchers, sinks, metrics. Never references SafeWebCore.</p></div>
+      <div><span class="tag">JwtBearer</span>
+        <p class="sub" style="margin:.4rem 0 0">Authority guard, hardening, logging configuration manager. Never references SafeWebCore.</p></div>
+      <div><span class="tag">Analyzers</span>
+        <p class="sub" style="margin:.4rem 0 0">SWC001–SWC004, <code>netstandard2.0</code>, build-time only. Nothing in the family depends on it.</p></div>
+      <div><span class="tag">Testing</span>
+        <p class="sub" style="margin:.4rem 0 0">Header and nonce assertions, test host bootstrap. The one allowed reference: to SafeWebCore.</p></div>
+      <div><span class="tag ok">Verified 2026-09-27</span>
+        <p class="sub" style="margin:.4rem 0 0">Build green with 25 warnings / 0 errors; 168 tests passed in 2.3 s; zero project references between the four libraries.</p></div>
+    </div>
+  </div>
+
+  <p class="sub">Navigation: <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd>; the header chips jump to a slide.</p>
+</section>
+<section class="slide" data-title="Layers">
+  <h2>The paradigm, layer by layer</h2>
+  <p class="sub">Read the arrows as "may depend on". The direction is fixed so a contract never learns about an implementation.</p>
+
+  <svg viewBox="0 0 900 372" role="img" aria-label="Layer stack: composition root depends on pipeline and adapters, and adapters depend on contracts">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#5ad1ff"/>
+      </marker>
+    </defs>
+    <rect x="150" y="20" width="660" height="52" rx="11" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="168" y="42" font-size="15" font-weight="700">Composition root</text>
+    <text x="168" y="61" font-size="11.5" fill="#9aa8c7">Extensions — the only place that registers services and adds middleware; Presets is data it consumes</text>
+
+    <rect x="150" y="96" width="660" height="52" rx="11" fill="#121a33" stroke="#26355c"/>
+    <text x="168" y="118" font-size="15" font-weight="700">Pipeline</text>
+    <text x="168" y="137" font-size="11.5" fill="#9aa8c7">Middleware — the request filter that emits headers</text>
+
+    <rect x="150" y="172" width="660" height="52" rx="11" fill="#121a33" stroke="#26355c"/>
+    <text x="168" y="194" font-size="15" font-weight="700">Adapters</text>
+    <text x="168" y="213" font-size="11.5" fill="#9aa8c7">Infrastructure, Builder, TagHelpers; in FraudDetection Infrastructure, Detection, Extensions — the internal implementations</text>
+
+    <rect x="150" y="248" width="660" height="52" rx="11" fill="#121a33" stroke="#8b7dff"/>
+    <text x="168" y="270" font-size="15" font-weight="700">Contracts (ports)</text>
+    <text x="168" y="289" font-size="11.5" fill="#9aa8c7">Abstractions, Options, Models, Constants, Metadata, Attributes — interfaces, option groups, value records, constants</text>
+
+    <rect x="150" y="320" width="660" height="40" rx="11" fill="#0e1730" stroke="#9aa8c7" stroke-dasharray="6 5"/>
+    <text x="168" y="338" font-size="12.5" fill="#9aa8c7">Distribution — SafeWebCore.Analyzers and SafeWebCore.Testing</text>
+    <text x="168" y="353" font-size="11" fill="#9aa8c7">build-time diagnostics and test helpers, outside the runtime graph</text>
+
+    <line x1="112" y1="72" x2="112" y2="92" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar)"/>
+    <line x1="112" y1="148" x2="112" y2="168" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar)"/>
+    <line x1="112" y1="224" x2="112" y2="244" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar)"/>
+  </svg>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="note ok">A new type lands in the layer that owns its concern. Infrastructure types never appear in a
+      public signature, and the pipeline never reaches into detector internals.</div>
+    <div class="card" style="margin:0">
+      <h3>Watch for</h3>
+      <ul class="tight">
+        <li>A registration appearing outside <code>Extensions</code> breaks the single composition root.</li>
+        <li>A contract reaching for an adapter is the direction reversing.</li>
+        <li>Anything depending on <code>SafeWebCore.Analyzers</code> is wrong by definition.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="slide" data-title="Packages">
+  <h2>Package boundaries</h2>
+  <p class="sub">Five packages, no sideways coupling. The red badges are the references that may never exist.</p>
+
+  <svg viewBox="0 0 900 390" role="img" aria-label="Package graph: one consumer app depends on the three runtime packages, which never reference each other">
+    <defs>
+      <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#5ad1ff"/>
+      </marker>
+      <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#9aa8c7"/>
+      </marker>
+    </defs>
+
+    <rect x="330" y="12" width="240" height="44" rx="11" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="450" y="39" font-size="13.5" text-anchor="middle" font-weight="700">Consumer ASP.NET Core app</text>
+
+    <rect x="100" y="128" width="220" height="50" rx="11" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="210" y="150" font-size="13.5" text-anchor="middle" font-weight="700">SafeWebCore</text>
+    <text x="210" y="167" font-size="10.5" text-anchor="middle" fill="#9aa8c7">contracts · adapters · pipeline · root</text>
+
+    <rect x="340" y="128" width="220" height="50" rx="11" fill="#121a33" stroke="#8b7dff"/>
+    <text x="450" y="150" font-size="13.5" text-anchor="middle" font-weight="700">SafeWebCore.FraudDetection</text>
+    <text x="450" y="167" font-size="10.5" text-anchor="middle" fill="#9aa8c7">detectors · sinks · metrics</text>
+
+    <rect x="580" y="128" width="220" height="50" rx="11" fill="#121a33" stroke="#8b7dff"/>
+    <text x="690" y="150" font-size="13.5" text-anchor="middle" font-weight="700">SafeWebCore.JwtBearer</text>
+    <text x="690" y="167" font-size="10.5" text-anchor="middle" fill="#9aa8c7">authority guard · hardening</text>
+
+    <line x1="400" y1="58" x2="216" y2="124" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar2)"/>
+    <line x1="450" y1="58" x2="450" y2="124" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar2)"/>
+    <line x1="500" y1="58" x2="684" y2="124" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar2)"/>
+
+    <circle cx="330" cy="103" r="13" fill="#2a0f1a" stroke="#fb7185"/>
+    <text x="330" y="108" font-size="15" text-anchor="middle" fill="#fb7185" font-weight="700">x</text>
+    <circle cx="570" cy="103" r="13" fill="#2a0f1a" stroke="#fb7185"/>
+    <text x="570" y="108" font-size="15" text-anchor="middle" fill="#fb7185" font-weight="700">x</text>
+    <text x="450" y="107" font-size="10.5" text-anchor="middle" fill="#fb7185">no ProjectReference, no PackageReference between the four libraries</text>
+
+    <rect x="100" y="310" width="220" height="48" rx="11" fill="#0e1730" stroke="#9aa8c7" stroke-dasharray="6 5"/>
+    <text x="210" y="332" font-size="12.5" text-anchor="middle" font-weight="700">SafeWebCore.Analyzers</text>
+    <text x="210" y="348" font-size="10.5" text-anchor="middle" fill="#9aa8c7">build-time only</text>
+
+    <rect x="340" y="310" width="220" height="48" rx="11" fill="#121a33" stroke="#26355c"/>
+    <text x="450" y="332" font-size="12.5" text-anchor="middle" font-weight="700">SafeWebCore.Testing</text>
+    <text x="450" y="348" font-size="10.5" text-anchor="middle" fill="#9aa8c7">test helpers</text>
+
+    <rect x="580" y="310" width="220" height="48" rx="11" fill="#121a33" stroke="#26355c"/>
+    <text x="690" y="332" font-size="12.5" text-anchor="middle" font-weight="700">Consumer test project</text>
+    <text x="690" y="348" font-size="10.5" text-anchor="middle" fill="#9aa8c7">xUnit v3</text>
+
+    <line x1="210" y1="184" x2="210" y2="306" stroke="#9aa8c7" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar3)"/>
+    <text x="218" y="250" font-size="10.5" fill="#9aa8c7">analyzers run at build time</text>
+    <line x1="450" y1="308" x2="308" y2="186" stroke="#5ad1ff" stroke-width="1.6" marker-end="url(#ar2)"/>
+    <text x="352" y="240" font-size="10.5" fill="#5ad1ff">the one allowed reference</text>
+    <line x1="580" y1="334" x2="562" y2="334" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar2)"/>
+    <line x1="700" y1="308" x2="322" y2="184" stroke="#5ad1ff" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ar2)"/>
+  </svg>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card" style="margin:0">
+      <h3>AD-1 — Packages are independent siblings</h3>
+      <p style="font-size:.87rem">No <code>ProjectReference</code> and no <code>PackageReference</code> from one
+        <code>SafeWebCore.*</code> package to another. One exception: <code>SafeWebCore.Testing</code> to
+        <code>SafeWebCore</code>. Shared behaviour is promoted into <code>SafeWebCore</code> as public API or
+        duplicated deliberately, never referenced sideways.</p>
+      <p class="sub" style="margin:0">Evidence: zero project references between the four libraries, verified 2026-09-27.</p>
+    </div>
+    <div class="card" style="margin:0">
+      <h3>AD-2 — One-way dependency direction, single composition root</h3>
+      <p style="font-size:.87rem">Contracts depend on nothing else in their package; adapters and the pipeline may
+        depend on contracts and on adapters; only <code>Extensions</code> composes. Nothing in the family depends on
+        <code>SafeWebCore.Analyzers</code>.</p>
+      <div class="note" style="margin-top:8px">Both rules are review-enforced today. An architecture test for layer
+        direction and sideways references is on the deferred list.</div>
+    </div>
+  </div>
+</section>
+<section class="slide" data-title="Request path">
+  <h2>One request, one emission table</h2>
+  <p class="sub">The middleware constructor materializes every options-derived value once; the request path only substitutes the nonce (AD-6).</p>
+
+  <svg viewBox="0 0 900 150" role="img" aria-label="Request lifecycle: nonce into HttpContext.Items, header emission, OnStarting removals, response">
+    <defs>
+      <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#5ad1ff"/>
+      </marker>
+    </defs>
+    <rect x="8" y="34" width="140" height="56" rx="10" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="78" y="58" font-size="13" text-anchor="middle" font-weight="700">Request</text>
+    <text x="78" y="76" font-size="10.5" text-anchor="middle" fill="#9aa8c7">path policies resolved</text>
+
+    <rect x="176" y="34" width="180" height="56" rx="10" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="266" y="58" font-size="13" text-anchor="middle" font-weight="700">NonceService</text>
+    <text x="266" y="76" font-size="10.5" text-anchor="middle" fill="#9aa8c7">Items[NetSecureHeaders.CspNonceKey]</text>
+
+    <rect x="384" y="34" width="200" height="56" rx="10" fill="#121a33" stroke="#5ad1ff"/>
+    <text x="484" y="58" font-size="13" text-anchor="middle" font-weight="700">AddSecurityHeaders</text>
+    <text x="484" y="76" font-size="10.5" text-anchor="middle" fill="#9aa8c7">the only place that writes them</text>
+
+    <rect x="612" y="34" width="176" height="56" rx="10" fill="#121a33" stroke="#26355c"/>
+    <text x="700" y="58" font-size="13" text-anchor="middle" font-weight="700">OnStarting</text>
+    <text x="700" y="76" font-size="10.5" text-anchor="middle" fill="#9aa8c7">removes Server, X-Powered-By</text>
+
+    <rect x="816" y="34" width="76" height="56" rx="10" fill="#121a33" stroke="#4ade80"/>
+    <text x="854" y="58" font-size="13" text-anchor="middle" font-weight="700">Response</text>
+    <text x="854" y="76" font-size="10.5" text-anchor="middle" fill="#4ade80">out</text>
+
+    <line x1="150" y1="62" x2="172" y2="62" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar4)"/>
+    <line x1="358" y1="62" x2="380" y2="62" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar4)"/>
+    <line x1="586" y1="62" x2="608" y2="62" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar4)"/>
+    <line x1="790" y1="62" x2="812" y2="62" stroke="#5ad1ff" stroke-width="2" marker-end="url(#ar4)"/>
+
+    <text x="8" y="20" font-size="11" fill="#9aa8c7">constructor (once): _defaultCspTemplate · BuildReportingEndpointsValue · BuildPathPolicies</text>
+    <text x="8" y="126" font-size="11" fill="#9aa8c7">per request: Replace("{nonce}", nonce, StringComparison.Ordinal) is the only mutation of a precomputed value</text>
+  </svg>
+
+  <h3 style="margin-top:18px">Emission order inside <code>AddSecurityHeaders</code></h3>
+  <div class="prec">
+    <div><b>1</b><span>The standard headers — 13 <code>AddIfEnabled</code> lines, names from <code>HeaderNames</code></span><span class="win">append</span></div>
+    <div><b>2</b><span>NEL and <code>Reporting-Endpoints</code></span><span class="win">append</span></div>
+    <div><b>3</b><span>CSP — report-only versus enforced resolves per endpoint (<code>CspModeAttribute</code>, then <code>UseCspReportOnly</code>)</span><span class="win">append · nonce substituted</span></div>
+    <div><b>4</b><span><code>AdditionalHeaders</code> — assigns through the header indexer</span><span class="win">replaces the emitted value</span></div>
+    <div><b>5</b><span><code>CustomPolicies</code> (<code>IHeaderPolicy</code>)</span><span class="win">last and documented override</span></div>
+  </div>
+
+  <div class="note bad" style="margin-top:14px">Stage 4 is the sharp edge: an <code>AdditionalHeaders</code> entry named after a
+    library-owned header replaces it — including a CSP entry, whose baked-in <code>{nonce}</code> placeholder would then
+    never be substituted. The validator only rejects duplicates <i>inside</i> <code>AdditionalHeaders</code>. This is one of
+    the five open questions below.</div>
+
+  <div class="note ok"><code>NetSecureHeadersDiagnosticsService</code> is the preview projection of the same table, not a second
+    emitter. AD-8 step 5 keeps it in lockstep — an automated check for that drift is deferred.</div>
+</section>
+<section class="slide" data-title="15 decisions">
+  <h2>The 15 decisions</h2>
+  <p class="sub">Rule text quoted verbatim from the spine. Filter by the package you are touching.</p>
+
+  <div class="chips" id="adChips">
+    <button class="on" data-f="all">All 15</button>
+    <button data-f="core">SafeWebCore</button>
+    <button data-f="fraud">FraudDetection</button>
+    <button data-f="jwt">JwtBearer</button>
+    <button data-f="analyzers">Analyzers</button>
+  </div>
+
+  <div class="grid g2" id="adList">
+
+    <div class="ad" data-layers="core fraud jwt analyzers testing">
+      <h3><span class="id">AD-1</span> Packages are independent siblings</h3>
+      <div class="binds">Binds: all five packages under <code>src/</code></div>
+      <div class="rule">no <code>ProjectReference</code> and no <code>PackageReference</code> from one
+        <code>SafeWebCore.*</code> package to another. One exception: <code>SafeWebCore.Testing</code> to
+        <code>SafeWebCore</code>. Shared behaviour is promoted into <code>SafeWebCore</code> as public API or duplicated
+        deliberately, never referenced sideways.</div>
+    </div>
+
+    <div class="ad" data-layers="core fraud jwt analyzers testing">
+      <h3><span class="id">AD-2</span> One-way dependency direction, single composition root</h3>
+      <div class="binds">Binds: all packages</div>
+      <div class="rule">contracts depend on nothing else in their package; adapters and the pipeline may depend on
+        contracts and on adapters; only <code>Extensions</code> composes. Nothing in the family depends on
+        <code>SafeWebCore.Analyzers</code>.</div>
+    </div>
+
+    <div class="ad" data-layers="core fraud jwt">
+      <h3><span class="id">AD-3</span> Additive-only public API, enforced by the PublicAPI baseline</h3>
+      <div class="binds">Binds: SafeWebCore, SafeWebCore.FraudDetection, SafeWebCore.JwtBearer</div>
+      <div class="rule">never remove or rename a symbol listed in <code>PublicAPI.Shipped.txt</code>; add intentional new
+        public API to <code>PublicAPI.Unshipped.txt</code> in the same change; keep XML documentation on all public API;
+        fix <code>RS0037</code> rather than suppressing it; a breaking change is a deliberate major-version decision,
+        never incidental. <code>SafeWebCore.Analyzers</code> and <code>SafeWebCore.Testing</code> carry no baseline.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>WarningsAsErrors: RS0037</code> and
+        <code>WarningsNotAsErrors: RS0016;RS0017</code> in the three csproj files, plus the backward-compatibility policy.</div>
+    </div>
+
+    <div class="ad" data-layers="core fraud jwt">
+      <h3><span class="id">AD-4</span> Misconfiguration fails at startup with an actionable message</h3>
+      <div class="binds">Binds: SafeWebCore, SafeWebCore.FraudDetection, SafeWebCore.JwtBearer</div>
+      <div class="rule">every option group has an <code>IValidateOptions&lt;T&gt;</code> implementation and is registered
+        with <code>.ValidateOnStart()</code>; each failure message names its scope (global or the specific path policy)
+        and ends with an explicit <code>Fix:</code>; the request path never throws for configuration problems and never
+        silently coerces a value.</div>
+    </div>
+    <div class="ad" data-layers="core fraud jwt">
+      <h3><span class="id">AD-5</span> Per-request state lives only in <code>HttpContext.Items</code></h3>
+      <div class="binds">Binds: all runtime packages</div>
+      <div class="rule">no <code>AddScoped</code> registrations. The per-request nonce is
+        <code>HttpContext.Items[NetSecureHeaders.CspNonceKey]</code>, reached through a typed <code>HttpContext</code>
+        extension. New per-request state adds its own constant key plus an accessor extension and is set before
+        <code>await next(context)</code>; a key belongs to the type that owns the feature, its string is unique across the
+        family, and callers reach it only through that type's typed accessor. Singleton services hold configuration and
+        stateless helpers, never request state.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: zero scoped registrations in <code>src/</code>;
+        <code>HttpContextExtensions.GetCspNonce</code>.</div>
+    </div>
+
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-6</span> Options-derived values are materialized once</h3>
+      <div class="binds">Binds: SafeWebCore middleware</div>
+      <div class="rule">every header value derived from options is computed in the middleware constructor, for the global
+        options and for each path policy, and is immutable afterwards. The only per-request mutation is
+        <code>Replace("{nonce}", nonce, StringComparison.Ordinal)</code>. Nothing in <code>InvokeAsync</code> rebuilds a
+        value from the options object.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>_defaultCspTemplate</code>,
+        <code>BuildReportingEndpointsValue</code> and <code>BuildPathPolicies</code> all run in the constructor.</div>
+    </div>
+
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-7</span> Exactly one header-emission table</h3>
+      <div class="binds">Binds: SafeWebCore</div>
+      <div class="rule"><code>NetSecureHeadersMiddleware.AddSecurityHeaders</code> is the only place that writes security
+        headers to a response; the only other per-response mutation is the removal of <code>Server</code> and
+        <code>X-Powered-By</code> on <code>OnStarting</code> when the options ask for it. Names come from
+        <code>HeaderNames</code>, built-ins go through <code>AddIfEnabled(enabled, name, value)</code>, and no raw
+        header-name literal appears at an emission site. A header is library-owned once a <code>HeaderNames</code>
+        constant exists and <code>AddIfEnabled</code> emits it, and <code>AdditionalHeaders</code> must not use a
+        library-owned name, because it assigns through the header indexer and would replace the emitted value. CSP
+        enforcement versus report-only resolves per endpoint (<code>CspModeAttribute</code>, then
+        <code>UseCspReportOnly</code>). Reporting stays a contract: <code>Csp.ReportTo</code> must name a group that
+        exists in <code>ReportingEndpoints</code>, and the sink path remains the documented <code>/csp-report</code>
+        endpoint. <code>CustomPolicies</code> (<code>IHeaderPolicy</code>) run last and are the documented override.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>AddSecurityHeaders</code>;
+        <code>NetSecureHeadersDiagnosticsService</code> is the preview projection of the same table, not a second
+        emitter; analyzer rules SWC003 and SWC004.</div>
+    </div>
+    <div class="ad" data-layers="core analyzers">
+      <h3><span class="id">AD-8</span> A new first-class header follows one seven-step path</h3>
+      <div class="binds">Binds: SafeWebCore, and <code>SafeWebCore.Analyzers</code> where the mistake is statically detectable</div>
+      <div class="rule">(1) a typed option or option group with a safe default; (2) a constant in <code>HeaderNames</code>;
+        (3) one <code>AddIfEnabled</code> line in <code>AddSecurityHeaders</code>; (4) inclusion in the relevant
+        <code>SecurePresets</code> set; (5) the matching <code>AddStandardHeader</code> line in the
+        <code>NetSecureHeadersDiagnosticsService</code> projection, so the preview cannot drift from what is emitted;
+        (6) the public symbols recorded in <code>PublicAPI.Unshipped.txt</code>; (7) the feature documented in
+        <code>docs/</code> with a <code>CHANGELOG.md</code> entry. Add an analyzer rule when a misuse is detectable at
+        build time.</div>
+    </div>
+
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-9</span> Path policies inherit, override explicitly, and the longest prefix wins</h3>
+      <div class="binds">Binds: SafeWebCore options</div>
+      <div class="rule">a path policy is created with <code>options.PathPolicy("/prefix", customize)</code>, which starts
+        from a clone of the global options, so only explicitly configured values differ. Prefixes normalize to a leading
+        <code>/</code>, compare case-insensitively, and the longest matching prefix wins. Duplicate prefixes after
+        normalization fail at startup.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>NetSecureHeadersOptionsExtensions.PathPolicy</code>,
+        the descending prefix sort in <code>BuildPathPolicies</code>, and the duplicate check in the validator.</div>
+    </div>
+
+    <div class="ad" data-layers="core fraud">
+      <h3><span class="id">AD-10</span> Telemetry never blocks the response and never fails the request</h3>
+      <div class="binds">Binds: SafeWebCore, SafeWebCore.FraudDetection</div>
+      <div class="rule">events go to every registered sink through a dispatcher, are awaited fire-and-forget with the
+        request's <code>CancellationToken</code>, and are never awaited inline on the response path. A sink is added with
+        <code>AddSafeWebCoreSecurityEventSink&lt;T&gt;</code> or <code>AddFraudEventSink&lt;T&gt;</code> so the default
+        sinks stay registered. The fraud dispatcher swallows a throwing sink per sink, deliberately, so that telemetry
+        cannot break detection; the security dispatcher does not catch and relies on being fire-and-forget. When touching
+        either one, keep the request path free of sink exceptions. Delivery order is registration order and therefore
+        deterministic, but nothing may depend on it and no sink may assume another has already run.</div>
+      <div class="binds" style="margin:.5rem 0 0">All three security-event call sites discard the returned task
+        (<code>_ = _eventDispatcher.EmitAsync(...)</code>). See open question 1.</div>
+    </div>
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-11</span> The environment downgrade is opt-in per registration call</h3>
+      <div class="binds">Binds: SafeWebCore registration overloads</div>
+      <div class="rule">CSP becomes report-only outside Production only through <code>AddNetSecureHeadersForEnvironment</code>
+        and <code>AddNetSecureHeadersStrictAPlusForEnvironment</code>. The plain registration and preset overloads keep the
+        configured mode in every environment. Changing this is an explicit, documented decision; analyzer rule SWC002
+        exists to flag report-only that is left on permanently.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>ApplyEnvironmentRolloutDefaults</code> is called from
+        exactly those two overloads and nowhere else.</div>
+    </div>
+
+    <div class="ad" data-layers="fraud">
+      <h3><span class="id">AD-12</span> Fraud detectors are synchronous, side-effect-free and tenant-aware</h3>
+      <div class="binds">Binds: SafeWebCore.FraudDetection</div>
+      <div class="rule"><code>IFraudDetector.Analyze(ClientFingerprintData)</code> stays synchronous and returns a
+        <code>FraudReport</code>. A detector may consult the injected <code>IGeoIpService</code>, through the shared
+        <code>GeoIpEnricher</code>, and nothing else: no notifications, no mail or HTTP calls, no persistence. Enriching
+        the fingerprint before the call remains the recommended path the library documents. Tenant options are read per
+        analysis through <code>IFraudDetectionOptionsResolver</code>, where a registered
+        <code>IFraudDetectionConfigurationStore</code> takes precedence over the options monitor. Anything
+        time-dependent uses <code>TimeProvider</code>.</div>
+    </div>
+
+    <div class="ad" data-layers="fraud">
+      <h3><span class="id">AD-13</span> The verdict-to-risk mapping lives in exactly one place</h3>
+      <div class="binds">Binds: SafeWebCore.FraudDetection</div>
+      <div class="rule"><code>RiskScore.FromScoreAndVerdict</code> is the only verdict-to-level mapping
+        (<code>RegionImpersonation</code> to <code>Critical</code>, <code>HighlySuspicious</code> to <code>High</code>,
+        <code>Suspicious</code> to <code>Medium</code>, everything else to <code>Low</code>) and the only place the score
+        is clamped to 0–100. Every detector populates <code>Risk</code> through it, and <code>RiskScore.None</code> means
+        that no assessment happened, never that the risk is low. <code>Risk</code> stays additive to <code>Verdict</code>
+        and <code>SuspicionScore</code>, and trigger keys are constants in <code>FraudTrigger</code>.</div>
+    </div>
+
+    <div class="ad" data-layers="jwt">
+      <h3><span class="id">AD-14</span> JwtBearer hardening runs through the options pipeline</h3>
+      <div class="binds">Binds: SafeWebCore.JwtBearer</div>
+      <div class="rule">hardening is applied with <code>Configure&lt;JwtBearerOptions&gt;(scheme, ...)</code> plus a
+        post-configure step, never by editing a resolved options instance. The startup authority guard is registered once
+        (guarded by an existing-descriptor check) as both singleton and hosted service. <code>FailFast = true</code> is the
+        secure default and only an explicit later registration may opt out. A step added to that pipeline later may add
+        hardening; weakening an applied rule is allowed only through an explicit option on the hardening options type,
+        because post-configure steps run in registration order and the guard cannot detect a weakened rule. Helpers that
+        must stay internal use <code>InternalsVisibleTo</code> for the matching test project only.</div>
+    </div>
+
+    <div class="ad" data-layers="analyzers">
+      <h3><span class="id">AD-15</span> Analyzer rules are warnings, numbered, and documented one by one</h3>
+      <div class="binds">Binds: SafeWebCore.Analyzers</div>
+      <div class="rule">every rule is <code>DiagnosticSeverity.Warning</code> with <code>isEnabledByDefault: true</code>,
+        category <code>SafeWebCore</code>, and an ascending <code>SWC0nn</code> id declared only in
+        <code>DiagnosticDescriptors</code>. Each rule gets its own section in
+        <code>src/SafeWebCore.Analyzers/README.md</code> and an entry in <code>AnalyzerReleases.Unshipped.md</code>. Rules
+        never change runtime behaviour and never reference runtime package internals.</div>
+    </div>
+
+  </div>
+</section>
+<section class="slide" data-title="New header">
+  <h2>Runbook: adding a first-class header</h2>
+  <p class="sub">AD-8 fixes one path so two units cannot split the configuration surface between a typed option and a stringly-typed <code>AdditionalHeaders</code> entry.</p>
+
+  <ol class="flow">
+    <li>A typed option or option group with a safe default
+      <small>so a preset can turn it on and a consumer can still override it</small></li>
+    <li>A constant in <code>HeaderNames</code>
+      <small>no raw header-name literal may appear at an emission site</small></li>
+    <li>One <code>AddIfEnabled</code> line in <code>AddSecurityHeaders</code>
+      <small>the single emission table (AD-7)</small></li>
+    <li>Inclusion in the relevant <code>SecurePresets</code> set
+      <small>otherwise the preset silently omits the new header</small></li>
+    <li>The matching <code>AddStandardHeader</code> line in the <code>NetSecureHeadersDiagnosticsService</code> projection
+      <small>so the preview cannot drift from what is emitted — the step the reviewer gate added</small></li>
+    <li>The public symbols recorded in <code>PublicAPI.Unshipped.txt</code>
+      <small>unrecorded public surface blocks a release review (AD-3)</small></li>
+    <li>The feature documented in <code>docs/</code> with a <code>CHANGELOG.md</code> entry
+      <small>plus an analyzer rule when the misuse is detectable at build time</small></li>
+  </ol>
+
+  <div class="note bad">Steps 3 and 5 are the <i>two</i> tables. Skipping 5 is exactly the drift the gate found:
+    the diagnostics preview would advertise a header the response never carries. An automated lockstep check is deferred.</div>
+</section>
+
+<section class="slide" data-title="Envelope">
+  <h2>The operating envelope</h2>
+  <p class="sub">Nothing here is deployed or operated by the library: it is a set of packages a consumer process loads.</p>
+
+  <table>
+    <tr><th>Context</th><th>What happens</th></tr>
+    <tr><td><b>developer</b></td><td>Build and test through <code>SafeWebCore.slnx</code> on the local SDK <code>11.0.100-rc.1</code> — green: 25 warnings, 0 errors, 168 tests.</td></tr>
+    <tr><td><b>CI</b></td><td><code>ubuntu-latest</code> with .NET <code>10.0.x</code>: restore, build <code>-c Release --no-incremental</code>, test, pack five nupkgs, upload the artifact.</td></tr>
+    <tr><td><b>release</b></td><td>Manual <code>dotnet nuget push</code>. SafeWebCore is published; the other four are release candidates. All five are already live on nuget.org, so a release needs a <i>new</i> version.</td></tr>
+    <tr><td><b>runtime</b></td><td>No SafeWebCore-hosted infrastructure — nothing to deploy, monitor or operate on our side.</td></tr>
+    <tr><td><b>environments</b></td><td>Production enforces its configuration; report-only comes only from the <code>*ForEnvironment</code> overloads (AD-11).</td></tr>
+  </table>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card" style="margin:0">
+      <h3>Stack highlights</h3>
+      <table>
+        <tr><th>Item</th><th>Value</th></tr>
+        <tr><td>Target framework</td><td><code>net10.0</code> — LTS, end of support 2028-11-14; latest patch 10.0.12</td></tr>
+        <tr><td>Local SDK</td><td><code>11.0.100-rc.1.26425.128</code> — support window ends 2026-10-13, CI builds the shipped artifacts on 10.0.x</td></tr>
+        <tr><td>Build gates</td><td><code>TreatWarningsAsErrors=true</code>, <code>AnalysisLevel=latest-recommended</code>, <code>RS0037</code> error, <code>RS0016</code>/<code>RS0017</code> warning</td></tr>
+        <tr><td>Published</td><td>SafeWebCore through 1.7.0; FraudDetection, JwtBearer 1.0.0; Analyzers, Testing 1.0.0-preview.1</td></tr>
+      </table>
+    </div>
+    <div class="card" style="margin:0">
+      <h3>Two facts worth acting on</h3>
+      <ul class="tight">
+        <li>The local SDK is an <b>RC whose support window ends 2026-10-13</b>; CI is on 10.0.x. Retargeting to .NET 11 (GA 2026-11-10) is deferred by choice, not by constraint.</li>
+        <li><code>docs/nuget-packages.md</code> is <b>factually wrong</b> — it reports 1.3.5 as the latest SafeWebCore and the other four as unpublished. A release decision cannot be taken from it.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="slide" data-title="Open questions">
+  <h2>Five open questions, with a recommendation</h2>
+  <p class="sub">The spine leaves these open on purpose. Each one is a real trade-off; click a question for the evidence
+    and the recommendation this walkthrough makes.</p>
+
+  <details>
+    <summary>1. Should <code>SecurityEventDispatcher</code> swallow a throwing sink per sink, as <code>FraudEventDispatcher</code> does?</summary>
+    <div class="body">
+      <p><b>What the code does today.</b> <code>EmitAsync</code> awaits each sink in a bare loop with no <code>try</code>,
+        and all three call sites discard the returned task (<code>_ = _eventDispatcher.EmitAsync(...)</code>). So one sink
+        that throws ends delivery for every sink registered after it, silently: the response is safe, the remaining events
+        are gone, and the exception surfaces only as an unobserved task exception. <code>FraudEventDispatcher</code> does
+        the opposite — it materializes the sinks into an array once in its constructor and catches per sink.</p>
+      <p><b>Recommendation: adopt the fraud policy.</b> Catch per sink in <code>EmitAsync</code> and materialize the sink
+        list once in the constructor, since the dispatcher is a singleton enumerating a DI-provided sequence on every
+        event. Keep the async signature and the fire-and-forget contract unchanged, and count swallowed failures in
+        <code>SafeWebCoreMetrics</code> so a broken sink is visible instead of silent.</p>
+      <p><b>Why not keep it as it is.</b> "Fire-and-forget is the only protection" protects the <i>response</i>, not
+        <i>delivery</i>. A throwing sink is already a bug; letting it also mute every later sink is an accidental
+        trade-off rather than a designed one. Delivery order is already contractual as registration order (AD-10), which
+        only means something if the loop finishes.</p>
+      <p><b>Cost.</b> A behaviour change with no API surface change, so no <code>PublicAPI</code> entry; it needs a test
+        with a throwing first sink. AD-10's sentence "the security dispatcher does not catch" then collapses into one
+        policy for both dispatchers.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>2. Is adding a <code>FraudVerdict</code> or <code>RiskLevel</code> member additive, or breaking?</summary>
+    <div class="body">
+      <p><b>Binary compatibility: additive.</b> <b>Source compatibility:</b> a consumer switching exhaustively on the enum
+        without a default arm stops compiling — a loud, correct failure that AD-3's additive-only rule should name
+        explicitly rather than imply.</p>
+      <p><b>The hazard is inside this package, and it fails open.</b> <code>RiskScore.FromScoreAndVerdict</code> maps
+        everything unrecognized to <code>RiskLevel.Low</code>, and <code>DetermineAction</code> — duplicated verbatim in
+        <code>GeoCulturalConsistencyDetector</code> and <code>WesternImpersonationDetector</code> — maps it to
+        <code>RecommendedAction.NoAction</code>. A new severe verdict therefore lands as <i>low risk, no action</i> unless
+        someone remembers every arm, in two files. Both enums are also consumed ordinally:
+        <code>MaxSeverity</code> is <code>(RecommendedAction)Math.Max((int)first, (int)second)</code>, and the
+        <code>risk_level</code> metric tag is the <code>RiskLevel</code> name — so inserting or renumbering a member in
+        either enum silently changes ordering or tag values.</p>
+      <p><b>Recommendation.</b> (a) Append-only: new members go last with explicit numeric values, never renumbered.
+        (b) Make the unknown case fail closed — either map an unrecognized verdict to the highest level, or add an explicit
+        <code>Unclassified</code> level so "unknown" is never reported as "safe". (c) One pull request must add the
+        <code>RiskLevel</code> arm, both <code>RecommendedAction</code> arms (or fold that switch into a single shared
+        helper, which AD-13's spirit already implies) and the metrics tag together. This belongs in the
+        backward-compatibility policy and in a new AD on the next spine update.</p>
+      <p><b>Precedent in the codebase.</b> <code>FakeWestern = RegionImpersonation</code> with <code>[Obsolete]</code> is
+        already how a verdict name is retired here — duplicate the value, never renumber.</p>
+    </div>
+  </details>
+  <details>
+    <summary>3. Which version form is canonical: <code>1.0.0</code>, or the four-part <code>1.0.0.0</code>?</summary>
+    <div class="body">
+      <p><b>Where the family stands.</b> SafeWebCore <code>1.7.0</code>, JwtBearer <code>1.0.0</code>, Analyzers and
+        Testing <code>1.0.0-preview.1</code>, and FraudDetection <code>1.0.0.0</code>. nuget.org already carries all five,
+        including FraudDetection 1.0.0.</p>
+      <p><b>Why the four-part form is a live trap.</b> NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
+        that version is published — so the <code>&lt;Version&gt;</code> value currently in the csproj can never be pushed
+        again. The next FraudDetection release must be a higher version regardless of which form is chosen.</p>
+      <p><b>Recommendation: three-part SemVer is canonical</b> (<code>1.2.3</code>, optionally with a
+        <code>-preview.N</code> suffix). It matches the other three packages, it is what NuGet stores after normalization
+        anyway, and the four-part assembly identity is still produced automatically. Change FraudDetection to
+        <code>1.1.0</code> or <code>1.0.1</code> at the next release and record the rule in the release documentation.</p>
+      <p><b>Second-order effect to check.</b> Because all five packages are live, any pipeline or documentation step that
+        assumes a first publish (or that reads <code>docs/nuget-packages.md</code>, which is wrong) must be corrected
+        before the next release.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>4. Should <code>AdditionalHeaders</code> be prevented from naming a header the library already emits?</summary>
+    <div class="body">
+      <p><b>Verified behaviour.</b> The validator rejects duplicates only <i>inside</i> <code>AdditionalHeaders</code>
+        (case-insensitively). Emission appends the standard headers and the CSP value and then assigns each additional
+        header through the response header indexer, which <b>replaces</b> the values already there. An entry named
+        <code>Content-Security-Policy</code> therefore discards the per-request nonce substitution — and with it, every
+        nonce-based script or style the app emits. <code>CustomPolicies</code> runs after it and remains the last word.</p>
+      <p><b>Recommendation: guard the library-owned names.</b> Reject, at startup, an <code>AdditionalHeaders</code> entry
+        whose name matches a <code>HeaderNames</code> constant that <code>AddIfEnabled</code> emits, with the scope and a
+        <code>Fix:</code> as AD-4 requires. Keep the indexer as the documented override for headers the library does not own,
+        and keep <code>CustomPolicies</code> as the deliberate escape hatch for replacing a library-owned one. Implement the
+        guard once, in the validator — not in both the middleware and the diagnostics projection.</p>
+      <p><b>Trade-off.</b> It removes an undocumented way to hand-replace HSTS or CSP by configuration; the explicit
+        <code>IHeaderPolicy</code> path covers that need with a type, which is the point of AD-7.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>5. Do <code>NonceService</code> and <code>NetSecureHeaders</code> belong in the root <code>SafeWebCore</code> namespace?</summary>
+    <div class="body">
+      <p><b>What is actually there.</b> <code>Infrastructure/NonceService.cs</code> and
+        <code>Infrastructure/INonceService.cs</code> declare <code>namespace SafeWebCore</code> — the root — while every
+        other type in that folder declares <code>SafeWebCore.Infrastructure</code>. <code>NetSecureHeaders.cs</code>
+        (holding <code>CspNonceKey</code>) sits at the project root and is root-namespaced, and the consistency conventions
+        already say folders mirror namespaces.</p>
+      <p><b>Recommendation: keep it, and write the rule down.</b> Types a consumer names directly — in registration or in
+        markup — live in the root namespace (<code>NetSecureHeaders</code>, <code>INonceService</code>); the folder is
+        organisation, not the namespace contract. <code>HttpContextExtensions</code> follows the other half of the same
+        logic: <code>SafeWebCore.Extensions</code>, a namespace named after its concern. Moving the two Infrastructure
+        outliers is a source-breaking change for zero functional gain, which makes it at most a major-version change and,
+        on inspection, not worth one then either.</p>
+      <p><b>If consistency is preferred anyway.</b> Do it as a deliberate major: move the real types into
+        <code>SafeWebCore.Infrastructure</code> and leave obsolete root-namespace shims for one major, with the
+        <code>PublicAPI</code> entries and the backward-compatibility policy updated in the same change.</p>
+    </div>
+  </details>
+
+  <div class="note" style="margin-top:14px">None of the five changes an existing rule; four of them add one. Folded into the
+    spine they become <code>AD-16</code> onward, with the existing ids untouched, plus one amendment to AD-10.</div>
+</section>
+<section class="slide" data-title="Deferred">
+  <h2>What the spine deliberately does not decide</h2>
+  <p class="sub">Named so the silence is intentional. 12 items, each with the reason it can wait.</p>
+
+  <table>
+    <tr><th>Deferred</th><th>Why it can wait</th></tr>
+    <tr><td>Promoting <code>RS0016</code> and <code>RS0017</code> to errors</td><td>Needs a curated baseline first; 16 <code>RS0016</code> and 9 <code>RS0017</code> diagnostics remain today</td></tr>
+    <tr><td>Clearing the stale baseline entries (9 in FraudDetection, 1 in JwtBearer)</td><td>Mechanical cleanup with no effect on the public surface</td></tr>
+    <tr><td>Enforcing the <code>Async</code> suffix in the build</td><td>The rule is a <code>suggestion</code> and <code>EnforceCodeStyleInBuild</code> is not set; turning it on needs a trial build</td></tr>
+    <tr><td>Retargeting to .NET 11 and aligning the local SDK with CI</td><td>.NET 11 GA is 2026-11-10 and <code>net10.0</code> is supported to 2028-11-14, so nothing forces the move</td></tr>
+    <tr><td>Pinning <code>Microsoft.AspNetCore.Mvc.Testing</code> and moving JwtBearer to the current 10.0 patch</td><td>Reproducibility hygiene, not design</td></tr>
+    <tr><td>Unifying the two dispatcher failure policies</td><td>Needs a decision (Open Questions 1); current behaviour is documented in AD-10</td></tr>
+    <tr><td>Symbols and SourceLink for the other four packages</td><td>Core-only today; per-package publishing work without design content</td></tr>
+    <tr><td>Human-facing renderings</td><td><span class="tag ok">partly done</span> This deck now exists; a fuller solution design, a C4 set and a per-team split are still open</td></tr>
+    <tr><td>A CI smoke test that installs the packed packages</td><td>Packing already runs in CI; the install test is additional work</td></tr>
+    <tr><td>Fixing <code>docs/nuget-packages.md</code></td><td>It is wrong rather than stale, and it misleads a release decision — but it governs no rule</td></tr>
+    <tr><td>Enforcing the emission and diagnostics lockstep with a test</td><td>AD-8 names the step; an automated check would be stronger — the same enforcement gap as AD-1 and AD-2</td></tr>
+    <tr><td>An architecture test for the layer direction and sideways package references</td><td>AD-1 and AD-2 are review-enforced only today</td></tr>
+  </table>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card" style="margin:0">
+      <h3>What the reviewer gate changed</h3>
+      <ul class="tight">
+        <li><b>AD-7 was wrong as drafted.</b> <code>NetSecureHeadersDiagnosticsService</code> kept a <i>second</i> header
+          table of its own. Fixed: response emission lives in one place, the preview is a projection, and AD-8 got step 5
+          to keep them in lockstep.</li>
+        <li>AD-5 and AD-7 ownership definitions tightened; AD-10 sink ordering stated; AD-12 geo-service wording; AD-13 risk
+          population; AD-14 post-configure additivity; AD-15 added for the analyzer rules.</li>
+        <li>The stack table was corrected on two facts: all five packages are published, and the local RC SDK's support
+          window ends 2026-10-13 while CI builds on 10.0.x.</li>
+      </ul>
+    </div>
+    <div class="card" style="margin:0">
+      <h3>Where this goes next</h3>
+      <ul class="tight">
+        <li><b>Adopt the spine as a spec companion</b> (<code>bmad-spec</code>) so downstream work can cite stable
+          <code>AD-n</code> ids.</li>
+        <li><b>Then stories</b> (<code>bmad-preview-ticketing</code>), or straight to a small change through
+          <code>bmad-build</code>.</li>
+        <li><b>Decide the five open questions</b>, then fold four of them in as AD-16 onward plus one AD-10 amendment.</li>
+        <li><b>Close the two enforcement gaps</b> — the lockstep test and the architecture test — if the ids are to mean
+          anything to an agent that only runs the build.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <button id="prev" type="button">&#8592; Prev</button>
+  <button id="next" type="button">Next &#8594;</button>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="count" id="count">1 / 9</div>
+</footer>
+
+<script>
+(function () {
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var toc = document.getElementById('toc');
+  var bar = document.getElementById('bar');
+  var count = document.getElementById('count');
+  var i = 0, n = slides.length;
+
+  slides.forEach(function (s, idx) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = s.dataset.title || ('Slide ' + (idx + 1));
+    b.addEventListener('click', function () { go(idx); });
+    toc.appendChild(b);
+  });
+
+  function go(k) {
+    i = Math.max(0, Math.min(n - 1, k));
+    slides.forEach(function (s, x) { s.classList.toggle('active', x === i); });
+    [].slice.call(toc.children).forEach(function (b, x) { b.classList.toggle('on', x === i); });
+    bar.style.width = ((i + 1) / n * 100) + '%';
+    count.textContent = (i + 1) + ' / ' + n;
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) { }
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+  document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(n - 1); }
+  });
+
+  var chips = document.getElementById('adChips');
+  if (chips) {
+    var ads = [].slice.call(document.querySelectorAll('#adList .ad'));
+    chips.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-f]');
+      if (!btn) return;
+      var f = btn.dataset.f;
+      [].slice.call(chips.querySelectorAll('button')).forEach(function (b) { b.classList.toggle('on', b === btn); });
+      ads.forEach(function (a) {
+        var layers = (a.dataset.layers || '').split(/\s+/);
+        a.classList.toggle('hide', f !== 'all' && layers.indexOf(f) === -1);
+      });
+    });
+  }
+
+  var start = parseInt((location.hash || '').replace('#', ''), 10);
+  go(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>
