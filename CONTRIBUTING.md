@@ -29,6 +29,17 @@ dotnet build
 dotnet test
 ```
 
+### AI-assisted development (BMad)
+
+This repository is set up for the [BMad Method](https://docs.bmad-method.org): the skills live in
+`.agents/skills` (used by Cline and GitHub Copilot) and the project runtime lives in `_bmad/`.
+
+- Install or update: `npx skills update`, then ask your coding agent to run `bmad setup`.
+- Ask for a skill by name, for example `bmad-build` for a change that fits one session, `bmad-review` to review a
+  diff or PR, `bmad-qa-generate-e2e-tests` for missing end-to-end coverage, or `bmad` for help and status.
+- See [docs/development/bmad-workflow.md](docs/development/bmad-workflow.md) for the full workflow, commands and
+  guardrails. BMad does not override this file or the backward compatibility policy below.
+
 ## Coding Standards
 
 - Target .NET 10 / C# 14

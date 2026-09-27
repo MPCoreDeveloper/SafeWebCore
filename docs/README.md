@@ -27,6 +27,7 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 - **[Recipes](recipes/README.md)** — Practical guides for common scenarios (MVC+CDN, Swagger, Blazor, Report-Only, Reverse Proxy, etc.)
 - **[Roadmap](roadmap.md)** — Planned work for `v1.4` through `v1.6`, focused on DX, diagnostics, tooling, and observability
 - **[Backward Compatibility Policy](development/backward-compatibility-policy.md)** — Rules for additive-only changes, stable defaults, and supported upgrade paths
+- **[BMad Workflow](development/bmad-workflow.md)** — AI-assisted development setup (BMad Method skills, `_bmad/` runtime, update/status commands, guardrails)
 
 ### Repository, packages & release
 
@@ -61,6 +62,7 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 | **Use testing helpers** | [SafeWebCore.Testing package](https://www.nuget.org/packages/SafeWebCore.Testing) (preview) |
 | **Understand planned roadmap work** | [Roadmap](roadmap.md) |
 | **Review compatibility rules before contributing** | [Backward Compatibility Policy](development/backward-compatibility-policy.md) |
+| **Set up or use AI agents (BMad Method)** | [BMad Workflow](development/bmad-workflow.md) |
 | **See all projects in the repo** | [Project Catalog](projects.md) |
 | **Understand NuGet candidates** | [NuGet Packages & Candidates](nuget-packages.md) |
 | **Check if ready to release** | [Release Readiness](release-readiness.md) |
