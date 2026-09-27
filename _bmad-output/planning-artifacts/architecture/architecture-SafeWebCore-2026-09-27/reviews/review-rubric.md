@@ -26,3 +26,10 @@ AD-7 forbids `AdditionalHeaders` from restating a library-owned header and AD-5 
 **L2 — No `Capability → Architecture Map`.** Correct for this run: no spec drove the spine.
 
 **L3 — Operational envelope present and complete.** Build, CI, release, runtime and environment behaviour are all stated, so the dimension the gate usually finds silent is covered.
+
+## Addendum — 2026-09-27b: post-decision re-check
+
+- **M3 is closed.** AD-10 no longer implies the sink order is incidental: it states registration order as deterministic and non-reliable, and adds the per-sink isolation policy that the original finding only nudged.
+- **H1, H2, M1, M2 and L1 to L3 are unchanged.** The AD-8 lockstep step, the ownership definitions in AD-5 and AD-7 and the narrowed AD-12 wording all survive this edit; adding four rules after them did not reopen any of them.
+- **Dimensions re-checked after the update.** Nineteen ADs, each with Binds, Prevents and Rule; the four new ones also carry Evidence. Four of the nineteen — the AD-10 amendment, AD-16, AD-17 and AD-18 — are marked *implementation pending*, so a ratified rule is not read as shipped behaviour, which keeps the spine's claims true against the code as it stands. Deferred still holds twelve named items: the dispatcher row was replaced by the verdict-mapping consolidation, so the count is unchanged. The capability-map and operational-envelope findings are unaffected.
+- **Verdict unchanged: passes.** The four new decisions close the questions this run raised without loosening an existing rule; the only rule text that changed in meaning is AD-10, and it changed in the stricter direction.

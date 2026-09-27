@@ -30,3 +30,9 @@ All five are published. `docs/nuget-packages.md` (audited 2026-07-25) says the l
 **V4 — Verified current, no action.** `net10.0` is LTS: released 2025-11-11, latest patch 10.0.12, end of support 2028-11-14. `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.11 exists and restores; 10.0.12 is the current patch, already noted as deferred hygiene.
 
 **V5 — `Microsoft.AspNetCore.Mvc.Testing` `10.0.*` floats.** Under `Deterministic=true` a floating restore still makes a build non-reproducible across machines and dates. Already listed under Deferred; keep it there.
+
+## Addendum — 2026-09-27b: V3 decided
+
+- **V3 is closed by AD-17.** Three-part SemVer is canonical, the four-part form is dropped, `SafeWebCore.FraudDetection` moves to a higher three-part version at its next release, and the release documentation states the canonical form. `docs/nuget-packages.md` moves from hygiene to prerequisite: AD-17 makes correcting it a condition of the next release decision. The file still reports 1.3.5 as the latest published `SafeWebCore` and four packages as unpublished, so the finding is unchanged and now load-bearing.
+- **V1 keeps its correction in the Stack section** (all five packages are published) **and V2 keeps its RC-window note** (local SDK 11.0.100-rc.1, CI on 10.0.x, support window ending 2026-10-13). V4 stays current, V5 stays deferred.
+- **Nothing in this update changes a version pin.** AD-17 fixes the form and the FraudDetection next-release requirement; the deferred `10.0.12` JwtBearer patch and the floating `Mvc.Testing` reference are untouched.

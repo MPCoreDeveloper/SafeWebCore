@@ -29,7 +29,7 @@ companions: []
 
 ## Invariants & Rules
 
-Fifteen decisions fix what a future builder cannot read off compliant code. The rationale behind each one lives in `.memlog.md`, not here.
+Nineteen decisions fix what a future builder cannot read off compliant code. The rationale behind each one lives in `.memlog.md`, not here. AD-10 was amended and AD-16 to AD-19 were added on 2026-09-27, when the five questions this run carried were decided; a rule whose matching code change is still to come says so in its status.
 
 ### AD-1 — Packages are independent siblings [ADOPTED]
 
@@ -104,11 +104,12 @@ graph BT
 - **Rule:** a path policy is created with `options.PathPolicy("/prefix", customize)`, which starts from a clone of the global options, so only explicitly configured values differ. Prefixes normalize to a leading `/`, compare case-insensitively, and the longest matching prefix wins. Duplicate prefixes after normalization fail at startup.
 - **Evidence:** `NetSecureHeadersOptionsExtensions.PathPolicy`, the descending prefix sort in `BuildPathPolicies`, and the duplicate check in the validator.
 
-### AD-10 — Telemetry never blocks the response and never fails the request [ADOPTED]
+### AD-10 — Telemetry never blocks the response and never fails the request [ADOPTED — amended 2026-09-27, implementation pending]
 
 - **Binds:** SafeWebCore, SafeWebCore.FraudDetection
 - **Prevents:** a telemetry sink adding latency to the response or turning a logging failure into a 500 or an unobserved task exception.
-- **Rule:** events go to every registered sink through a dispatcher, are awaited fire-and-forget with the request's `CancellationToken`, and are never awaited inline on the response path. A sink is added with `AddSafeWebCoreSecurityEventSink<T>` or `AddFraudEventSink<T>` so the default sinks stay registered. The fraud dispatcher swallows a throwing sink per sink, deliberately, so that telemetry cannot break detection; the security dispatcher does not catch and relies on being fire-and-forget. When touching either one, keep the request path free of sink exceptions. Delivery order is registration order and therefore deterministic, but nothing may depend on it and no sink may assume another has already run.
+- **Rule:** events go to every registered sink through a dispatcher, are awaited fire-and-forget with the request's `CancellationToken`, and are never awaited inline on the response path. A sink is added with `AddSafeWebCoreSecurityEventSink<T>` or `AddFraudEventSink<T>` so the default sinks stay registered. Both dispatchers isolate a throwing sink deliberately, so that telemetry cannot break detection: each materializes its sink sequence once, in its constructor, and invokes every sink inside its own `try`. Fire-and-forget protects the response, not delivery — the security call sites discard the returned task, so a bare loop would let one broken sink mute every sink registered after it and surface only as an unobserved task exception. A swallowed failure is counted in that dispatcher's metrics type, never silent. When touching either one, keep the request path free of sink exceptions. Delivery order is registration order and therefore deterministic, but nothing may depend on it and no sink may assume another has already run.
+- **Evidence:** `FraudEventDispatcher` already snapshots `sinks?.ToArray() ?? []` in its constructor and catches per sink; `SecurityEventDispatcher` awaits each sink in a bare loop with no `try`, and all three of its call sites discard the returned task (`_ = _eventDispatcher.EmitAsync(...)`).
 
 ### AD-11 — The environment downgrade is opt-in per registration call [ADOPTED]
 
@@ -141,11 +142,39 @@ graph BT
 - **Prevents:** a rule shipping at error severity and breaking consumer builds, two rules colliding on an id or a severity, and a rule that changes runtime behaviour.
 - **Rule:** every rule is `DiagnosticSeverity.Warning` with `isEnabledByDefault: true`, category `SafeWebCore`, and an ascending `SWC0nn` id declared only in `DiagnosticDescriptors`. Each rule gets its own section in `src/SafeWebCore.Analyzers/README.md` and an entry in `AnalyzerReleases.Unshipped.md`. Rules never change runtime behaviour and never reference runtime package internals.
 
+### AD-16 — Enum members are append-only and every verdict mapping fails closed [ADOPTED — implementation pending]
+
+- **Binds:** SafeWebCore.FraudDetection
+- **Prevents:** a new `FraudVerdict`, `RiskLevel` or `RecommendedAction` member landing as *low risk, no action* because one of the parallel switches was forgotten, and a renumbering that silently changes ordinal comparisons or metric tag values.
+- **Rule:** members of `FraudVerdict`, `RiskLevel` and `RecommendedAction` are append-only: a new member is added last, never inserted, reordered or renumbered, and it pins its value explicitly the way `RiskLevel` already does (`Low = 0` through `Critical = 3`), because `MaxSeverity` compares ordinals with `Math.Max((int)first, (int)second)` and the `risk_level` and `verdict` metric tags carry member names. An unrecognized verdict never maps to the lowest level or to `NoAction`: `RiskScore.FromScoreAndVerdict` and every verdict-to-action switch fail closed, so *unknown* is never reported as *safe*. One change adds a new member together with the `RiskLevel` arm, every verdict-to-action arm and the metric tag. A mapping that more than one detector needs is written once, in a shared helper, and never extended in duplicate.
+- **Evidence:** `RiskScore.FromScoreAndVerdict` falls through `_ => RiskLevel.Low` for an undefined verdict; the `DetermineAction` switch is duplicated verbatim in `GeoCulturalConsistencyDetector` and `WesternImpersonationDetector` with `_ => RecommendedAction.NoAction`; `risk_level` is the metric tag name in `FraudEventDispatcher`. Retiring a verdict name follows the existing precedent: `FakeWestern` is `[Obsolete]` and equals `RegionImpersonation` rather than freeing a number.
+
+### AD-17 — Three-part SemVer is the canonical version form [ADOPTED — implementation pending]
+
+- **Binds:** the csproj file of each of the five packages and the release documentation
+- **Prevents:** a release that reuses a version nuget.org already carries, because NuGet normalizes `1.0.0.0` to `1.0.0` and `SafeWebCore.FraudDetection` 1.0.0 is published.
+- **Rule:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N` suffix. The four-part form is not used, and the four-part assembly identity is still produced automatically. `SafeWebCore.FraudDetection` moves to a higher three-part version at its next release. The release documentation states the canonical form and the published versions, and `docs/nuget-packages.md` is corrected before it is used in a release decision.
+- **Evidence:** published versions verified 2026-09-27 through the NuGet flat-container API — `SafeWebCore` 1.0.0 through 1.3.5 plus 1.6.0 and 1.7.0, `SafeWebCore.FraudDetection` and `SafeWebCore.JwtBearer` 1.0.0, `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1 — while `docs/nuget-packages.md` reports the opposite.
+
+### AD-18 — `AdditionalHeaders` may not name a header the library owns [ADOPTED — implementation pending]
+
+- **Binds:** SafeWebCore options and the options validator
+- **Prevents:** a configuration entry silently replacing a header the library emits — including the CSP value whose `{nonce}` placeholder is substituted per request — which would drop the nonce authorization of every script and style the app emits.
+- **Rule:** `AdditionalHeaders` may only name headers the library does not own. An entry whose name matches a `HeaderNames` constant that `AddIfEnabled` emits fails at startup, in the validator, with the options scope and a `Fix:` that names `CustomPolicies` / `IHeaderPolicy` as the supported replacement path. The response header indexer stays the documented override for headers the library does not own, and `CustomPolicies` remains the deliberate escape hatch for a library-owned one. The check is implemented once, in the validator, not duplicated in the middleware and the diagnostics projection.
+- **Evidence:** `ValidateAdditionalHeaders` rejects duplicates only inside `AdditionalHeaders` (`StringComparer.OrdinalIgnoreCase`); emission appends the standard headers and the CSP value and then assigns `headers[additionalHeader.Name] = additionalHeader.Value`, which replaces the earlier value; `CustomPolicies` runs after it.
+
+### AD-19 — The root namespace is for the types a consumer names [ADOPTED]
+
+- **Binds:** SafeWebCore public API layout
+- **Prevents:** a namespace sweep that breaks consumers for no functional gain, and a folder-mirrors-namespace rule that would force a second breaking change later.
+- **Rule:** a public type a consumer writes by name — in registration, in markup or in an option lambda — lives in the root `SafeWebCore` namespace (`NetSecureHeaders`, `INonceService`); the folder that holds the file is organisation, not the namespace contract. Types grouped by the concern they serve live in the namespace named after that concern (`SafeWebCore.Infrastructure`, `SafeWebCore.Extensions`, `SafeWebCore.Middleware`). `NonceService` and `INonceService` stay root-namespaced inside `Infrastructure/`; moving them is a major-version change and is not worth one.
+- **Evidence:** `Infrastructure/NonceService.cs` and `Infrastructure/INonceService.cs` declare `namespace SafeWebCore` while the other files in that folder declare `SafeWebCore.Infrastructure`; `HttpContextExtensions` follows the other half of the rule in `SafeWebCore.Extensions`.
+
 ## Consistency Conventions
 
 | Concern | Convention |
 | --- | --- |
-| Layout | One type per file, file name equals type name; folders mirror namespaces with file-scoped namespace declarations |
+| Layout | One type per file, file name equals type name; folders mirror namespaces with file-scoped namespace declarations, with the root-namespace exception AD-19 defines for the types a consumer names directly |
 | Naming | Interfaces `I*` in `Abstractions`; implementations in `Infrastructure` and `internal` unless they are public value types; extension classes `<Subject>Extensions`; option groups `<Feature>Options`; analyzers `SWC0nn` ascending with `DiagnosticDescriptors` as the only registry; shared keys as constants (`HeaderNames`, `FraudTrigger`, `NetSecureHeaders.CspNonceKey`) |
 | Guard clauses | `ArgumentNullException.ThrowIfNull` and `ArgumentException.ThrowIfNullOrWhiteSpace` at every public entry point (94 call sites in `src/`) |
 | Contracts | Option groups are mutable classes with safe defaults so presets can be applied and customized; anything combined or replaced wholesale is a `record` updated with `with`; `required` plus `init` for shapes that must be complete (`PathPolicyOptions`, `FraudEvent`); implementations are `sealed` |
@@ -244,19 +273,23 @@ SafeWebCore/
 | Enforcing the `Async` suffix in the build | The rule is a `suggestion` and `EnforceCodeStyleInBuild` is not set; turning it on needs a trial build because it can surface existing violations |
 | Retargeting to .NET 11 and aligning the local SDK with CI | .NET 11 GA is 2026-11-10 and `net10.0` is supported to 2028-11-14, so nothing forces the move |
 | Pinning `Microsoft.AspNetCore.Mvc.Testing` (`10.0.*`) and moving JwtBearer to the current 10.0 patch | Reproducibility hygiene, not design |
-| Unifying the two dispatcher failure policies | Needs a decision (see Open Questions); current behaviour is documented in AD-10 |
+| Consolidating the duplicated `DetermineAction` and `MaxSeverity` switch into one shared helper | The two copies in `GeoCulturalConsistencyDetector` and `WesternImpersonationDetector` agree today; consolidating them is mechanical work with no design content, and AD-16 forbids extending them in duplicate |
 | Symbols and SourceLink for the other four packages | Core-only today; per-package publishing work without design content |
 | Human-facing renderings (deck, solution design, C4 set, per-team split) | This run is build-substrate only by explicit choice |
 | A CI smoke test that installs the packed packages | Packing already runs in CI; the install test is additional work |
-| Fixing `docs/nuget-packages.md` | It is wrong rather than stale: it reports 1.3.5 as the latest published SafeWebCore and all four other packages as unpublished, while nuget.org shows SafeWebCore 1.7.0 and 1.0.0 for FraudDetection and JwtBearer (verified 2026-09-27). It misleads a release decision but governs no rule |
+| Fixing `docs/nuget-packages.md` | It is wrong rather than stale: it reports 1.3.5 as the latest published SafeWebCore and all four other packages as unpublished, while nuget.org shows SafeWebCore 1.7.0 and 1.0.0 for FraudDetection and JwtBearer (verified 2026-09-27). It misleads a release decision, and AD-17 makes the correction a prerequisite for the next release decision; it still governs no rule of its own |
 | Enforcing the emission and diagnostics lockstep with a test | AD-8 now names the step; an automated check that both header tables list the same headers would be stronger, and it is the same enforcement gap as AD-1 and AD-2 |
 | An architecture test for the layer direction and the absence of sideways package references | AD-1 and AD-2 are review-enforced only today |
 
 ## Open Questions
 
-- Should `SecurityEventDispatcher` swallow a throwing sink per sink, as `FraudEventDispatcher` does, or does the fire-and-forget contract stay the only protection?
-- Is adding a `FraudVerdict` or `RiskLevel` member additive, or breaking for a consumer with an exhaustive switch?
-- Which version form is canonical for a new package: `1.0.0`, or the four-part `1.0.0.0` that `SafeWebCore.FraudDetection` uses today? NuGet normalizes `1.0.0.0` to `1.0.0`, and 1.0.0 is already published for that package, so the four-part form would reuse an existing version on the next release.
-- Should `AdditionalHeaders` be prevented from naming a header the library already emits? The validator only rejects duplicates inside `AdditionalHeaders`, and emission assigns through the header indexer, so an entry named `Strict-Transport-Security` replaces the emitted value (verified 2026-09-27).
-- Do `NonceService` and `NetSecureHeaders` belong in the root `SafeWebCore` namespace while their files live in `Infrastructure/`? A namespace change is breaking, so this is a keep-unless-major-version question.
+None open. The five questions this run carried were decided on 2026-09-27 and are folded into the rules above; the question text is kept here for traceability.
+
+| Question | Decision | Rule |
+| --- | --- | --- |
+| Should `SecurityEventDispatcher` swallow a throwing sink per sink, as `FraudEventDispatcher` does, or does the fire-and-forget contract stay the only protection? | Both dispatchers materialize their sink sequence once and isolate a throwing sink per sink, and count the swallowed failure. Fire-and-forget protects the response, not delivery, so it cannot carry the whole contract. | AD-10 (amended) |
+| Is adding a `FraudVerdict` or `RiskLevel` member additive, or breaking for a consumer with an exhaustive switch? | Additive for binary compatibility; a source-level compile break for an exhaustive switch without a default arm, which is the loud failure worth keeping. Members are append-only, and every verdict mapping fails closed. | AD-16 |
+| Which version form is canonical for a new package: `1.0.0`, or the four-part `1.0.0.0` that `SafeWebCore.FraudDetection` uses today? | Three-part SemVer is canonical (`1.2.3`, optionally `-preview.N`); the four-part form is dropped, and `SafeWebCore.FraudDetection` moves to a higher three-part version at its next release. | AD-17 |
+| Should `AdditionalHeaders` be prevented from naming a header the library already emits? | Yes. The validator fails at startup with the options scope and a `Fix:` that points at `CustomPolicies`, which stays the supported replacement path; the header indexer remains the documented override for headers the library does not own. | AD-18 |
+| Do `NonceService` and `NetSecureHeaders` belong in the root `SafeWebCore` namespace while their files live in `Infrastructure/`? | They stay. The root namespace is for the types a consumer names directly, the folder is organisation rather than the namespace contract, and a move would break consumers for no functional gain. | AD-19 |
 

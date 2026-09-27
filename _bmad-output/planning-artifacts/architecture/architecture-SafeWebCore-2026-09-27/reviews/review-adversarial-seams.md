@@ -30,3 +30,12 @@ Unit A adds `IPostConfigureOptions<JwtBearerOptions>` that relaxes an audience o
 
 - **Two units choosing CSP enforcement mode**: `CspModeAttribute` per endpoint, then `UseCspReportOnly`, is a single decision path.
 - **Two units populating CSP**: `CspBuilder` and direct `opts.Csp with { ... }` both write the same record, and the header is built from that record once, so the result cannot diverge.
+
+## Addendum — 2026-09-27b: the seam decisions taken
+
+The spine was updated after this review: AD-10 was amended and AD-16 to AD-19 added, on the five open questions. Re-checked against the seam inventory above.
+
+- **A2 is closed, and at the layer this review named.** AD-18 makes the validator reject an `AdditionalHeaders` entry whose name matches a `HeaderNames` constant emitted through `AddIfEnabled`, so "library-owned" is a testable predicate rather than an argument, and the sanctioned replacement path is `CustomPolicies` / `IHeaderPolicy`. The rule text also pins the check to the validator, not to the middleware and the diagnostics projection.
+- **The dispatcher asymmetry turned out to be a sixth seam, and it is now AD-10's amended rule.** A sink that throws in `SecurityEventDispatcher` ends delivery for every sink registered after it and surfaces only as an unobserved task exception, while `FraudEventDispatcher` catches per sink. One policy now covers both: materialize the sink sequence once, isolate per sink, count the swallowed failure.
+- **A seam of the same family: the duplicated verdict mapping.** `DetermineAction` is duplicated verbatim in `GeoCulturalConsistencyDetector` and `WesternImpersonationDetector` with `_ => RecommendedAction.NoAction`, and `RiskScore.FromScoreAndVerdict` falls through to `RiskLevel.Low`. AD-16 makes the mappings fail closed and forbids extending the copies in duplicate; consolidating them into one helper is deferred as mechanical work.
+- **A1, A3, A4, A5 and A6 stand as written.** They are unchanged tightening candidates for the next revision, not closed by this update.

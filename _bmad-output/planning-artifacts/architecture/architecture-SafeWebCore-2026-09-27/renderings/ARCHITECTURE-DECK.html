@@ -113,7 +113,7 @@
   <div class="brand">SafeWebCore <span>/ architecture spine</span></div>
   <nav class="toc" id="toc" aria-label="Slides"></nav>
   <div class="meta">
-    <b>15 decisions</b> · 5 packages · ratified <b>2026-09-27</b><br>
+    <b>19 decisions</b> · 5 packages · ratified <b>2026-09-27</b><br>
     source: <code>ARCHITECTURE-SPINE.md</code> (status: final)
   </div>
 </header>
@@ -137,7 +137,7 @@
       <p style="font-size:.94rem">If two units one level down built this independently, could they choose
         incompatibly? Fix it in the spine only when the answer is yes, <b>and</b> the call is non-obvious,
         <b>and</b> it is a real trade-off. Otherwise it is named under Deferred.</p>
-      <p class="sub" style="margin:0">15 decisions passed that test; 12 items did not and are listed by name.</p>
+      <p class="sub" style="margin:0">19 decisions passed that test; 12 items did not and are listed by name.</p>
     </div>
   </div>
 
@@ -337,18 +337,19 @@
 
   <div class="note bad" style="margin-top:14px">Stage 4 is the sharp edge: an <code>AdditionalHeaders</code> entry named after a
     library-owned header replaces it — including a CSP entry, whose baked-in <code>{nonce}</code> placeholder would then
-    never be substituted. The validator only rejects duplicates <i>inside</i> <code>AdditionalHeaders</code>. This is one of
-    the five open questions below.</div>
+    never be substituted. The validator only rejects duplicates <i>inside</i> <code>AdditionalHeaders</code>. <b>AD-18</b>
+    closes this: such an entry fails at startup with a <code>Fix:</code> pointing at <code>CustomPolicies</code>.
+    <span class="tag warn">implementation pending</span></div>
 
   <div class="note ok"><code>NetSecureHeadersDiagnosticsService</code> is the preview projection of the same table, not a second
     emitter. AD-8 step 5 keeps it in lockstep — an automated check for that drift is deferred.</div>
 </section>
-<section class="slide" data-title="15 decisions">
-  <h2>The 15 decisions</h2>
+<section class="slide" data-title="19 decisions">
+  <h2>The 19 decisions</h2>
   <p class="sub">Rule text quoted verbatim from the spine. Filter by the package you are touching.</p>
 
   <div class="chips" id="adChips">
-    <button class="on" data-f="all">All 15</button>
+    <button class="on" data-f="all">All 19</button>
     <button data-f="core">SafeWebCore</button>
     <button data-f="fraud">FraudDetection</button>
     <button data-f="jwt">JwtBearer</button>
@@ -459,17 +460,20 @@
     </div>
 
     <div class="ad" data-layers="core fraud">
-      <h3><span class="id">AD-10</span> Telemetry never blocks the response and never fails the request</h3>
+      <h3><span class="id">AD-10</span> Telemetry never blocks the response and never fails the request
+        <span class="tag warn">amended · pending</span></h3>
       <div class="binds">Binds: SafeWebCore, SafeWebCore.FraudDetection</div>
       <div class="rule">events go to every registered sink through a dispatcher, are awaited fire-and-forget with the
         request's <code>CancellationToken</code>, and are never awaited inline on the response path. A sink is added with
         <code>AddSafeWebCoreSecurityEventSink&lt;T&gt;</code> or <code>AddFraudEventSink&lt;T&gt;</code> so the default
-        sinks stay registered. The fraud dispatcher swallows a throwing sink per sink, deliberately, so that telemetry
-        cannot break detection; the security dispatcher does not catch and relies on being fire-and-forget. When touching
-        either one, keep the request path free of sink exceptions. Delivery order is registration order and therefore
-        deterministic, but nothing may depend on it and no sink may assume another has already run.</div>
+        sinks stay registered. Both dispatchers isolate a throwing sink deliberately: each materializes its sink sequence
+        once in its constructor and invokes every sink inside its own <code>try</code>, because fire-and-forget protects
+        the response, not delivery. A swallowed failure is counted in that dispatcher's metrics type, never silent. When
+        touching either one, keep the request path free of sink exceptions. Delivery order is registration order and
+        therefore deterministic, but nothing may depend on it and no sink may assume another has already run.</div>
       <div class="binds" style="margin:.5rem 0 0">All three security-event call sites discard the returned task
-        (<code>_ = _eventDispatcher.EmitAsync(...)</code>). See open question 1.</div>
+        (<code>_ = _eventDispatcher.EmitAsync(...)</code>), which is why the isolation has to live inside the dispatcher —
+        <code>FraudEventDispatcher</code> already does this.</div>
     </div>
     <div class="ad" data-layers="core">
       <h3><span class="id">AD-11</span> The environment downgrade is opt-in per registration call</h3>
@@ -525,6 +529,65 @@
         <code>DiagnosticDescriptors</code>. Each rule gets its own section in
         <code>src/SafeWebCore.Analyzers/README.md</code> and an entry in <code>AnalyzerReleases.Unshipped.md</code>. Rules
         never change runtime behaviour and never reference runtime package internals.</div>
+    </div>
+
+    <div class="ad" data-layers="fraud">
+      <h3><span class="id">AD-16</span> Enum members are append-only and every verdict mapping fails closed
+        <span class="tag warn">pending</span></h3>
+      <div class="binds">Binds: SafeWebCore.FraudDetection</div>
+      <div class="rule">members of <code>FraudVerdict</code>, <code>RiskLevel</code> and <code>RecommendedAction</code> are
+        append-only: a new member is added last, never inserted, reordered or renumbered, and it pins its value explicitly
+        the way <code>RiskLevel</code> already does (<code>Low = 0</code> through <code>Critical = 3</code>). An
+        unrecognized verdict never maps to the lowest level or to <code>NoAction</code>:
+        <code>RiskScore.FromScoreAndVerdict</code> and every verdict-to-action switch fail closed, so <i>unknown</i> is
+        never reported as <i>safe</i>. One change adds a new member with every arm and the metric tag, and a mapping two
+        detectors need lives in one shared helper.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>RiskScore.FromScoreAndVerdict</code> falls through
+        <code>_ =&gt; RiskLevel.Low</code>; <code>DetermineAction</code> is duplicated verbatim in
+        <code>GeoCulturalConsistencyDetector</code> and <code>WesternImpersonationDetector</code> with
+        <code>_ =&gt; RecommendedAction.NoAction</code>; <code>MaxSeverity</code> compares ordinals and the
+        <code>risk_level</code> tag carries the <code>RiskLevel</code> name. Precedent: <code>FakeWestern</code> is
+        <code>[Obsolete]</code> and equals <code>RegionImpersonation</code> rather than freeing a number.</div>
+    </div>
+
+    <div class="ad" data-layers="core fraud jwt analyzers testing">
+      <h3><span class="id">AD-17</span> Three-part SemVer is the canonical version form
+        <span class="tag warn">pending</span></h3>
+      <div class="binds">Binds: the csproj file of each of the five packages and the release documentation</div>
+      <div class="rule"><code>&lt;Version&gt;</code> is three-part SemVer — <code>1.2.3</code>, optionally with a
+        <code>-preview.N</code> suffix. The four-part form is not used, and the four-part assembly identity is still
+        produced automatically. <code>SafeWebCore.FraudDetection</code> moves to a higher three-part version at its next
+        release, and the release documentation states the canonical form and the published versions.</div>
+      <div class="binds" style="margin:.5rem 0 0">Why: NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
+        FraudDetection 1.0.0 is already published — so the four-part value in that csproj can never be pushed again.</div>
+    </div>
+
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-18</span> <code>AdditionalHeaders</code> may not name a header the library owns
+        <span class="tag warn">pending</span></h3>
+      <div class="binds">Binds: SafeWebCore options and the options validator</div>
+      <div class="rule"><code>AdditionalHeaders</code> may only name headers the library does not own. An entry whose name
+        matches a <code>HeaderNames</code> constant that <code>AddIfEnabled</code> emits fails at startup, in the
+        validator, with the options scope and a <code>Fix:</code> naming <code>CustomPolicies</code> /
+        <code>IHeaderPolicy</code> as the supported replacement path. The response header indexer stays the documented
+        override for headers the library does not own, and the check is implemented once, in the validator.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: the validator rejects duplicates only <i>inside</i>
+        <code>AdditionalHeaders</code>, and emission assigns <code>headers[name] = value</code> after the standard headers
+        and the CSP value, which replaces the emitted value.</div>
+    </div>
+
+    <div class="ad" data-layers="core">
+      <h3><span class="id">AD-19</span> The root namespace is for the types a consumer names</h3>
+      <div class="binds">Binds: SafeWebCore public API layout</div>
+      <div class="rule">a public type a consumer writes by name — in registration, in markup or in an option lambda — lives
+        in the root <code>SafeWebCore</code> namespace (<code>NetSecureHeaders</code>, <code>INonceService</code>); the
+        folder that holds the file is organisation, not the namespace contract. Types grouped by the concern they serve
+        live in the namespace named after that concern. <code>NonceService</code> and <code>INonceService</code> stay
+        root-namespaced inside <code>Infrastructure/</code>; moving them is a major-version change and is not worth
+        one.</div>
+      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>Infrastructure/NonceService.cs</code> and
+        <code>Infrastructure/INonceService.cs</code> declare <code>namespace SafeWebCore</code>;
+        <code>HttpContextExtensions</code> follows the other half of the rule in <code>SafeWebCore.Extensions</code>.</div>
     </div>
 
   </div>
@@ -587,20 +650,22 @@
     </div>
   </div>
 </section>
-<section class="slide" data-title="Open questions">
-  <h2>Five open questions, with a recommendation</h2>
-  <p class="sub">The spine leaves these open on purpose. Each one is a real trade-off; click a question for the evidence
-    and the recommendation this walkthrough makes.</p>
+<section class="slide" data-title="Questions decided">
+  <h2>Five questions, decided</h2>
+  <p class="sub">The spine left these open on purpose; all five were decided on 2026-09-27 and are folded in as
+    <code>AD-16</code> to <code>AD-19</code> plus an amended <code>AD-10</code>. Click a question for the evidence
+    behind the call.</p>
 
-  <details>
+  <details open>
     <summary>1. Should <code>SecurityEventDispatcher</code> swallow a throwing sink per sink, as <code>FraudEventDispatcher</code> does?</summary>
     <div class="body">
+      <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-10</b>, which was amended.</p>
       <p><b>What the code does today.</b> <code>EmitAsync</code> awaits each sink in a bare loop with no <code>try</code>,
         and all three call sites discard the returned task (<code>_ = _eventDispatcher.EmitAsync(...)</code>). So one sink
         that throws ends delivery for every sink registered after it, silently: the response is safe, the remaining events
         are gone, and the exception surfaces only as an unobserved task exception. <code>FraudEventDispatcher</code> does
         the opposite — it materializes the sinks into an array once in its constructor and catches per sink.</p>
-      <p><b>Recommendation: adopt the fraud policy.</b> Catch per sink in <code>EmitAsync</code> and materialize the sink
+      <p><b>Decided: adopt the fraud policy.</b> Catch per sink in <code>EmitAsync</code> and materialize the sink
         list once in the constructor, since the dispatcher is a singleton enumerating a DI-provided sequence on every
         event. Keep the async signature and the fire-and-forget contract unchanged, and count swallowed failures in
         <code>SafeWebCoreMetrics</code> so a broken sink is visible instead of silent.</p>
@@ -609,7 +674,7 @@
         trade-off rather than a designed one. Delivery order is already contractual as registration order (AD-10), which
         only means something if the loop finishes.</p>
       <p><b>Cost.</b> A behaviour change with no API surface change, so no <code>PublicAPI</code> entry; it needs a test
-        with a throwing first sink. AD-10's sentence "the security dispatcher does not catch" then collapses into one
+        with a throwing first sink. AD-10's sentence "the security dispatcher does not catch" has collapsed into one
         policy for both dispatchers.</p>
     </div>
   </details>
@@ -617,6 +682,8 @@
   <details>
     <summary>2. Is adding a <code>FraudVerdict</code> or <code>RiskLevel</code> member additive, or breaking?</summary>
     <div class="body">
+      <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-16</b>.
+        <span class="tag warn">implementation pending</span></p>
       <p><b>Binary compatibility: additive.</b> <b>Source compatibility:</b> a consumer switching exhaustively on the enum
         without a default arm stops compiling — a loud, correct failure that AD-3's additive-only rule should name
         explicitly rather than imply.</p>
@@ -628,12 +695,12 @@
         <code>MaxSeverity</code> is <code>(RecommendedAction)Math.Max((int)first, (int)second)</code>, and the
         <code>risk_level</code> metric tag is the <code>RiskLevel</code> name — so inserting or renumbering a member in
         either enum silently changes ordering or tag values.</p>
-      <p><b>Recommendation.</b> (a) Append-only: new members go last with explicit numeric values, never renumbered.
+      <p><b>Decided.</b> (a) Append-only: new members go last with an explicit value, never renumbered.
         (b) Make the unknown case fail closed — either map an unrecognized verdict to the highest level, or add an explicit
         <code>Unclassified</code> level so "unknown" is never reported as "safe". (c) One pull request must add the
         <code>RiskLevel</code> arm, both <code>RecommendedAction</code> arms (or fold that switch into a single shared
         helper, which AD-13's spirit already implies) and the metrics tag together. This belongs in the
-        backward-compatibility policy and in a new AD on the next spine update.</p>
+        backward-compatibility policy too. It is <b>AD-16</b>.</p>
       <p><b>Precedent in the codebase.</b> <code>FakeWestern = RegionImpersonation</code> with <code>[Obsolete]</code> is
         already how a verdict name is retired here — duplicate the value, never renumber.</p>
     </div>
@@ -641,13 +708,15 @@
   <details>
     <summary>3. Which version form is canonical: <code>1.0.0</code>, or the four-part <code>1.0.0.0</code>?</summary>
     <div class="body">
+      <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-17</b>.
+        <span class="tag warn">implementation pending</span></p>
       <p><b>Where the family stands.</b> SafeWebCore <code>1.7.0</code>, JwtBearer <code>1.0.0</code>, Analyzers and
         Testing <code>1.0.0-preview.1</code>, and FraudDetection <code>1.0.0.0</code>. nuget.org already carries all five,
         including FraudDetection 1.0.0.</p>
       <p><b>Why the four-part form is a live trap.</b> NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
         that version is published — so the <code>&lt;Version&gt;</code> value currently in the csproj can never be pushed
         again. The next FraudDetection release must be a higher version regardless of which form is chosen.</p>
-      <p><b>Recommendation: three-part SemVer is canonical</b> (<code>1.2.3</code>, optionally with a
+      <p><b>Decided: three-part SemVer is canonical</b> (<code>1.2.3</code>, optionally with a
         <code>-preview.N</code> suffix). It matches the other three packages, it is what NuGet stores after normalization
         anyway, and the four-part assembly identity is still produced automatically. Change FraudDetection to
         <code>1.1.0</code> or <code>1.0.1</code> at the next release and record the rule in the release documentation.</p>
@@ -660,12 +729,14 @@
   <details>
     <summary>4. Should <code>AdditionalHeaders</code> be prevented from naming a header the library already emits?</summary>
     <div class="body">
+      <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-18</b>.
+        <span class="tag warn">implementation pending</span></p>
       <p><b>Verified behaviour.</b> The validator rejects duplicates only <i>inside</i> <code>AdditionalHeaders</code>
         (case-insensitively). Emission appends the standard headers and the CSP value and then assigns each additional
         header through the response header indexer, which <b>replaces</b> the values already there. An entry named
         <code>Content-Security-Policy</code> therefore discards the per-request nonce substitution — and with it, every
         nonce-based script or style the app emits. <code>CustomPolicies</code> runs after it and remains the last word.</p>
-      <p><b>Recommendation: guard the library-owned names.</b> Reject, at startup, an <code>AdditionalHeaders</code> entry
+      <p><b>Decided: guard the library-owned names.</b> Reject, at startup, an <code>AdditionalHeaders</code> entry
         whose name matches a <code>HeaderNames</code> constant that <code>AddIfEnabled</code> emits, with the scope and a
         <code>Fix:</code> as AD-4 requires. Keep the indexer as the documented override for headers the library does not own,
         and keep <code>CustomPolicies</code> as the deliberate escape hatch for replacing a library-owned one. Implement the
@@ -678,14 +749,16 @@
   <details>
     <summary>5. Do <code>NonceService</code> and <code>NetSecureHeaders</code> belong in the root <code>SafeWebCore</code> namespace?</summary>
     <div class="body">
+      <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-19</b>, which changes no
+        code.</p>
       <p><b>What is actually there.</b> <code>Infrastructure/NonceService.cs</code> and
         <code>Infrastructure/INonceService.cs</code> declare <code>namespace SafeWebCore</code> — the root — while every
         other type in that folder declares <code>SafeWebCore.Infrastructure</code>. <code>NetSecureHeaders.cs</code>
         (holding <code>CspNonceKey</code>) sits at the project root and is root-namespaced, and the consistency conventions
         already say folders mirror namespaces.</p>
-      <p><b>Recommendation: keep it, and write the rule down.</b> Types a consumer names directly — in registration or in
-        markup — live in the root namespace (<code>NetSecureHeaders</code>, <code>INonceService</code>); the folder is
-        organisation, not the namespace contract. <code>HttpContextExtensions</code> follows the other half of the same
+      <p><b>Decided: keep it, and the rule is now written down as AD-19.</b> Types a consumer names directly — in
+        registration or in markup — live in the root namespace (<code>NetSecureHeaders</code>, <code>INonceService</code>);
+        the folder is organisation, not the namespace contract. <code>HttpContextExtensions</code> follows the other half of the same
         logic: <code>SafeWebCore.Extensions</code>, a namespace named after its concern. Moving the two Infrastructure
         outliers is a source-breaking change for zero functional gain, which makes it at most a major-version change and,
         on inspection, not worth one then either.</p>
@@ -695,8 +768,10 @@
     </div>
   </details>
 
-  <div class="note" style="margin-top:14px">None of the five changes an existing rule; four of them add one. Folded into the
-    spine they become <code>AD-16</code> onward, with the existing ids untouched, plus one amendment to AD-10.</div>
+  <div class="note" style="margin-top:14px">All five decisions are in the spine now: four became <code>AD-16</code> to
+    <code>AD-19</code> and one amended <code>AD-10</code>. The question text and the decisions stay on record in the
+    spine's <i>Open Questions</i> section, and every rule that still needs its code change is marked <i>implementation
+    pending</i>.</div>
 </section>
 <section class="slide" data-title="Deferred">
   <h2>What the spine deliberately does not decide</h2>
@@ -709,11 +784,11 @@
     <tr><td>Enforcing the <code>Async</code> suffix in the build</td><td>The rule is a <code>suggestion</code> and <code>EnforceCodeStyleInBuild</code> is not set; turning it on needs a trial build</td></tr>
     <tr><td>Retargeting to .NET 11 and aligning the local SDK with CI</td><td>.NET 11 GA is 2026-11-10 and <code>net10.0</code> is supported to 2028-11-14, so nothing forces the move</td></tr>
     <tr><td>Pinning <code>Microsoft.AspNetCore.Mvc.Testing</code> and moving JwtBearer to the current 10.0 patch</td><td>Reproducibility hygiene, not design</td></tr>
-    <tr><td>Unifying the two dispatcher failure policies</td><td>Needs a decision (Open Questions 1); current behaviour is documented in AD-10</td></tr>
+    <tr><td>Consolidating the duplicated <code>DetermineAction</code> and <code>MaxSeverity</code> switch into one shared helper</td><td>The two copies agree today; consolidating them has no design content, and AD-16 now forbids extending them in duplicate</td></tr>
     <tr><td>Symbols and SourceLink for the other four packages</td><td>Core-only today; per-package publishing work without design content</td></tr>
     <tr><td>Human-facing renderings</td><td><span class="tag ok">partly done</span> This deck now exists; a fuller solution design, a C4 set and a per-team split are still open</td></tr>
     <tr><td>A CI smoke test that installs the packed packages</td><td>Packing already runs in CI; the install test is additional work</td></tr>
-    <tr><td>Fixing <code>docs/nuget-packages.md</code></td><td>It is wrong rather than stale, and it misleads a release decision — but it governs no rule</td></tr>
+    <tr><td>Fixing <code>docs/nuget-packages.md</code></td><td>It is wrong rather than stale and misleads a release decision; AD-17 makes the correction a prerequisite for the next release decision — but it governs no rule of its own</td></tr>
     <tr><td>Enforcing the emission and diagnostics lockstep with a test</td><td>AD-8 names the step; an automated check would be stronger — the same enforcement gap as AD-1 and AD-2</td></tr>
     <tr><td>An architecture test for the layer direction and sideways package references</td><td>AD-1 and AD-2 are review-enforced only today</td></tr>
   </table>
@@ -729,6 +804,8 @@
           population; AD-14 post-configure additivity; AD-15 added for the analyzer rules.</li>
         <li>The stack table was corrected on two facts: all five packages are published, and the local RC SDK's support
           window ends 2026-10-13 while CI builds on 10.0.x.</li>
+        <li><b>Then the five open questions were decided</b> (2026-09-27): AD-10 amended, AD-16 to AD-19 added. Each of the
+          three reports in <code>reviews/</code> now carries an addendum recording what its findings turned into.</li>
       </ul>
     </div>
     <div class="card" style="margin:0">
@@ -738,7 +815,9 @@
           <code>AD-n</code> ids.</li>
         <li><b>Then stories</b> (<code>bmad-preview-ticketing</code>), or straight to a small change through
           <code>bmad-build</code>.</li>
-        <li><b>Decide the five open questions</b>, then fold four of them in as AD-16 onward plus one AD-10 amendment.</li>
+        <li><b>Implement what the five decisions imply</b>: per-sink isolation in
+          <code>SecurityEventDispatcher</code>, the fail-closed verdict mappings, the <code>AdditionalHeaders</code> guard
+          in the validator, and the FraudDetection version move.</li>
         <li><b>Close the two enforcement gaps</b> — the lockstep test and the architecture test — if the ids are to mean
           anything to an agent that only runs the build.</li>
       </ul>
