@@ -6,6 +6,32 @@
 > `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1. Use
 > [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
 > SemVer form.
+>
+> **The workspace carries 1.8.0** (version bumped, changelog dated — not published yet). Everything
+> below the release-prep section is the frozen 2026-07-25 audit and does **not** describe 1.8.0.
+
+---
+
+## Release-prep state for 1.8.0 (2026-09-27)
+
+The live status of the release the workspace is prepared for. The 2026-07-25 audit below stays frozen
+as the historical snapshot.
+
+| Item | State |
+|------|-------|
+| Build | ✅ `dotnet build SafeWebCore.slnx -c Release --no-incremental` — **0 errors**. 25 pre-existing `RS0016`/`RS0017` public-API-baseline warnings, all in `SafeWebCore.FraudDetection` (record-generated `Equals`/`GetHashCode`/`ToString`/operators, `MeterName`) and `SafeWebCore.JwtBearer` (2) — the core project itself builds clean |
+| Tests | ✅ 190 passed, 0 failed — `SafeWebCore.Tests` 125, `SafeWebCore.FraudDetection.Tests` 27, `SafeWebCore.JwtBearer.Tests` 38 |
+| Version | ✅ `<Version>` **1.8.0** in `SafeWebCore.csproj`; `SafeWebCore.FraudDetection` **1.1.0** (three-part) |
+| CHANGELOG | ✅ `[Unreleased]` promoted to `[1.8.0] — 2026-09-27`, empty `[Unreleased]` placeholder left, compare links added, stale 1.7.0-era duplicates removed |
+| Package docs | ✅ `README.md` and `PACKAGE.md` state 1.8.0 with the new notes; `<PackageReleaseNotes>` rewritten in the csproj (it lands in the nuspec) |
+| Pack | ✅ `dotnet pack` produces `SafeWebCore.1.8.0.nupkg` (~89 KB) and `SafeWebCore.1.8.0.snupkg` (~26 KB); the nuspec carries version `1.8.0` and the v1.8.0 release notes (verified 2026-09-27) |
+| PublicAPI | ⏳ Promote the `PublicAPI.Unshipped.txt` entries to `PublicAPI.Shipped.txt` at tag time — those entries are the 1.8.0 surface, and the flip claims they shipped |
+| Tag + push | ⏳ Tag `v1.8.0` (three-part form; the remote's older tags are mixed) → `nuget-publish.yml` packs all five and pushes with `--skip-duplicate`. Only `SafeWebCore` 1.8.0 and `SafeWebCore.FraudDetection` 1.1.0 are new there; `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10) and the two `1.0.0-preview.1` packages are skipped. Finish the FraudDetection packaging parity first, because the tag cannot publish it later without a higher version |
+| Git | ✅ All 1.8.0 work committed on `master`; the release-prep change is its own commit |
+
+Still genuinely open from the original audit — none of it blocks 1.8.0: packaging parity for
+`SafeWebCore.FraudDetection` (icon, symbols, `PackageReleaseNotes`), a CI performance gate, and
+analyzer unit tests.
 
 
 **Audit date:** 2026-07-25  

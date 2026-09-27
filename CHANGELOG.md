@@ -9,30 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet — the work below shipped as **1.8.0** on 2026-09-27. New entries start here.
+
+---
+
+## [1.8.0] — 2026-09-27
+
 ### Added
-- `NetSecureHeadersOptions.PathPolicy(pathPrefix, customize)` extension method — creates a path policy that **inherits** the global configuration and only overrides explicitly set values. This prevents accidental security header downgrades (for example a weaker HSTS value on `/api`).
+- `SafeWebCoreMetrics.SecurityEventSinkFailures` (`safewebcore.security_event_sink_failures_total`) and `SafeWebCoreFraudMetrics.FraudEventSinkFailures` (`safewebcore.fraud_event_sink_failures_total`) — a sink failure that a dispatcher isolates is now counted instead of disappearing.
+- `SecurityEventDispatcher(IEnumerable<ISecurityEventSink>, SafeWebCoreMetrics?)` — overload for the failure counter. The existing single-argument constructor keeps working.
+- `RiskLevel.Unclassified` (`= 4`, appended last) — the level for a verdict the library does not recognize, so an unknown verdict is never reported as `Low`.
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (was the four-part `1.0.0.0`, which NuGet normalizes to the already-published `1.0.0`).
+
+### Companion package: `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10)
 - **New companion module: `SafeWebCore.JwtBearer`** — makes a misconfigured JWT authority fail loud (or fail fast) at startup instead of silently returning `401` for everything. Solves dotnet/aspnetcore#67991 (reported by Stephan van Rooij) today, while the .NET team schedules the fix for .NET 12 Planning. Implements `AddJwtBearerAuthorityValidation`, `AddJwtBearerHardening`, and the one-liner `AddSafeWebCoreJwtBearer`.
 - `SafeWebCore.JwtBearer` token hardening — optional: require signed tokens / reject `alg: none`, algorithm allow-list, `typ` header checks (`JWT`/`at+jwt`), audience/issuer enforcement, maximum clock skew and token lifetime, `jti`/`nbf`/`iat` requirements.
 - `SafeWebCore.JwtBearer` runtime metadata logging — wraps the OpenID Connect configuration manager so metadata retrieval failures are logged at Error (4xx) / Warning level during runtime, not only at startup.
 - `SafeWebCore.JwtBearer` empty-JWKS detection — a discovery document that loads but contains **no signing keys** is now a permanent configuration error: `Error` log + startup throw when `FailFast`, down-gradable to a `Warning` via `RequireSigningKeys = false`.
 - `SafeWebCore.JwtBearer` optional `PeriodicValidationInterval` — background re-validation of the authority while the app runs (never throws; permanent → Error, transient → Warning). Closes the last-known-good observability gap for identity-provider outages after a healthy start.
 - `examples/JwtBearerDemo` — runnable reproduction of issue #67991 (broken vs. fixed behavior) and `StephanReproIntegrationTests` proving both sides.
-
-- `NetSecureHeadersOptions.ApplyPreset(...)` is now **public** — the official inheritance mechanism to copy all values from another options instance (for example the global options) before applying overrides.
-- `NetSecureHeadersOptions.Clone()` — creates an independent copy of an options instance for safe mutation.
-- `SafeWebCoreMetrics.SecurityEventSinkFailures` (`safewebcore.security_event_sink_failures_total`) and `SafeWebCoreFraudMetrics.FraudEventSinkFailures` (`safewebcore.fraud_event_sink_failures_total`) — a sink failure that a dispatcher isolates is now counted instead of disappearing.
-- `SecurityEventDispatcher(IEnumerable<ISecurityEventSink>, SafeWebCoreMetrics?)` — overload for the failure counter. The existing single-argument constructor keeps working.
-- `RiskLevel.Unclassified` (`= 4`, appended last) — the level for a verdict the library does not recognize, so an unknown verdict is never reported as `Low`.
-- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (was the four-part `1.0.0.0`, which NuGet normalizes to the already-published `1.0.0`).
+- Note: this module reached nuget.org on **2026-09-10** as `SafeWebCore.JwtBearer` `1.0.0`, from the same workspace commits recorded here; the repository has no tag for that publish, so its changes appear in a CHANGELOG section for the first time. The `v1.8.0` release train carries `SafeWebCore.JwtBearer` `1.0.0` unchanged, so NuGet skips it as a duplicate.
 
 ### Security
-- Path policies created with `PathPolicy(...)` now inherit all unspecified settings from the global configuration instead of falling back to library defaults. This addresses the security footgun where a path-specific policy could unintentionally weaken `Strict-Transport-Security`, CSP, or other security headers.
 - `SecurityEventDispatcher` isolates a throwing `ISecurityEventSink` per sink instead of letting it end delivery for every sink registered after it. All three call sites discard the returned task, so a bare loop lost the remaining events and surfaced the failure only as an unobserved task exception; a failing sink can no longer mute the others.
 - Verdict mappings now fail closed: `RiskScore.FromScoreAndVerdict` maps an unrecognized verdict to `RiskLevel.Unclassified` (never `Low`) and the shared verdict-to-action mapping maps it to `RecommendedAction.BlockRequest` (never `NoAction`). An unrecognized verdict is therefore never reported as *safe*.
 - `AdditionalHeaders` may no longer name a header the library owns (HSTS, X-Frame-Options, CSP, NEL, Reporting-Endpoints, and the rest of the typed set). Startup validation fails with the options scope and a `Fix:` that points at `CustomPolicies` / `IHeaderPolicy`, because assigning the response header indexer replaced the library value — for CSP including the per-request `{nonce}` substitution, which silently dropped the nonce authorization of every script and style the app emits.
 
 ### Compatibility
-- ✅ **100% backwards compatible** — existing `PathPolicies.Add(new PathPolicyOptions { ... })` behavior (replacement semantics) is unchanged. The new inheritance API is purely additive.
+- ✅ **100% backwards compatible** — the new counters, the `SecurityEventDispatcher` overload and `RiskLevel.Unclassified` are additive, and existing registrations plus `PathPolicies.Add(new PathPolicyOptions { ... })` replacement semantics behave exactly as in 1.7.0.
 - ⚠️ **Intentional tightening** — a configuration that named a library-owned header in `AdditionalHeaders` now fails at startup instead of silently replacing the library value. Move the entry to `CustomPolicies` (`IHeaderPolicy`) when the replacement is deliberate.
 - ⚠️ A consumer `switch` over `RiskLevel` without a default arm needs one new arm for `Unclassified`; every other enum member keeps its value.
 
@@ -237,7 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server header removal
 - Comprehensive documentation and test suite
 
-[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.5...v1.6.0
 [1.3.5]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.0...v1.3.5

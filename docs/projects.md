@@ -141,7 +141,7 @@ Lightweight, high-performance ASP.NET Core middleware that emits security header
 
 ### Version reality check
 
-The **published** package identity is still **1.3.5**. The workspace contains substantial **Unreleased** work (config binding, environment helpers, diagnostics, metrics, analyzers, testing package) intended for a future **1.4+** line. Do not treat workspace HEAD as identical to nuget.org 1.3.5 without reading `CHANGELOG.md` `[Unreleased]`.
+The **published** package identity is **1.7.0**. The workspace carries **1.8.0** — the four implementation-pending architecture rules (event-sink isolation, fail-closed fraud verdicts, the header-ownership guard) plus the two sink-failure counters — dated `[1.8.0] — 2026-09-27` in `CHANGELOG.md` and not yet on nuget.org. The earlier **1.4+ / 1.6 / 1.7** work (config binding, environment helpers, diagnostics, metrics, presets) is published, and `SafeWebCore.Analyzers` and `SafeWebCore.Testing` shipped as `1.0.0-preview.1`. Do not treat workspace HEAD as identical to nuget.org 1.7.0; read `CHANGELOG.md` for which dated section a change belongs to.
 
 ---
 
@@ -261,7 +261,7 @@ Custom target `AddAnalyzerToPackage` places the analyzer assembly at `analyzers/
 ### Documentation
 
 - `src/SafeWebCore.Analyzers/README.md`
-- Changelog tooling section under `[Unreleased]`
+- Changelog tooling section under `[1.6.0]`
 - Roadmap v1.5 tooling epics
 
 ---
@@ -459,8 +459,8 @@ All examples:
 | Asset | Role |
 |-------|------|
 | `README.md` | Product landing page |
-| `PACKAGE.md` | NuGet readme for **SafeWebCore** (currently documents 1.3.5) |
-| `CHANGELOG.md` | Keep a Changelog; large `[Unreleased]` block for next release |
+| `PACKAGE.md` | NuGet readme for **SafeWebCore** (documents 1.8.0) |
+| `CHANGELOG.md` | Keep a Changelog; one dated section per release plus a small `[Unreleased]` block for work in progress |
 | `CONTRIBUTING.md` | Contributor workflow + public API rules |
 | `LICENSE` | MIT |
 | `icon.png` | NuGet icon (core package) |

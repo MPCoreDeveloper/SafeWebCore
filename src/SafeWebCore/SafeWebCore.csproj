@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.8.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,19 +23,18 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
         <PackageReleaseNotes>
-## v1.7.0 — Path policy inheritance, OWASP API + NSwag presets
+## v1.8.0 — Event-sink isolation, fail-closed verdicts, header-ownership guard
 
-**Security (issue #3):**
-- New `PathPolicy(...)` extension method: path policies now inherit the global configuration and only override explicitly set values — prevents accidental security header downgrades (e.g. weaker HSTS on /api)
-- `ApplyPreset(...)` and `Clone()` are now public — official inheritance mechanism for path policies and custom presets
-- `NetSecureHeadersOptions.PathPolicy("...")` with global inheritance is the recommended path policy API
+**Hardening (tightening in a safe direction; the API surface stays additive):**
+- `SecurityEventDispatcher` isolates a throwing `ISecurityEventSink` per sink instead of muting every sink registered after it, and counts the swallowed failure in `SafeWebCoreMetrics.SecurityEventSinkFailures`. `FraudEventDispatcher` does the same in `SafeWebCoreFraudMetrics.FraudEventSinkFailures`
+- Fail-closed verdict mapping: an unrecognized verdict is now `RiskLevel.Unclassified` (appended, `= 4`) instead of `Low`, and the shared `FraudVerdictMapping` maps it to `RecommendedAction.BlockRequest` instead of `NoAction`
+- Startup validation now rejects an `AdditionalHeaders` entry that names a header SafeWebCore owns (HSTS, X-Frame-Options, CSP, NEL, Reporting-Endpoints, ...), because assigning that header replaced the library value — for CSP including the per-request nonce. Use `CustomPolicies` / `IHeaderPolicy` for a deliberate override
 
-**New presets:**
-- `SecurePresets.OwaspApi()` / `AddNetSecureHeadersOwaspApiPreset(...)` — OWASP API Security Top 10 aligned response-header hardening for API endpoints
-- `SecurePresets.NSwag()` / `AddNetSecureHeadersNSwagPreset(...)` — NSwag UI (Rico Sutter) preset with nonce-based CSP and unpkg CDN assets
-- `SecurePresets.OwaspApiPath()` — path policy helper for OWASP API preset
+**Also new:**
+- `SecurityEventDispatcher(IEnumerable&lt;ISecurityEventSink&gt;, SafeWebCoreMetrics?)` overload for the failure counter; the single-argument constructor keeps working
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (the four-part `1.0.0.0` normalizes to the already-published `1.0.0`)
 
-**Compatibility:** 100% backward compatible. All new APIs are additive and opt-in.
+**Compatibility:** 100% backward compatible on the public surface — everything new is additive. Two intentional tightenings are documented in CHANGELOG.md: the `AdditionalHeaders` startup guard, and a consumer `switch` over `RiskLevel` without a default arm needing one arm for `Unclassified`.
 
 See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>

@@ -647,6 +647,7 @@
         <tr><td>Target framework</td><td><code>net10.0</code> — LTS, end of support 2028-11-14; latest patch 10.0.12</td></tr>
         <tr><td>Local SDK</td><td><code>11.0.100-rc.1.26425.128</code> — support window ends 2026-10-13, CI builds the shipped artifacts on 10.0.x</td></tr>
         <tr><td>Build gates</td><td><code>TreatWarningsAsErrors=true</code>, <code>AnalysisLevel=latest-recommended</code>, <code>RS0037</code> error, <code>RS0016</code>/<code>RS0017</code> warning</td></tr>
+        <tr><td>csproj</td><td>After the 1.8.0 release prep: SafeWebCore <code>1.8.0</code>, FraudDetection <code>1.1.0</code>, JwtBearer <code>1.0.0</code>, Analyzers and Testing <code>1.0.0-preview.1</code></td></tr>
         <tr><td>Published</td><td>SafeWebCore through 1.7.0; FraudDetection, JwtBearer 1.0.0; Analyzers, Testing 1.0.0-preview.1</td></tr>
       </table>
     </div>
@@ -654,7 +655,7 @@
       <h3>Two facts worth acting on</h3>
       <ul class="tight">
         <li>The local SDK is an <b>RC whose support window ends 2026-10-13</b>; CI is on 10.0.x. Retargeting to .NET 11 (GA 2026-11-10) is deferred by choice, not by constraint.</li>
-        <li><code>docs/nuget-packages.md</code> is <b>factually wrong</b> — it reports 1.3.5 as the latest SafeWebCore and the other four as unpublished. A release decision cannot be taken from it.</li>
+        <li><code>docs/nuget-packages.md</code> <b>was factually wrong</b> — it reported 1.3.5 as the latest SafeWebCore and the other four as unpublished, so a release decision could not be taken from it. It was corrected on 2026-09-27 (published set, canonical three-part form, CI pack row, release trains).</li>
       </ul>
     </div>
   </div>
@@ -721,12 +722,13 @@
     <div class="body">
       <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-17</b>.
         <span class="tag ok">implemented 2026-09-27</span></p>
-      <p><b>Where the family stands.</b> SafeWebCore <code>1.7.0</code>, JwtBearer <code>1.0.0</code>, Analyzers and
-        Testing <code>1.0.0-preview.1</code>, and FraudDetection <code>1.0.0.0</code>. nuget.org already carries all five,
-        including FraudDetection 1.0.0.</p>
-      <p><b>Why the four-part form is a live trap.</b> NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
-        that version is published — so the <code>&lt;Version&gt;</code> value currently in the csproj can never be pushed
-        again. The next FraudDetection release must be a higher version regardless of which form is chosen.</p>
+      <p><b>Where the family stands.</b> Before the release prep the csproj carried SafeWebCore <code>1.7.0</code>,
+        JwtBearer <code>1.0.0</code>, Analyzers and Testing <code>1.0.0-preview.1</code>, and FraudDetection
+        <code>1.0.0.0</code>. nuget.org already carries all five, including FraudDetection 1.0.0. After the prep it carries
+        SafeWebCore <code>1.8.0</code> and FraudDetection <code>1.1.0</code>.</p>
+      <p><b>Why the four-part form was a live trap.</b> NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
+        that version is published — so the <code>&lt;Version&gt;</code> value the csproj carried could never have been
+        pushed again. The next FraudDetection release had to be a higher version regardless of which form was chosen.</p>
       <p><b>Decided: three-part SemVer is canonical</b> (<code>1.2.3</code>, optionally with a
         <code>-preview.N</code> suffix). It matches the other three packages, it is what NuGet stores after normalization
         anyway, and the four-part assembly identity is still produced automatically. FraudDetection now carries

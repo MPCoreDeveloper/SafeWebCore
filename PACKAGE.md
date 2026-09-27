@@ -2,13 +2,13 @@
 
 A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
-**Current version:** 1.7.0
+**Current version:** 1.8.0
 
-New in 1.7.0:
-- **Path policy inheritance** — `PathPolicy(...)` now inherits the global configuration and only overrides explicitly set values (resolves issue #3, prevents HSTS/CSP downgrades on path-specific endpoints).
-- **OWASP API preset** — `AddNetSecureHeadersOwaspApiPreset()` aligned with the OWASP API Security Top 10 response-header hardening.
-- **NSwag preset** — `AddNetSecureHeadersNSwagPreset()` for Rico Sutter's NSwag UI with nonce-based CSP and no `'unsafe-inline'` (stricter than Swagger).
-- `ApplyPreset(...)` and `Clone()` are now public — official inheritance mechanism for path policies and custom presets.
+New in 1.8.0:
+- **Event-sink isolation** — `SecurityEventDispatcher` (and the fraud dispatcher) isolate a throwing sink per sink instead of muting every sink registered after it, and count the swallowed failure in `SafeWebCoreMetrics.SecurityEventSinkFailures` / `SafeWebCoreFraudMetrics.FraudEventSinkFailures`.
+- **Fail-closed verdict mapping** — an unrecognized fraud verdict is now `RiskLevel.Unclassified` (never `Low`) and maps to `RecommendedAction.BlockRequest` (never `NoAction`); the duplicated mapping in both detectors is consolidated into one internal helper.
+- **Header-ownership guard** — startup validation rejects an `AdditionalHeaders` entry that names a header SafeWebCore owns (HSTS, X-Frame-Options, CSP, NEL, Reporting-Endpoints, ...), because assigning that header replaced the library value — for CSP including the per-request nonce. Use `CustomPolicies` for a deliberate override.
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (the four-part `1.0.0.0` normalized to the already-published `1.0.0`).
 
 ## Backward Compatibility Goal
 

@@ -10,7 +10,7 @@
 
 **SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
-**Current version:** 1.7.0
+**Current version:** 1.8.0
 
 ---
 
@@ -100,16 +100,16 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.7.0
+## 🆕 What's New in v1.8.0
 
-v1.7.0 is a **security hardening and presets** release — fully backwards compatible with v1.6.0 and earlier.
+v1.8.0 is a **hardening** release — 100% backwards compatible with v1.7.0 and earlier on the public API surface.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Path policy inheritance** | `PathPolicy(...)` now inherits the global configuration — only explicitly set values override (resolves issue #3, prevents HSTS/CSP downgrades on path-specific endpoints) |
-| **Public inheritance API** | `ApplyPreset(...)` and `Clone()` are now public — build path policies and custom presets from an existing options instance |
-| **OWASP API preset** | `AddNetSecureHeadersOwaspApiPreset()` aligned with the OWASP API Security Top 10 response-header hardening |
-| **NSwag preset** | `AddNetSecureHeadersNSwagPreset()` for Rico Sutter's NSwag UI with nonce-based CSP and no `'unsafe-inline'` (stricter than Swagger) |
+| **Event-sink isolation** | A throwing `ISecurityEventSink` / `IFraudEventSink` no longer mutes the sinks registered after it; both dispatchers isolate each sink and count the swallowed failure (`security_event_sink_failures_total`, `fraud_event_sink_failures_total`) |
+| **Fail-closed verdicts** | An unrecognized fraud verdict maps to `RiskLevel.Unclassified` (never `Low`) and `RecommendedAction.BlockRequest` (never `NoAction`); one shared mapping replaces the duplicated copies in both detectors |
+| **Header-ownership guard** | Startup validation rejects an `AdditionalHeaders` entry that names a library-owned header (HSTS, CSP, NEL, Reporting-Endpoints, ...), because it replaced the value the library emits — for CSP including the per-request nonce. `CustomPolicies` stays the deliberate override |
+| **Versioning** | `SafeWebCore.FraudDetection` moves to the three-part `1.1.0` (the four-part `1.0.0.0` normalized to the already-published `1.0.0`) |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 

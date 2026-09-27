@@ -213,7 +213,7 @@ Seed at authoring time, verified on 2026-09-27; the projects own this once it ch
 | Solution | `SafeWebCore.slnx` | single entry point for restore, build, test and pack |
 | Build gates | `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`, `RS0037` error, `RS0016`/`RS0017` warning | `Directory.Build.props` plus per-project csproj |
 | Reproducibility | `Deterministic`, SourceLink, `snupkg` | core only; FraudDetection and JwtBearer still lack symbols and SourceLink |
-| Package versions and publish state | csproj: SafeWebCore 1.7.0, FraudDetection 1.0.0.0, JwtBearer 1.0.0, Analyzers 1.0.0-preview.1, Testing 1.0.0-preview.1 | Published on nuget.org, verified 2026-09-27: SafeWebCore through 1.7.0, FraudDetection 1.0.0, JwtBearer 1.0.0, Analyzers 1.0.0-preview.1, Testing 1.0.0-preview.1. All five are live, so a release now needs a new version rather than a first publish |
+| Package versions and publish state | csproj after the 1.8.0 release prep: SafeWebCore 1.8.0, FraudDetection 1.1.0, JwtBearer 1.0.0, Analyzers 1.0.0-preview.1, Testing 1.0.0-preview.1 | Published on nuget.org, verified 2026-09-27: SafeWebCore through 1.7.0, FraudDetection 1.0.0, JwtBearer 1.0.0, Analyzers 1.0.0-preview.1, Testing 1.0.0-preview.1. All five are live, so a release now needs a new version rather than a first publish |
 
 ## Structural Seed
 
