@@ -11,7 +11,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore.FraudDetection</PackageId>
-    <Version>1.0.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore.FraudDetection</Product>
@@ -39,10 +39,12 @@
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="All" />
   </ItemGroup>
 
-  <!-- Explicitly register the baseline files so the analyzer picks them up reliably -->
+  <!-- Explicitly register the baseline files so the analyzer picks them up reliably.
+       The test project is the only friend assembly, matching the pattern the other packages use. -->
   <ItemGroup>
     <AdditionalFiles Include="PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <InternalsVisibleTo Include="SafeWebCore.FraudDetection.Tests" />
   </ItemGroup>
 
   <!-- Public API baseline enforcement (roadmap v1.4 item 1.2) -->

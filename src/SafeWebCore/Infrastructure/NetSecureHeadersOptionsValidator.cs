@@ -5,6 +5,34 @@ namespace SafeWebCore.Infrastructure;
 
 internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSecureHeadersOptions>
 {
+    /// <summary>
+    /// Header names the library emits through its typed options. An <c>AdditionalHeaders</c> entry may
+    /// not name one of these: assigning the response header indexer overwrites the library value — for
+    /// CSP including the per-request nonce substitution, which would drop the nonce authorization of
+    /// every script and style the app emits. <c>CustomPolicies</c> / <c>IHeaderPolicy</c> is the
+    /// deliberate escape hatch for that case.
+    /// </summary>
+    private static readonly string[] LibraryOwnedHeaderNames =
+    [
+        HeaderNames.StrictTransportSecurity,
+        HeaderNames.XFrameOptions,
+        HeaderNames.XContentTypeOptions,
+        HeaderNames.ReferrerPolicy,
+        HeaderNames.PermissionsPolicy,
+        HeaderNames.CrossOriginEmbedderPolicy,
+        HeaderNames.CrossOriginOpenerPolicy,
+        HeaderNames.CrossOriginResourcePolicy,
+        HeaderNames.XDnsPrefetchControl,
+        HeaderNames.XPermittedCrossDomainPolicies,
+        HeaderNames.OriginAgentCluster,
+        HeaderNames.XRobotsTag,
+        HeaderNames.ClearSiteData,
+        HeaderNames.ContentSecurityPolicy,
+        HeaderNames.ContentSecurityPolicyReportOnly,
+        HeaderNames.NetworkErrorLogging,
+        HeaderNames.ReportingEndpoints
+    ];
+
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, NetSecureHeadersOptions options)
     {
@@ -89,6 +117,11 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
                 failures.Add($"{scope}: Additional header '{header.Name}' value must not be null, empty, or whitespace. Fix: provide the value to emit, e.g. \"force-load-at-top\".");
             }
 
+            if (IsLibraryOwnedHeaderName(header.Name))
+            {
+                failures.Add($"{scope}: Additional header '{header.Name}' names a header SafeWebCore owns, so the value the library emits would be replaced — for CSP including the per-request nonce. Fix: remove the entry and configure the typed option instead, or emit it deliberately through CustomPolicies / IHeaderPolicy.");
+            }
+
             if (!seen.Add(header.Name))
             {
                 failures.Add($"{scope}: Duplicate additional header '{header.Name}' is not allowed. Fix: merge the values or keep only one entry per header name.");
@@ -159,6 +192,9 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
             failures.Add($"{scope}: NelValue is missing 'max_age' field. Fix: add \"max_age\":<seconds>, e.g. {{\"report_to\":\"default\",\"max_age\":2592000}}.");
         }
     }
+
+    private static bool IsLibraryOwnedHeaderName(string name)
+        => LibraryOwnedHeaderNames.Any(owned => string.Equals(owned, name, StringComparison.OrdinalIgnoreCase));
 
     private static string NormalizePathPrefix(string pathPrefix)
         => pathPrefix.StartsWith('/') ? pathPrefix : $"/{pathPrefix}";

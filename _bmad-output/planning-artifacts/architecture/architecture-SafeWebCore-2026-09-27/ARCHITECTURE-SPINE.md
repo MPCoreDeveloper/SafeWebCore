@@ -29,7 +29,7 @@ companions: []
 
 ## Invariants & Rules
 
-Nineteen decisions fix what a future builder cannot read off compliant code. The rationale behind each one lives in `.memlog.md`, not here. AD-10 was amended and AD-16 to AD-19 were added on 2026-09-27, when the five questions this run carried were decided; a rule whose matching code change is still to come says so in its status.
+Nineteen decisions fix what a future builder cannot read off compliant code. The rationale behind each one lives in `.memlog.md`, not here. AD-10 was amended and AD-16 to AD-19 were added on 2026-09-27, when the five questions this run carried were decided. All four rules that carried an *implementation pending* status were implemented the same day — both dispatchers isolate a throwing sink per sink and count the swallowed failure, `RiskScore.FromScoreAndVerdict` and the shared `FraudVerdictMapping` fail closed, `SafeWebCore.FraudDetection` carries the three-part `1.1.0`, and the validator rejects an `AdditionalHeaders` entry that names a library-owned header — so every rule below is backed by code and tests.
 
 ### AD-1 — Packages are independent siblings [ADOPTED]
 
@@ -104,7 +104,7 @@ graph BT
 - **Rule:** a path policy is created with `options.PathPolicy("/prefix", customize)`, which starts from a clone of the global options, so only explicitly configured values differ. Prefixes normalize to a leading `/`, compare case-insensitively, and the longest matching prefix wins. Duplicate prefixes after normalization fail at startup.
 - **Evidence:** `NetSecureHeadersOptionsExtensions.PathPolicy`, the descending prefix sort in `BuildPathPolicies`, and the duplicate check in the validator.
 
-### AD-10 — Telemetry never blocks the response and never fails the request [ADOPTED — amended 2026-09-27, implementation pending]
+### AD-10 — Telemetry never blocks the response and never fails the request [ADOPTED — amended and implemented 2026-09-27]
 
 - **Binds:** SafeWebCore, SafeWebCore.FraudDetection
 - **Prevents:** a telemetry sink adding latency to the response or turning a logging failure into a 500 or an unobserved task exception.
@@ -142,25 +142,25 @@ graph BT
 - **Prevents:** a rule shipping at error severity and breaking consumer builds, two rules colliding on an id or a severity, and a rule that changes runtime behaviour.
 - **Rule:** every rule is `DiagnosticSeverity.Warning` with `isEnabledByDefault: true`, category `SafeWebCore`, and an ascending `SWC0nn` id declared only in `DiagnosticDescriptors`. Each rule gets its own section in `src/SafeWebCore.Analyzers/README.md` and an entry in `AnalyzerReleases.Unshipped.md`. Rules never change runtime behaviour and never reference runtime package internals.
 
-### AD-16 — Enum members are append-only and every verdict mapping fails closed [ADOPTED — implementation pending]
+### AD-16 — Enum members are append-only and every verdict mapping fails closed [ADOPTED — implemented 2026-09-27]
 
 - **Binds:** SafeWebCore.FraudDetection
 - **Prevents:** a new `FraudVerdict`, `RiskLevel` or `RecommendedAction` member landing as *low risk, no action* because one of the parallel switches was forgotten, and a renumbering that silently changes ordinal comparisons or metric tag values.
 - **Rule:** members of `FraudVerdict`, `RiskLevel` and `RecommendedAction` are append-only: a new member is added last, never inserted, reordered or renumbered, and it pins its value explicitly the way `RiskLevel` already does (`Low = 0` through `Critical = 3`), because `MaxSeverity` compares ordinals with `Math.Max((int)first, (int)second)` and the `risk_level` and `verdict` metric tags carry member names. An unrecognized verdict never maps to the lowest level or to `NoAction`: `RiskScore.FromScoreAndVerdict` and every verdict-to-action switch fail closed, so *unknown* is never reported as *safe*. One change adds a new member together with the `RiskLevel` arm, every verdict-to-action arm and the metric tag. A mapping that more than one detector needs is written once, in a shared helper, and never extended in duplicate.
 - **Evidence:** `RiskScore.FromScoreAndVerdict` falls through `_ => RiskLevel.Low` for an undefined verdict; the `DetermineAction` switch is duplicated verbatim in `GeoCulturalConsistencyDetector` and `WesternImpersonationDetector` with `_ => RecommendedAction.NoAction`; `risk_level` is the metric tag name in `FraudEventDispatcher`. Retiring a verdict name follows the existing precedent: `FakeWestern` is `[Obsolete]` and equals `RegionImpersonation` rather than freeing a number.
 
-### AD-17 — Three-part SemVer is the canonical version form [ADOPTED — implementation pending]
+### AD-17 — Three-part SemVer is the canonical version form [ADOPTED — implemented 2026-09-27]
 
 - **Binds:** the csproj file of each of the five packages and the release documentation
 - **Prevents:** a release that reuses a version nuget.org already carries, because NuGet normalizes `1.0.0.0` to `1.0.0` and `SafeWebCore.FraudDetection` 1.0.0 is published.
 - **Rule:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N` suffix. The four-part form is not used, and the four-part assembly identity is still produced automatically. `SafeWebCore.FraudDetection` moves to a higher three-part version at its next release. The release documentation states the canonical form and the published versions, and `docs/nuget-packages.md` is corrected before it is used in a release decision.
 - **Evidence:** published versions verified 2026-09-27 through the NuGet flat-container API — `SafeWebCore` 1.0.0 through 1.3.5 plus 1.6.0 and 1.7.0, `SafeWebCore.FraudDetection` and `SafeWebCore.JwtBearer` 1.0.0, `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1 — while `docs/nuget-packages.md` reports the opposite.
 
-### AD-18 — `AdditionalHeaders` may not name a header the library owns [ADOPTED — implementation pending]
+### AD-18 — `AdditionalHeaders` may not name a header the library owns [ADOPTED — implemented 2026-09-27]
 
 - **Binds:** SafeWebCore options and the options validator
 - **Prevents:** a configuration entry silently replacing a header the library emits — including the CSP value whose `{nonce}` placeholder is substituted per request — which would drop the nonce authorization of every script and style the app emits.
-- **Rule:** `AdditionalHeaders` may only name headers the library does not own. An entry whose name matches a `HeaderNames` constant that `AddIfEnabled` emits fails at startup, in the validator, with the options scope and a `Fix:` that names `CustomPolicies` / `IHeaderPolicy` as the supported replacement path. The response header indexer stays the documented override for headers the library does not own, and `CustomPolicies` remains the deliberate escape hatch for a library-owned one. The check is implemented once, in the validator, not duplicated in the middleware and the diagnostics projection.
+- **Rule:** `AdditionalHeaders` may only name headers the library does not own. An entry whose name matches a header the middleware emits through its typed options — the `AddIfEnabled` set of `HeaderNames` constants plus `Content-Security-Policy`, `Content-Security-Policy-Report-Only`, `NEL` and `Reporting-Endpoints` — fails at startup, in the validator, with the options scope and a `Fix:` that names `CustomPolicies` / `IHeaderPolicy` as the supported replacement path. The response header indexer stays the documented override for headers the library does not own, and `CustomPolicies` remains the deliberate escape hatch for a library-owned one. The check is implemented once, in the validator, not duplicated in the middleware and the diagnostics projection.
 - **Evidence:** `ValidateAdditionalHeaders` rejects duplicates only inside `AdditionalHeaders` (`StringComparer.OrdinalIgnoreCase`); emission appends the standard headers and the CSP value and then assigns `headers[additionalHeader.Name] = additionalHeader.Value`, which replaces the earlier value; `CustomPolicies` runs after it.
 
 ### AD-19 — The root namespace is for the types a consumer names [ADOPTED]
@@ -185,7 +185,7 @@ graph BT
 | Serialization | `System.Text.Json` with `JsonSerializerDefaults.Web` held in a `static readonly JsonSerializerOptions`; no per-call options allocation |
 | Configuration | Options pattern everywhere; core binds from configuration with `AddNetSecureHeadersFromConfiguration`; FraudDetection default section `SafeWebCore:FraudDetection`; registration methods are safe to call twice where they would otherwise duplicate a singleton or hosted service |
 | Deprecation | Legacy paths stay functional and documented while new work uses the neutral path (`EnableGeoCulturalConsistency` and `IsRegionImpersonation` instead of `EnableWesternImpersonation` and `IsFakeWestern`); obsolete members are marked obsolete and are still accessed internally under `#pragma warning disable CS0618` |
-| Tests | xUnit v3 on `Microsoft.Testing.Platform`, one suite per package in `tests/<Package>.Tests`, assertions through the `SafeWebCore.Testing` helpers; `InternalsVisibleTo` only for `SafeWebCore.JwtBearer.Tests` |
+| Tests | xUnit v3 on `Microsoft.Testing.Platform`, one suite per package in `tests/<Package>.Tests`, assertions through the `SafeWebCore.Testing` helpers; `InternalsVisibleTo` only for the matching test project (`SafeWebCore.JwtBearer.Tests`, `SafeWebCore.FraudDetection.Tests`) |
 | Commits and PRs | Conventional Commits with a module scope (`fix(JwtBearer): ...`); `CHANGELOG.md` entry for user-visible changes; contributions land on `master` through a pull request |
 
 ## Stack
@@ -273,11 +273,9 @@ SafeWebCore/
 | Enforcing the `Async` suffix in the build | The rule is a `suggestion` and `EnforceCodeStyleInBuild` is not set; turning it on needs a trial build because it can surface existing violations |
 | Retargeting to .NET 11 and aligning the local SDK with CI | .NET 11 GA is 2026-11-10 and `net10.0` is supported to 2028-11-14, so nothing forces the move |
 | Pinning `Microsoft.AspNetCore.Mvc.Testing` (`10.0.*`) and moving JwtBearer to the current 10.0 patch | Reproducibility hygiene, not design |
-| Consolidating the duplicated `DetermineAction` and `MaxSeverity` switch into one shared helper | The two copies in `GeoCulturalConsistencyDetector` and `WesternImpersonationDetector` agree today; consolidating them is mechanical work with no design content, and AD-16 forbids extending them in duplicate |
 | Symbols and SourceLink for the other four packages | Core-only today; per-package publishing work without design content |
 | Human-facing renderings (deck, solution design, C4 set, per-team split) | This run is build-substrate only by explicit choice |
 | A CI smoke test that installs the packed packages | Packing already runs in CI; the install test is additional work |
-| Fixing `docs/nuget-packages.md` | It is wrong rather than stale: it reports 1.3.5 as the latest published SafeWebCore and all four other packages as unpublished, while nuget.org shows SafeWebCore 1.7.0 and 1.0.0 for FraudDetection and JwtBearer (verified 2026-09-27). It misleads a release decision, and AD-17 makes the correction a prerequisite for the next release decision; it still governs no rule of its own |
 | Enforcing the emission and diagnostics lockstep with a test | AD-8 now names the step; an automated check that both header tables list the same headers would be stronger, and it is the same enforcement gap as AD-1 and AD-2 |
 | An architecture test for the layer direction and the absence of sideways package references | AD-1 and AD-2 are review-enforced only today |
 

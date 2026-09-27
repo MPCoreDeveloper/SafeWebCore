@@ -33,3 +33,13 @@ AD-7 forbids `AdditionalHeaders` from restating a library-owned header and AD-5 
 - **H1, H2, M1, M2 and L1 to L3 are unchanged.** The AD-8 lockstep step, the ownership definitions in AD-5 and AD-7 and the narrowed AD-12 wording all survive this edit; adding four rules after them did not reopen any of them.
 - **Dimensions re-checked after the update.** Nineteen ADs, each with Binds, Prevents and Rule; the four new ones also carry Evidence. Four of the nineteen — the AD-10 amendment, AD-16, AD-17 and AD-18 — are marked *implementation pending*, so a ratified rule is not read as shipped behaviour, which keeps the spine's claims true against the code as it stands. Deferred still holds twelve named items: the dispatcher row was replaced by the verdict-mapping consolidation, so the count is unchanged. The capability-map and operational-envelope findings are unaffected.
 - **Verdict unchanged: passes.** The four new decisions close the questions this run raised without loosening an existing rule; the only rule text that changed in meaning is AD-10, and it changed in the stricter direction.
+
+## Addendum — 2026-09-27c: implementation pass
+
+The four *implementation pending* rules were implemented on 2026-09-27, in the same change as this note:
+
+- **The status column the previous addendum described is gone.** AD-10, AD-16, AD-17 and AD-18 now read *implemented 2026-09-27*, so the "[what] the rule claims" against "[what] the code does" gap that this review's high findings turned on is closed rather than flagged. Every rule is now backed by code and by tests: `SecurityEventDispatcherTests` and `FraudEventDispatcherTests` (per-sink isolation plus the two failure counters), `FraudVerdictMappingTests` (the fail-closed arms and the pinned enum ordinals) and three new validator tests.
+- **The Deferred set is now ten items, not twelve.** The verdict-mapping consolidation and the `docs/nuget-packages.md` correction both landed, so their rows were removed from the spine's table; the deck's Deferred slide was updated to match.
+- **One new consistency-convention entry.** `InternalsVisibleTo` is now granted to `SafeWebCore.FraudDetection.Tests` as well as `SafeWebCore.JwtBearer.Tests`, for the internal `FraudVerdictMapping` and the internal `FraudEventDispatcher`. The row was widened to "the matching test project" rather than left to contradict the csproj.
+- **Verdict unchanged: passes.** The implemented change is additive on the public surface (`RiskLevel.Unclassified`, one dispatcher constructor overload, two counters) and tightening in behaviour, which is what the ratified rules asked for.
+

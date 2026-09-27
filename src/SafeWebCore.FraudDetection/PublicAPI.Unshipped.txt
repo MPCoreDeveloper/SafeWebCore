@@ -46,4 +46,6 @@ SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.SafeWebCoreFra
 SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink
 SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink.OnFraudEvent(SafeWebCore.FraudDetection.Abstractions.FraudEvent! fraudEvent) -> void
 SafeWebCore.FraudDetection.Infrastructure.WebhookFraudEventSink.WebhookFraudEventSink(System.Net.Http.IHttpClientFactory! httpClientFactory, string! httpClientName, string! webhookUrl) -> void
+SafeWebCore.FraudDetection.Infrastructure.SafeWebCoreFraudMetrics.FraudEventSinkFailures.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.FraudDetection.Models.RiskLevel.Unclassified = 4 -> SafeWebCore.FraudDetection.Models.RiskLevel
 SafeWebCore.FraudDetection.Extensions.FraudDetectionServiceCollectionExtensions.AddFraudWebhookSink(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! webhookUrl, string httpClientName = "FraudWebhook") -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

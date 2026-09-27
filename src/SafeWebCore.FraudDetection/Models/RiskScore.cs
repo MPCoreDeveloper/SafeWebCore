@@ -38,15 +38,22 @@ public sealed record RiskScore
     /// <summary>
     /// Creates a RiskScore from a raw score and the verdict that was already determined.
     /// This keeps derivation consistent with existing verdict logic.
+    /// A verdict this method does not recognize fails closed: it maps to
+    /// <see cref="RiskLevel.Unclassified"/>, never to <see cref="RiskLevel.Low"/>.
     /// </summary>
+    /// <param name="score">The raw suspicion score; clamped to 0–100.</param>
+    /// <param name="verdict">The verdict the detector already determined.</param>
+    /// <param name="summary">Optional human-readable summary for observability.</param>
     public static RiskScore FromScoreAndVerdict(int score, FraudVerdict verdict, string? summary = null)
     {
         var level = verdict switch
         {
+            FraudVerdict.Clean => RiskLevel.Low,
             FraudVerdict.RegionImpersonation => RiskLevel.Critical,
             FraudVerdict.HighlySuspicious => RiskLevel.High,
             FraudVerdict.Suspicious => RiskLevel.Medium,
-            _ => RiskLevel.Low
+            // Fail closed: an unrecognized verdict is never reported as a low risk.
+            _ => RiskLevel.Unclassified
         };
 
         return new RiskScore

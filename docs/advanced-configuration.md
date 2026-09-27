@@ -352,11 +352,13 @@ When you call `AddNetSecureHeaders*` or `AddSafeWebCoreFraudDetection`, the foll
   - `safewebcore.headers_applied_total`
   - `safewebcore.csp_violations_total`
   - `safewebcore.path_policy_matches_total`
+  - `safewebcore.security_event_sink_failures_total`
 
 - **SafeWebCore.FraudDetection**
   - `safewebcore.fraud_analyses_total`
-  - `safewebcore.fraud_events_by_risk_total` (tag: `risk_level`)
+  - `safewebcore.fraud_events_by_risk_total` (tag: `risk_level`, includes `Unclassified` for an unrecognized verdict)
   - `safewebcore.fraud_events_by_verdict_total` (tag: `verdict`)
+  - `safewebcore.fraud_event_sink_failures_total`
 
 These counters are **always created** but only produce data when observed (OpenTelemetry, Prometheus, Application Insights, etc.). No configuration is required to enable them.
 

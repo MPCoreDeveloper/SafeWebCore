@@ -24,5 +24,12 @@ public enum RiskLevel
     /// <summary>
     /// Critical risk — strong evidence of impersonation (corresponds to <see cref="FraudVerdict.RegionImpersonation"/>).
     /// </summary>
-    Critical = 3
+    Critical = 3,
+
+    /// <summary>
+    /// The verdict was not recognized, so no level could be derived from it.
+    /// Never treat this as <see cref="Low"/>: an unrecognized verdict is not a safe one.
+    /// Appended last and pinned explicitly so existing ordinals and metric tag values keep their meaning.
+    /// </summary>
+    Unclassified = 4
 }

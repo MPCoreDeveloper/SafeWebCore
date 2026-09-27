@@ -337,9 +337,10 @@
 
   <div class="note bad" style="margin-top:14px">Stage 4 is the sharp edge: an <code>AdditionalHeaders</code> entry named after a
     library-owned header replaces it — including a CSP entry, whose baked-in <code>{nonce}</code> placeholder would then
-    never be substituted. The validator only rejects duplicates <i>inside</i> <code>AdditionalHeaders</code>. <b>AD-18</b>
-    closes this: such an entry fails at startup with a <code>Fix:</code> pointing at <code>CustomPolicies</code>.
-    <span class="tag warn">implementation pending</span></div>
+    never be substituted. The validator only rejected duplicates <i>inside</i> <code>AdditionalHeaders</code>. <b>AD-18</b>
+    closes this: an entry naming a header the library emits — the <code>AddIfEnabled</code> set plus CSP, NEL and
+    <code>Reporting-Endpoints</code> — now fails at startup with a <code>Fix:</code> pointing at
+    <code>CustomPolicies</code>. <span class="tag ok">implemented 2026-09-27</span></div>
 
   <div class="note ok"><code>NetSecureHeadersDiagnosticsService</code> is the preview projection of the same table, not a second
     emitter. AD-8 step 5 keeps it in lockstep — an automated check for that drift is deferred.</div>
@@ -461,7 +462,7 @@
 
     <div class="ad" data-layers="core fraud">
       <h3><span class="id">AD-10</span> Telemetry never blocks the response and never fails the request
-        <span class="tag warn">amended · pending</span></h3>
+        <span class="tag ok">amended · implemented 2026-09-27</span></h3>
       <div class="binds">Binds: SafeWebCore, SafeWebCore.FraudDetection</div>
       <div class="rule">events go to every registered sink through a dispatcher, are awaited fire-and-forget with the
         request's <code>CancellationToken</code>, and are never awaited inline on the response path. A sink is added with
@@ -472,8 +473,11 @@
         touching either one, keep the request path free of sink exceptions. Delivery order is registration order and
         therefore deterministic, but nothing may depend on it and no sink may assume another has already run.</div>
       <div class="binds" style="margin:.5rem 0 0">All three security-event call sites discard the returned task
-        (<code>_ = _eventDispatcher.EmitAsync(...)</code>), which is why the isolation has to live inside the dispatcher —
-        <code>FraudEventDispatcher</code> already does this.</div>
+        (<code>_ = _eventDispatcher.EmitAsync(...)</code>), which is why the isolation has to live inside the dispatcher.
+        <code>FraudEventDispatcher</code> already isolated per sink; both now count the swallowed failure —
+        <code>safewebcore.security_event_sink_failures_total</code> and
+        <code>safewebcore.fraud_event_sink_failures_total</code> — and each suite has a test with a throwing first
+        sink.</div>
     </div>
     <div class="ad" data-layers="core">
       <h3><span class="id">AD-11</span> The environment downgrade is opt-in per registration call</h3>
@@ -533,44 +537,49 @@
 
     <div class="ad" data-layers="fraud">
       <h3><span class="id">AD-16</span> Enum members are append-only and every verdict mapping fails closed
-        <span class="tag warn">pending</span></h3>
+        <span class="tag ok">implemented 2026-09-27</span></h3>
       <div class="binds">Binds: SafeWebCore.FraudDetection</div>
       <div class="rule">members of <code>FraudVerdict</code>, <code>RiskLevel</code> and <code>RecommendedAction</code> are
         append-only: a new member is added last, never inserted, reordered or renumbered, and it pins its value explicitly
-        the way <code>RiskLevel</code> already does (<code>Low = 0</code> through <code>Critical = 3</code>). An
+        the way <code>RiskLevel</code> does (<code>Low = 0</code> through <code>Critical = 3</code>, plus the appended
+        fail-closed <code>Unclassified = 4</code>). An
         unrecognized verdict never maps to the lowest level or to <code>NoAction</code>:
         <code>RiskScore.FromScoreAndVerdict</code> and every verdict-to-action switch fail closed, so <i>unknown</i> is
         never reported as <i>safe</i>. One change adds a new member with every arm and the metric tag, and a mapping two
         detectors need lives in one shared helper.</div>
-      <div class="binds" style="margin:.5rem 0 0">Evidence: <code>RiskScore.FromScoreAndVerdict</code> falls through
-        <code>_ =&gt; RiskLevel.Low</code>; <code>DetermineAction</code> is duplicated verbatim in
+      <div class="binds" style="margin:.5rem 0 0">Was: <code>RiskScore.FromScoreAndVerdict</code> fell through
+        <code>_ =&gt; RiskLevel.Low</code>, and <code>DetermineAction</code> was duplicated verbatim in
         <code>GeoCulturalConsistencyDetector</code> and <code>WesternImpersonationDetector</code> with
-        <code>_ =&gt; RecommendedAction.NoAction</code>; <code>MaxSeverity</code> compares ordinals and the
-        <code>risk_level</code> tag carries the <code>RiskLevel</code> name. Precedent: <code>FakeWestern</code> is
-        <code>[Obsolete]</code> and equals <code>RegionImpersonation</code> rather than freeing a number.</div>
+        <code>_ =&gt; RecommendedAction.NoAction</code>. Both now fail closed (<code>Unclassified</code> /
+        <code>BlockRequest</code>) through the shared <code>FraudVerdictMapping</code> helper. <code>MaxSeverity</code>
+        compares ordinals and the <code>risk_level</code> tag carries the <code>RiskLevel</code> name, which is why the
+        appended member pins its value. Precedent kept: <code>FakeWestern</code> is <code>[Obsolete]</code> and equals
+        <code>RegionImpersonation</code> rather than freeing a number.</div>
     </div>
 
     <div class="ad" data-layers="core fraud jwt analyzers testing">
       <h3><span class="id">AD-17</span> Three-part SemVer is the canonical version form
-        <span class="tag warn">pending</span></h3>
+        <span class="tag ok">implemented 2026-09-27</span></h3>
       <div class="binds">Binds: the csproj file of each of the five packages and the release documentation</div>
       <div class="rule"><code>&lt;Version&gt;</code> is three-part SemVer — <code>1.2.3</code>, optionally with a
         <code>-preview.N</code> suffix. The four-part form is not used, and the four-part assembly identity is still
-        produced automatically. <code>SafeWebCore.FraudDetection</code> moves to a higher three-part version at its next
-        release, and the release documentation states the canonical form and the published versions.</div>
+        produced automatically. <code>SafeWebCore.FraudDetection</code> carries <code>1.1.0</code> for its next release,
+        and <code>docs/nuget-packages.md</code> states the canonical form and the published versions.</div>
       <div class="binds" style="margin:.5rem 0 0">Why: NuGet normalizes <code>1.0.0.0</code> to <code>1.0.0</code>, and
-        FraudDetection 1.0.0 is already published — so the four-part value in that csproj can never be pushed again.</div>
+        FraudDetection 1.0.0 was already published — so the four-part value that csproj carried could never have been
+        pushed again.</div>
     </div>
 
     <div class="ad" data-layers="core">
       <h3><span class="id">AD-18</span> <code>AdditionalHeaders</code> may not name a header the library owns
-        <span class="tag warn">pending</span></h3>
+        <span class="tag ok">implemented 2026-09-27</span></h3>
       <div class="binds">Binds: SafeWebCore options and the options validator</div>
       <div class="rule"><code>AdditionalHeaders</code> may only name headers the library does not own. An entry whose name
-        matches a <code>HeaderNames</code> constant that <code>AddIfEnabled</code> emits fails at startup, in the
-        validator, with the options scope and a <code>Fix:</code> naming <code>CustomPolicies</code> /
-        <code>IHeaderPolicy</code> as the supported replacement path. The response header indexer stays the documented
-        override for headers the library does not own, and the check is implemented once, in the validator.</div>
+        matches a header the middleware emits through its typed options — the <code>AddIfEnabled</code> set plus CSP, NEL
+        and <code>Reporting-Endpoints</code> — fails at startup, in the validator, with the options scope and a
+        <code>Fix:</code> naming <code>CustomPolicies</code> / <code>IHeaderPolicy</code> as the supported replacement
+        path. The response header indexer stays the documented override for headers the library does not own, and the
+        check is implemented once, in the validator.</div>
       <div class="binds" style="margin:.5rem 0 0">Evidence: the validator rejects duplicates only <i>inside</i>
         <code>AdditionalHeaders</code>, and emission assigns <code>headers[name] = value</code> after the standard headers
         and the CSP value, which replaces the emitted value.</div>
@@ -683,7 +692,7 @@
     <summary>2. Is adding a <code>FraudVerdict</code> or <code>RiskLevel</code> member additive, or breaking?</summary>
     <div class="body">
       <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-16</b>.
-        <span class="tag warn">implementation pending</span></p>
+        <span class="tag ok">implemented 2026-09-27</span></p>
       <p><b>Binary compatibility: additive.</b> <b>Source compatibility:</b> a consumer switching exhaustively on the enum
         without a default arm stops compiling — a loud, correct failure that AD-3's additive-only rule should name
         explicitly rather than imply.</p>
@@ -696,10 +705,12 @@
         <code>risk_level</code> metric tag is the <code>RiskLevel</code> name — so inserting or renumbering a member in
         either enum silently changes ordering or tag values.</p>
       <p><b>Decided.</b> (a) Append-only: new members go last with an explicit value, never renumbered.
-        (b) Make the unknown case fail closed — either map an unrecognized verdict to the highest level, or add an explicit
-        <code>Unclassified</code> level so "unknown" is never reported as "safe". (c) One pull request must add the
-        <code>RiskLevel</code> arm, both <code>RecommendedAction</code> arms (or fold that switch into a single shared
-        helper, which AD-13's spirit already implies) and the metrics tag together. This belongs in the
+        (b) Fail closed, and the sharper reading won: an explicit, appended <code>Unclassified</code> level, because
+        mapping an unrecognized verdict to <code>Critical</code> would have fabricated a real classification in the
+        <code>risk_level</code> tag and in consumer alerts. (c) One change must add the
+        <code>RiskLevel</code> arm, both <code>RecommendedAction</code> arms and the metrics tag together — the action
+        mapping moved into one shared <code>FraudVerdictMapping</code> helper, so there is only one place left to
+        extend. This belongs in the
         backward-compatibility policy too. It is <b>AD-16</b>.</p>
       <p><b>Precedent in the codebase.</b> <code>FakeWestern = RegionImpersonation</code> with <code>[Obsolete]</code> is
         already how a verdict name is retired here — duplicate the value, never renumber.</p>
@@ -709,7 +720,7 @@
     <summary>3. Which version form is canonical: <code>1.0.0</code>, or the four-part <code>1.0.0.0</code>?</summary>
     <div class="body">
       <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-17</b>.
-        <span class="tag warn">implementation pending</span></p>
+        <span class="tag ok">implemented 2026-09-27</span></p>
       <p><b>Where the family stands.</b> SafeWebCore <code>1.7.0</code>, JwtBearer <code>1.0.0</code>, Analyzers and
         Testing <code>1.0.0-preview.1</code>, and FraudDetection <code>1.0.0.0</code>. nuget.org already carries all five,
         including FraudDetection 1.0.0.</p>
@@ -718,11 +729,11 @@
         again. The next FraudDetection release must be a higher version regardless of which form is chosen.</p>
       <p><b>Decided: three-part SemVer is canonical</b> (<code>1.2.3</code>, optionally with a
         <code>-preview.N</code> suffix). It matches the other three packages, it is what NuGet stores after normalization
-        anyway, and the four-part assembly identity is still produced automatically. Change FraudDetection to
-        <code>1.1.0</code> or <code>1.0.1</code> at the next release and record the rule in the release documentation.</p>
+        anyway, and the four-part assembly identity is still produced automatically. FraudDetection now carries
+        <code>1.1.0</code> for its next release, and the rule is recorded in the release documentation.</p>
       <p><b>Second-order effect to check.</b> Because all five packages are live, any pipeline or documentation step that
-        assumes a first publish (or that reads <code>docs/nuget-packages.md</code>, which is wrong) must be corrected
-        before the next release.</p>
+        assumes a first publish (or that read <code>docs/nuget-packages.md</code>, which reported the opposite) had to be
+        corrected first — and it was, on 2026-09-27.</p>
     </div>
   </details>
 
@@ -730,16 +741,18 @@
     <summary>4. Should <code>AdditionalHeaders</code> be prevented from naming a header the library already emits?</summary>
     <div class="body">
       <p style="margin:0 0 8px"><span class="tag ok">decided</span> folded into <b>AD-18</b>.
-        <span class="tag warn">implementation pending</span></p>
+        <span class="tag ok">implemented 2026-09-27</span></p>
       <p><b>Verified behaviour.</b> The validator rejects duplicates only <i>inside</i> <code>AdditionalHeaders</code>
         (case-insensitively). Emission appends the standard headers and the CSP value and then assigns each additional
         header through the response header indexer, which <b>replaces</b> the values already there. An entry named
         <code>Content-Security-Policy</code> therefore discards the per-request nonce substitution — and with it, every
         nonce-based script or style the app emits. <code>CustomPolicies</code> runs after it and remains the last word.</p>
       <p><b>Decided: guard the library-owned names.</b> Reject, at startup, an <code>AdditionalHeaders</code> entry
-        whose name matches a <code>HeaderNames</code> constant that <code>AddIfEnabled</code> emits, with the scope and a
-        <code>Fix:</code> as AD-4 requires. Keep the indexer as the documented override for headers the library does not own,
-        and keep <code>CustomPolicies</code> as the deliberate escape hatch for replacing a library-owned one. Implement the
+        whose name matches a header the middleware emits through its typed options, with the scope and a
+        <code>Fix:</code> as AD-4 requires — the <code>AddIfEnabled</code> set plus CSP, NEL and
+        <code>Reporting-Endpoints</code>, because the CSP case is the one that costs a nonce. Keep the indexer as the
+        documented override for headers the library does not own, and keep <code>CustomPolicies</code> as the deliberate
+        escape hatch for replacing a library-owned one. Implement the
         guard once, in the validator — not in both the middleware and the diagnostics projection.</p>
       <p><b>Trade-off.</b> It removes an undocumented way to hand-replace HSTS or CSP by configuration; the explicit
         <code>IHeaderPolicy</code> path covers that need with a type, which is the point of AD-7.</p>
@@ -770,12 +783,12 @@
 
   <div class="note" style="margin-top:14px">All five decisions are in the spine now: four became <code>AD-16</code> to
     <code>AD-19</code> and one amended <code>AD-10</code>. The question text and the decisions stay on record in the
-    spine's <i>Open Questions</i> section, and every rule that still needs its code change is marked <i>implementation
-    pending</i>.</div>
+    spine's <i>Open Questions</i> section, and all four rules that needed a code change now say <i>implemented
+    2026-09-27</i>: both dispatchers, the fail-closed mappings, the version form and the validator guard.</div>
 </section>
 <section class="slide" data-title="Deferred">
   <h2>What the spine deliberately does not decide</h2>
-  <p class="sub">Named so the silence is intentional. 12 items, each with the reason it can wait.</p>
+  <p class="sub">Named so the silence is intentional. 10 items, each with the reason it can wait.</p>
 
   <table>
     <tr><th>Deferred</th><th>Why it can wait</th></tr>
@@ -784,11 +797,9 @@
     <tr><td>Enforcing the <code>Async</code> suffix in the build</td><td>The rule is a <code>suggestion</code> and <code>EnforceCodeStyleInBuild</code> is not set; turning it on needs a trial build</td></tr>
     <tr><td>Retargeting to .NET 11 and aligning the local SDK with CI</td><td>.NET 11 GA is 2026-11-10 and <code>net10.0</code> is supported to 2028-11-14, so nothing forces the move</td></tr>
     <tr><td>Pinning <code>Microsoft.AspNetCore.Mvc.Testing</code> and moving JwtBearer to the current 10.0 patch</td><td>Reproducibility hygiene, not design</td></tr>
-    <tr><td>Consolidating the duplicated <code>DetermineAction</code> and <code>MaxSeverity</code> switch into one shared helper</td><td>The two copies agree today; consolidating them has no design content, and AD-16 now forbids extending them in duplicate</td></tr>
     <tr><td>Symbols and SourceLink for the other four packages</td><td>Core-only today; per-package publishing work without design content</td></tr>
     <tr><td>Human-facing renderings</td><td><span class="tag ok">partly done</span> This deck now exists; a fuller solution design, a C4 set and a per-team split are still open</td></tr>
     <tr><td>A CI smoke test that installs the packed packages</td><td>Packing already runs in CI; the install test is additional work</td></tr>
-    <tr><td>Fixing <code>docs/nuget-packages.md</code></td><td>It is wrong rather than stale and misleads a release decision; AD-17 makes the correction a prerequisite for the next release decision — but it governs no rule of its own</td></tr>
     <tr><td>Enforcing the emission and diagnostics lockstep with a test</td><td>AD-8 names the step; an automated check would be stronger — the same enforcement gap as AD-1 and AD-2</td></tr>
     <tr><td>An architecture test for the layer direction and sideways package references</td><td>AD-1 and AD-2 are review-enforced only today</td></tr>
   </table>
@@ -815,9 +826,9 @@
           <code>AD-n</code> ids.</li>
         <li><b>Then stories</b> (<code>bmad-preview-ticketing</code>), or straight to a small change through
           <code>bmad-build</code>.</li>
-        <li><b>Implement what the five decisions imply</b>: per-sink isolation in
-          <code>SecurityEventDispatcher</code>, the fail-closed verdict mappings, the <code>AdditionalHeaders</code> guard
-          in the validator, and the FraudDetection version move.</li>
+        <li><b>Landed on 2026-09-27</b>: per-sink isolation and the swallowed-failure counters in both dispatchers,
+          the fail-closed verdict mappings in one shared helper, the <code>AdditionalHeaders</code> guard in the
+          validator, and the FraudDetection move to <code>1.1.0</code> with the corrected release documentation.</li>
         <li><b>Close the two enforcement gaps</b> — the lockstep test and the architecture test — if the ids are to mean
           anything to an agent that only runs the build.</li>
       </ul>

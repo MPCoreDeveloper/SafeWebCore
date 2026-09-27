@@ -200,6 +200,76 @@ public sealed class NetSecureHeadersOptionsValidationTests
         Assert.NotNull(host);
     }
 
+    [Fact]
+    public void StartWithAdditionalHeaderThatNamesALibraryOwnedHeaderThrowsOptionsValidationException()
+    {
+        // Arrange
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            opts.AdditionalHeaders.Add(new()
+            {
+                Name = "x-frame-options",
+                Value = "SAMEORIGIN"
+            });
+        });
+
+        // Act
+        var exception = Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
+
+        // Assert
+        Assert.Contains("Additional header 'x-frame-options' names a header SafeWebCore owns", exception.Message);
+        Assert.Contains("CustomPolicies / IHeaderPolicy", exception.Message);
+    }
+
+    [Fact]
+    public void StartWithPathPolicyAdditionalHeaderThatNamesALibraryOwnedHeaderThrowsOptionsValidationException()
+    {
+        // Arrange
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            var pathOptions = new NetSecureHeadersOptions();
+            pathOptions.AdditionalHeaders.Add(new()
+            {
+                Name = "Content-Security-Policy",
+                Value = "default-src 'self'"
+            });
+
+            opts.PathPolicies.Add(new()
+            {
+                PathPrefix = "/api",
+                Options = pathOptions
+            });
+        });
+
+        // Act
+        var exception = Assert.Throws<OptionsValidationException>(() => hostBuilder.Start());
+
+        // Assert
+        Assert.Contains(
+            "Path policy '/api': Additional header 'Content-Security-Policy' names a header SafeWebCore owns",
+            exception.Message);
+    }
+
+    [Fact]
+    public async Task StartWithAdditionalHeaderTheLibraryDoesNotOwnSucceeds()
+    {
+        // Arrange - the guard only blocks names the library emits through its own typed options
+        var hostBuilder = CreateHostBuilder(opts =>
+        {
+            opts.AdditionalHeaders.Add(new()
+            {
+                Name = "Document-Policy",
+                Value = "force-load-at-top"
+            });
+        });
+
+        // Act + Assert - startup validation passes
+        using var host = await hostBuilder.StartAsync(TestContext.Current.CancellationToken);
+        Assert.NotNull(host);
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
     private static IHostBuilder CreateHostBuilder(Action<NetSecureHeadersOptions> configure)
         => new HostBuilder()
             .ConfigureWebHost(webBuilder =>

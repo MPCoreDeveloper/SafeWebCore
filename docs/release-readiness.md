@@ -1,5 +1,13 @@
 ﻿# SafeWebCore — Release Readiness Assessment
 
+> **Superseded for version facts.** This audit is the 2026-07-25 snapshot taken while 1.3.5 was
+> published (`cc3148b`). The published set as of 2026-09-27 is: `SafeWebCore` 1.0.0, 1.1.0, 1.2.0,
+> 1.3.0, 1.3.5, 1.6.0, 1.7.0; `SafeWebCore.FraudDetection` and `SafeWebCore.JwtBearer` 1.0.0;
+> `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1. Use
+> [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
+> SemVer form.
+
+
 **Audit date:** 2026-07-25  
 **Branch:** `master` (tracking `origin/master`)  
 **HEAD commit at audit start:** `cc3148b` ("new version 1.3.5")  

@@ -45,7 +45,8 @@ internal sealed class FraudEventDispatcher : IFraudEventDispatcher
             }
             catch
             {
-                // Sinks must not break fraud detection. Swallow per sink.
+                // Sinks must not break fraud detection. Isolate the sink and count the failure.
+                _metrics?.FraudEventSinkFailures.Add(1);
             }
         }
     }

@@ -1,4 +1,6 @@
 #nullable enable
+SafeWebCore.Infrastructure.SafeWebCoreMetrics.SecurityEventSinkFailures.get -> System.Diagnostics.Metrics.Counter<long>!
+SafeWebCore.Infrastructure.SecurityEventDispatcher.SecurityEventDispatcher(System.Collections.Generic.IEnumerable<SafeWebCore.Abstractions.ISecurityEventSink!>! sinks, SafeWebCore.Infrastructure.SafeWebCoreMetrics? metrics) -> void
 SafeWebCore.Options.NetSecureHeadersOptions.ApplyPreset(SafeWebCore.Options.NetSecureHeadersOptions! preset) -> void
 SafeWebCore.Options.NetSecureHeadersOptions.Clone() -> SafeWebCore.Options.NetSecureHeadersOptions!
 SafeWebCore.Options.NetSecureHeadersOptionsExtensions

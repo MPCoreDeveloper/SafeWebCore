@@ -165,7 +165,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
                 !westernOptions.AllowedCountries.Contains(enriched.ResolvedCountryCode);
 
             verdict = DetermineVerdict(finalScore, westernOptions);
-            action = DetermineAction(verdict);
+            action = FraudVerdictMapping.DetermineAction(verdict);
         }
 
         bool scannerDetected = false;
@@ -194,7 +194,7 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
                     StoreNotificationTimestamp(enriched);
                 }
 
-                action = MaxSeverity(action, options.PenTestDetection.ScannerRecommendedAction);
+                action = FraudVerdictMapping.MaxSeverity(action, options.PenTestDetection.ScannerRecommendedAction);
             }
         }
 
@@ -381,18 +381,6 @@ public sealed partial class WesternImpersonationDetector : IFraudDetector
         _ when score >= options.MediumSuspicionThreshold => FraudVerdict.Suspicious,
         _ => FraudVerdict.Clean
     };
-
-    private static RecommendedAction DetermineAction(FraudVerdict verdict) => verdict switch
-    {
-        FraudVerdict.Clean => RecommendedAction.NoAction,
-        FraudVerdict.Suspicious => RecommendedAction.Monitor,
-        FraudVerdict.HighlySuspicious => RecommendedAction.StepUpAuthentication,
-        FraudVerdict.RegionImpersonation => RecommendedAction.BlockRequest,
-        _ => RecommendedAction.NoAction
-    };
-
-    private static RecommendedAction MaxSeverity(RecommendedAction first, RecommendedAction second)
-        => (RecommendedAction)Math.Max((int)first, (int)second);
 
     [LoggerMessage(
         EventId = 1001,

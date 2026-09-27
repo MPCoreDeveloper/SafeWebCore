@@ -26,6 +26,9 @@ public sealed class SafeWebCoreMetrics
     /// <summary>Counter for total path-specific policy matches.</summary>
     public Counter<long> PathPolicyMatches { get; }
 
+    /// <summary>Counter for security event sink failures that the dispatcher isolated.</summary>
+    public Counter<long> SecurityEventSinkFailures { get; }
+
     /// <summary>
     /// Creates the SafeWebCore metrics instruments.
     /// </summary>
@@ -47,5 +50,10 @@ public sealed class SafeWebCoreMetrics
             "safewebcore.path_policy_matches_total",
             unit: "{matches}",
             description: "Total number of times a path-specific policy was matched.");
+
+        SecurityEventSinkFailures = Meter.CreateCounter<long>(
+            "safewebcore.security_event_sink_failures_total",
+            unit: "{failures}",
+            description: "Total number of security event sink failures isolated by the dispatcher so the response path stays unaffected.");
     }
 }

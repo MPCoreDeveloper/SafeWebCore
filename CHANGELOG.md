@@ -20,12 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `NetSecureHeadersOptions.ApplyPreset(...)` is now **public** — the official inheritance mechanism to copy all values from another options instance (for example the global options) before applying overrides.
 - `NetSecureHeadersOptions.Clone()` — creates an independent copy of an options instance for safe mutation.
+- `SafeWebCoreMetrics.SecurityEventSinkFailures` (`safewebcore.security_event_sink_failures_total`) and `SafeWebCoreFraudMetrics.FraudEventSinkFailures` (`safewebcore.fraud_event_sink_failures_total`) — a sink failure that a dispatcher isolates is now counted instead of disappearing.
+- `SecurityEventDispatcher(IEnumerable<ISecurityEventSink>, SafeWebCoreMetrics?)` — overload for the failure counter. The existing single-argument constructor keeps working.
+- `RiskLevel.Unclassified` (`= 4`, appended last) — the level for a verdict the library does not recognize, so an unknown verdict is never reported as `Low`.
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (was the four-part `1.0.0.0`, which NuGet normalizes to the already-published `1.0.0`).
 
 ### Security
 - Path policies created with `PathPolicy(...)` now inherit all unspecified settings from the global configuration instead of falling back to library defaults. This addresses the security footgun where a path-specific policy could unintentionally weaken `Strict-Transport-Security`, CSP, or other security headers.
+- `SecurityEventDispatcher` isolates a throwing `ISecurityEventSink` per sink instead of letting it end delivery for every sink registered after it. All three call sites discard the returned task, so a bare loop lost the remaining events and surfaced the failure only as an unobserved task exception; a failing sink can no longer mute the others.
+- Verdict mappings now fail closed: `RiskScore.FromScoreAndVerdict` maps an unrecognized verdict to `RiskLevel.Unclassified` (never `Low`) and the shared verdict-to-action mapping maps it to `RecommendedAction.BlockRequest` (never `NoAction`). An unrecognized verdict is therefore never reported as *safe*.
+- `AdditionalHeaders` may no longer name a header the library owns (HSTS, X-Frame-Options, CSP, NEL, Reporting-Endpoints, and the rest of the typed set). Startup validation fails with the options scope and a `Fix:` that points at `CustomPolicies` / `IHeaderPolicy`, because assigning the response header indexer replaced the library value — for CSP including the per-request `{nonce}` substitution, which silently dropped the nonce authorization of every script and style the app emits.
 
 ### Compatibility
 - ✅ **100% backwards compatible** — existing `PathPolicies.Add(new PathPolicyOptions { ... })` behavior (replacement semantics) is unchanged. The new inheritance API is purely additive.
+- ⚠️ **Intentional tightening** — a configuration that named a library-owned header in `AdditionalHeaders` now fails at startup instead of silently replacing the library value. Move the entry to `CustomPolicies` (`IHeaderPolicy`) when the replacement is deliberate.
+- ⚠️ A consumer `switch` over `RiskLevel` without a default arm needs one new arm for `Unclassified`; every other enum member keeps its value.
 
 ---
 

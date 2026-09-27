@@ -26,6 +26,9 @@ public sealed class SafeWebCoreFraudMetrics
     /// <summary>Counter for fraud events tagged by FraudVerdict.</summary>
     public Counter<long> FraudEventsByVerdict { get; }
 
+    /// <summary>Counter for fraud event sink failures that the dispatcher isolated.</summary>
+    public Counter<long> FraudEventSinkFailures { get; }
+
     /// <summary>
     /// Creates the FraudDetection metrics instruments.
     /// </summary>
@@ -41,11 +44,16 @@ public sealed class SafeWebCoreFraudMetrics
         FraudEventsByRisk = Meter.CreateCounter<long>(
             "safewebcore.fraud_events_by_risk_total",
             unit: "{events}",
-            description: "Fraud events broken down by RiskLevel (Low, Medium, High, Critical). Tag: risk_level");
+            description: "Fraud events broken down by RiskLevel (Low, Medium, High, Critical, Unclassified). Tag: risk_level");
 
         FraudEventsByVerdict = Meter.CreateCounter<long>(
             "safewebcore.fraud_events_by_verdict_total",
             unit: "{events}",
             description: "Fraud events broken down by FraudVerdict. Tag: verdict");
+
+        FraudEventSinkFailures = Meter.CreateCounter<long>(
+            "safewebcore.fraud_event_sink_failures_total",
+            unit: "{failures}",
+            description: "Total number of fraud event sink failures isolated by the dispatcher so detection stays unaffected.");
     }
 }
