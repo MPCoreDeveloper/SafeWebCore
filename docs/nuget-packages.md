@@ -126,8 +126,9 @@ dotnet add package SafeWebCore
 - [x] `PACKAGE.md` and `README.md` state the current version (both say 1.8.0)
 - [x] Broken doc links in `PACKAGE.md` still point at old `docs/roadmap-v1.2.md` paths (now under `docs/archive/`)
 - [x] CI pack + push workflow present — `.github/workflows/ci.yml` (build/test/pack on push + PR) and `nuget-publish.yml` (pack + `dotnet nuget push` on a `v*` tag, with `--skip-duplicate`)
-- [ ] Git tags are mixed: the remote carries `V1.0.0.0`, `V1.1.0.0`, `V1.2.0.0`, `V1.3.0.0`, `V1.6.0.0.0` and `v1.7.0` (there is no tag for 1.3.5). Tag this release as `v1.8.0` and prefer the three-part `vX.Y.Z` form from here on
-- [ ] Promote `PublicAPI.Unshipped.txt` → `PublicAPI.Shipped.txt` at tag time
+- [x] Git tags are mixed: the remote carries `V1.0.0.0`, `V1.1.0.0`, `V1.2.0.0`, `V1.3.0.0`, `V1.6.0.0.0` and `v1.7.0` (there is no tag for 1.3.5). This release is tagged **`v1.8.0`**; the three-part `vX.Y.Z` form is canonical from here on (spine AD-17)
+- [x] Promoted `PublicAPI.Unshipped.txt` → `PublicAPI.Shipped.txt` before the tag — **11 core entries** moved on 2026-09-27, so the 450-line shipped baseline claims exactly the surface that shipped through 1.7.0 and 1.8.0
+- [x] Public API baselines curated instead of suppressed: the 25 `RS0016`/`RS0017` warnings were fixed in the declarations themselves (record members need `override`/`static`, `MeterName` is a `const` field and not a property, `JwtAuthorityValidationGuard.Dispose()` was missing), so the whole solution now builds **0 warnings / 0 errors**. The `WarningsNotAsErrors` exemption for `RS0016`/`RS0017` therefore hides nothing anymore and can be dropped to enforce the surface as errors
 
 
 ---
@@ -144,9 +145,10 @@ dotnet add package SafeWebCore
 | Company | Posseth Software |
 | License | MIT |
 | Readme | `src/SafeWebCore.FraudDetection/README.md` |
-| Icon | **Missing** |
+| Icon | `icon.png` — reuses the root icon, packed since 2026-09-27 |
 | TFM | `net10.0` |
-| Symbols | **Not enabled** |
+| Symbols | `.snupkg` + SourceLink — parity with core since 2026-09-27 |
+| Release notes | `PackageReleaseNotes` for 1.1.0 embedded in the nuspec (1 161 chars) |
 | nuget.org | **Published** — `1.0.0` |
 
 ## Package contents (verified)
@@ -154,9 +156,12 @@ dotnet add package SafeWebCore
 ```text
 SafeWebCore.FraudDetection.nuspec
 README.md
+icon.png
 lib/net10.0/SafeWebCore.FraudDetection.dll
 lib/net10.0/SafeWebCore.FraudDetection.xml
 ```
+
+Symbol package: `SafeWebCore.FraudDetection.1.1.0.snupkg` → `lib/net10.0/SafeWebCore.FraudDetection.pdb`.
 
 ## What consumers get
 
@@ -180,33 +185,33 @@ dotnet add package SafeWebCore.FraudDetection
 
 | Check | Status |
 |-------|--------|
-| Builds Release, 0 warnings | Pass |
+| Builds Release, 0 warnings | Pass — solution-wide **0 warnings / 0 errors** since the baseline curation (2026-09-27) |
 | Packs successfully | Pass |
 | Tests pass (27 in `SafeWebCore.FraudDetection.Tests`, 2026-09-27) | Pass |
 | Package README quality | Strong |
 | XML docs generated | Pass |
-| Public API baseline files present | Pass (still in adoption mode for RS0016/17) |
-| Package icon | **Fail** — add `icon.png` pack item (can reuse root icon) |
-| Symbol package / SourceLink | **Fail** — copy flags from core csproj |
-| `PackageReleaseNotes` | **Missing** |
+| Public API baseline files present | Pass — curated and promoted (55 entries in `PublicAPI.Shipped.txt`, only `#nullable enable` left in Unshipped) |
+| Package icon | ✅ `icon.png` packed since 2026-09-27 |
+| Symbol package / SourceLink | ✅ `.snupkg` + SourceLink since 2026-09-27 |
+| `PackageReleaseNotes` | ✅ Present for 1.1.0 (1 161 chars in the nuspec) |
 | Example app using the module | **Missing** |
 | In solution test project for CI | ✅ `tests/SafeWebCore.FraudDetection.Tests` is in `SafeWebCore.slnx` |
-| Changelog entry for the next publish | Should be explicit before push |
-| nuget.org listing | ✅ `1.0.0` published |
+| Changelog entry for the next publish | ✅ `[1.8.0]` section plus the embedded release notes |
+| nuget.org listing | ✅ `1.0.0` published; `1.1.0` ships with the `v1.8.0` tag |
 
 ## Checklist for the next release (FraudDetection 1.1.0)
 
-1. Add package icon + optional SourceLink/symbols parity with core.
-2. Add `PackageReleaseNotes` for 1.1.0 (additive `RiskLevel.Unclassified`, the fail-closed mappings and the sink-failure counter).
-3. Confirm public API Unshipped entries intended for 1.1.0 are promoted/shipped as desired.
+1. ~~Add package icon + SourceLink/symbols parity with core~~ — done 2026-09-27 (`icon.png`, `.snupkg`, the SourceLink property group).
+2. ~~Add `PackageReleaseNotes` for 1.1.0~~ — done 2026-09-27 (additive `RiskLevel.Unclassified`, the fail-closed mappings and the sink-failure counter).
+3. ~~Confirm public API Unshipped entries intended for 1.1.0 are promoted/shipped~~ — done 2026-09-27 (all 55 entries promoted into `PublicAPI.Shipped.txt`).
 4. Add a short “Getting started with FraudDetection” link from root README / docs index.
 5. Prefer an example or recipe showing registration + `Analyze` + sink.
-6. Tag git appropriately; document multi-package versioning (core 1.x vs fraud 1.1.0).
-7. `dotnet nuget push artifacts/nupkg/SafeWebCore.FraudDetection.1.1.0.nupkg --source https://api.nuget.org/v3/index.json`
+6. ~~Tag git appropriately; document multi-package versioning~~ — done: `v1.8.0` covers core 1.8.0 + fraud 1.1.0 (see the versioning note below).
+7. The tag push publishes it (`nuget-publish.yml` pushes every package with `--skip-duplicate`); the manual equivalent stays: `dotnet nuget push artifacts/nuget/SafeWebCore.FraudDetection.1.1.0.nupkg --source https://api.nuget.org/v3/index.json`
 
 ### Versioning strategy note
 
-Core is at **1.8.0** in the workspace (**1.7.0** is the latest published) while FraudDetection moves to **1.1.0**. That is normal for a **separate package identity**. Do not force the same version number across packages unless you deliberately adopt lockstep versioning. The one hard rule is that `<Version>` stays three-part SemVer, because NuGet normalizes `1.0.0.0` to `1.0.0` — which FraudDetection already published.
+Core ships **1.8.0** and FraudDetection **1.1.0** from the same `v1.8.0` tag (**1.7.0** and **1.0.0** respectively were the latest published before it). That is normal for a **separate package identity**. Do not force the same version number across packages unless you deliberately adopt lockstep versioning. The one hard rule is that `<Version>` stays three-part SemVer, because NuGet normalizes `1.0.0.0` to `1.0.0` — which FraudDetection already published.
 
 ---
 
@@ -248,11 +253,18 @@ dotnet add package SafeWebCore.JwtBearer
 
 | Check | Status |
 |-------|--------|
-| Builds in solution | ✅ |
-| Unit + integration tests (xUnit v3) | ✅ (33, incl. Stephan's reproduction) |
-| Public API baseline (`PublicAPI.*.txt`) | ✅ |
+| Builds in solution | ✅ (0 warnings / 0 errors solution-wide since 2026-09-27) |
+| Unit + integration tests (xUnit v3) | ✅ (38 as of 2026-09-27, incl. Stephan's reproduction) |
+| Public API baseline (`PublicAPI.*.txt`) | ✅ Curated 2026-09-27 — the 2 `RS0016`/`RS0017` warnings came from the declaration form in `JwtAuthorityValidationGuard`, and all 51 entries were promoted into `PublicAPI.Shipped.txt` before the `v1.8.0` tag |
 | README + icon packed | ✅ (verified) |
 | `ci.yml` / `nuget-publish.yml` pack step | ✅ (added) |
+| Symbol package / SourceLink | ⚠️ Not enabled in the csproj yet — 1.0.0 is already published, so this parity change needs a higher JwtBearer version to reach nuget.org |
+
+### Packaging gap for the next JwtBearer version
+
+`SafeWebCore.JwtBearer.csproj` has no `IncludeSymbols`/SourceLink property group, so 1.0.0 ships without a
+`.snupkg`. The `v1.8.0` tag packs it again but `--skip-duplicate` skips the already-published 1.0.0, so this
+is a next-version task rather than part of 1.8.0.
 
 ### Publish command
 

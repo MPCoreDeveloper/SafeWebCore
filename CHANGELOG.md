@@ -19,7 +19,7 @@ Nothing yet — the work below shipped as **1.8.0** on 2026-09-27. New entries s
 - `SafeWebCoreMetrics.SecurityEventSinkFailures` (`safewebcore.security_event_sink_failures_total`) and `SafeWebCoreFraudMetrics.FraudEventSinkFailures` (`safewebcore.fraud_event_sink_failures_total`) — a sink failure that a dispatcher isolates is now counted instead of disappearing.
 - `SecurityEventDispatcher(IEnumerable<ISecurityEventSink>, SafeWebCoreMetrics?)` — overload for the failure counter. The existing single-argument constructor keeps working.
 - `RiskLevel.Unclassified` (`= 4`, appended last) — the level for a verdict the library does not recognize, so an unknown verdict is never reported as `Low`.
-- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (was the four-part `1.0.0.0`, which NuGet normalizes to the already-published `1.0.0`).
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (was the four-part `1.0.0.0`, which NuGet normalizes to the already-published `1.0.0`) and reaches packaging parity with core: `icon.png` inside the package, a `.snupkg` symbol package with SourceLink, and `PackageReleaseNotes` in the nuspec metadata.
 
 ### Companion package: `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10)
 - **New companion module: `SafeWebCore.JwtBearer`** — makes a misconfigured JWT authority fail loud (or fail fast) at startup instead of silently returning `401` for everything. Solves dotnet/aspnetcore#67991 (reported by Stephan van Rooij) today, while the .NET team schedules the fix for .NET 12 Planning. Implements `AddJwtBearerAuthorityValidation`, `AddJwtBearerHardening`, and the one-liner `AddSafeWebCoreJwtBearer`.
