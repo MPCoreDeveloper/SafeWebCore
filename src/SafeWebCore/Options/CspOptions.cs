@@ -48,10 +48,13 @@ using System.Text;
 /// </remarks>
 public record CspOptions
 {
+    /// <summary>CSP keyword that matches no source: <c>'none'</c>.</summary>
+    private const string NoneSource = "'none'";
+
     // ── Fetch directives ───────────────────────────────────────────────────
 
     /// <summary>Default fallback for all fetch directives. Default: <c>'none'</c>.</summary>
-    public string DefaultSrc { get; init; } = "'none'";
+    public string DefaultSrc { get; init; } = NoneSource;
 
     /// <summary>Restricts script execution. Default: nonce-based with strict-dynamic.</summary>
     public string ScriptSrc { get; init; } = "'nonce-{nonce}' 'strict-dynamic' https:";
@@ -84,7 +87,7 @@ public record CspOptions
     public string MediaSrc { get; init; } = "";
 
     /// <summary>Restricts <c>&lt;object&gt;</c>, <c>&lt;embed&gt;</c>, and <c>&lt;applet&gt;</c> sources. Default: <c>'none'</c>.</summary>
-    public string ObjectSrc { get; init; } = "'none'";
+    public string ObjectSrc { get; init; } = NoneSource;
 
     /// <summary>Restricts nested browsing contexts (<c>&lt;frame&gt;</c>, <c>&lt;iframe&gt;</c>). Empty = inherits from default-src.</summary>
     public string ChildSrc { get; init; } = "";
@@ -104,7 +107,7 @@ public record CspOptions
     // ── Document directives ────────────────────────────────────────────────
 
     /// <summary>Restricts <c>&lt;base&gt;</c> URIs. Default: <c>'none'</c>.</summary>
-    public string BaseUri { get; init; } = "'none'";
+    public string BaseUri { get; init; } = NoneSource;
 
     /// <summary>Applies sandbox restrictions (like <c>&lt;iframe sandbox&gt;</c>). Empty = disabled.</summary>
     public string Sandbox { get; init; } = "";
@@ -115,7 +118,7 @@ public record CspOptions
     public string FormAction { get; init; } = "'self'";
 
     /// <summary>Restricts parents that can embed this page. Default: <c>'none'</c> (replaces X-Frame-Options).</summary>
-    public string FrameAncestors { get; init; } = "'none'";
+    public string FrameAncestors { get; init; } = NoneSource;
 
     // ── Trusted Types (CSP Level 3 / 2025+) ────────────────────────────────
 

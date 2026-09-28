@@ -8,6 +8,14 @@ namespace SafeWebCore.Presets;
 /// </summary>
 public static class SecurePresets
 {
+    // ── CSP keyword constants (single source of truth for the presets) ─────
+    private const string NoneSource = "'none'";
+    private const string SelfSource = "'self'";
+    private const string ScriptSource = "'script'";
+    private const string SelfHttpsDataSources = "'self' https: data:";
+    private const string SelfBlobSources = "'self' blob:";
+    private const string StrictOriginWhenCrossOrigin = "strict-origin-when-cross-origin";
+
     /// <summary>
     /// Returns the strictest possible <see cref="NetSecureHeadersOptions"/> targeting
     /// an <b>A+</b> rating on <c>securityheaders.com</c> and a passing grade on
@@ -121,28 +129,28 @@ public static class SecurePresets
             EnableCsp = true,
             Csp = new CspOptions
             {
-                DefaultSrc = "'none'",
+                DefaultSrc = NoneSource,
                 ScriptSrc = "'nonce-{nonce}' 'strict-dynamic'",
                 ScriptSrcElem = "",
                 ScriptSrcAttr = "",
                 StyleSrc = "'nonce-{nonce}'",
                 StyleSrcElem = "",
                 StyleSrcAttr = "",
-                ImgSrc = "'self'",
-                FontSrc = "'self'",
-                ConnectSrc = "'self'",
+                ImgSrc = SelfSource,
+                FontSrc = SelfSource,
+                ConnectSrc = SelfSource,
                 MediaSrc = "",       // inherits 'none' from default-src
-                ObjectSrc = "'none'",
-                ChildSrc = "'none'",
-                WorkerSrc = "'self'",
-                ManifestSrc = "'self'",
+                ObjectSrc = NoneSource,
+                ChildSrc = NoneSource,
+                WorkerSrc = SelfSource,
+                ManifestSrc = SelfSource,
                 FencedFrameSrc = "",
-                BaseUri = "'none'",
+                BaseUri = NoneSource,
                 Sandbox = "",
-                FormAction = "'self'",
-                FrameAncestors = "'none'",
-                RequireTrustedTypesFor = "'script'",
-                TrustedTypes = "'none'",
+                FormAction = SelfSource,
+                FrameAncestors = NoneSource,
+                RequireTrustedTypesFor = ScriptSource,
+                TrustedTypes = NoneSource,
                 ReportTo = "",
                 EnableUpgradeInsecureRequests = true,
             },
@@ -277,24 +285,24 @@ public static class SecurePresets
     public static NetSecureHeadersOptions Mvc()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             ScriptSrc = "'nonce-{nonce}' 'strict-dynamic' https:",
             StyleSrc = "'nonce-{nonce}'",
-            ImgSrc = "'self' https: data:",
+            ImgSrc = SelfHttpsDataSources,
             FontSrc = "'self' https://fonts.gstatic.com",
-            ConnectSrc = "'self'",
-            ObjectSrc = "'none'",
+            ConnectSrc = SelfSource,
+            ObjectSrc = NoneSource,
             ChildSrc = "",
-            WorkerSrc = "'self'",
-            ManifestSrc = "'self'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
-            RequireTrustedTypesFor = "'script'",
-            TrustedTypes = "'none'",
+            WorkerSrc = SelfSource,
+            ManifestSrc = SelfSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
+            RequireTrustedTypesFor = ScriptSource,
+            TrustedTypes = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
         return options;
@@ -308,24 +316,24 @@ public static class SecurePresets
     public static NetSecureHeadersOptions Blazor()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
             StyleSrc = "'self' 'nonce-{nonce}'",
-            ImgSrc = "'self' https: data:",
+            ImgSrc = SelfHttpsDataSources,
             FontSrc = "'self' https://fonts.gstatic.com data:",
             ConnectSrc = "'self' wss: ws:",
-            MediaSrc = "'self' blob:",
-            ObjectSrc = "'none'",
-            WorkerSrc = "'self' blob:",
-            ManifestSrc = "'self'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
-            RequireTrustedTypesFor = "'script'",
-            TrustedTypes = "'none'",
+            MediaSrc = SelfBlobSources,
+            ObjectSrc = NoneSource,
+            WorkerSrc = SelfBlobSources,
+            ManifestSrc = SelfSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
+            RequireTrustedTypesFor = ScriptSource,
+            TrustedTypes = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
         return options;
@@ -355,24 +363,24 @@ public static class SecurePresets
     public static NetSecureHeadersOptions SpaReverseProxy()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
             StyleSrc = "'self' 'nonce-{nonce}'",
             ImgSrc = "'self' https: data: blob:",
-            FontSrc = "'self' https: data:",
+            FontSrc = SelfHttpsDataSources,
             ConnectSrc = "'self' https: wss:",
             MediaSrc = "'self' https: blob:",
-            ObjectSrc = "'none'",
-            WorkerSrc = "'self' blob:",
-            ManifestSrc = "'self'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
-            RequireTrustedTypesFor = "'script'",
-            TrustedTypes = "'none'",
+            ObjectSrc = NoneSource,
+            WorkerSrc = SelfBlobSources,
+            ManifestSrc = SelfSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
+            RequireTrustedTypesFor = ScriptSource,
+            TrustedTypes = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
         return options;
@@ -386,25 +394,25 @@ public static class SecurePresets
     public static NetSecureHeadersOptions ReverseProxy()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
 
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https:",
             StyleSrc = "'self' 'nonce-{nonce}'",
-            ImgSrc = "'self' https: data:",
+            ImgSrc = SelfHttpsDataSources,
             FontSrc = "'self' https:",
             ConnectSrc = "'self' https: wss:",
             MediaSrc = "'self' https:",
-            ObjectSrc = "'none'",
-            WorkerSrc = "'self'",
-            ManifestSrc = "'self'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
-            RequireTrustedTypesFor = "'script'",
-            TrustedTypes = "'none'",
+            ObjectSrc = NoneSource,
+            WorkerSrc = SelfSource,
+            ManifestSrc = SelfSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
+            RequireTrustedTypesFor = ScriptSource,
+            TrustedTypes = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
 
@@ -419,22 +427,22 @@ public static class SecurePresets
     public static NetSecureHeadersOptions Swagger()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
 
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             // Swagger UI frequently needs unsafe-inline for styles and loads assets from jsdelivr
             ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https://cdn.jsdelivr.net",
             StyleSrc = "'self' 'unsafe-inline' https://cdn.jsdelivr.net",
             ImgSrc = "'self' data: https:",
             FontSrc = "'self' https://cdn.jsdelivr.net",
             ConnectSrc = "'self' https: wss:",
-            WorkerSrc = "'self' blob:",
-            ObjectSrc = "'none'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
+            WorkerSrc = SelfBlobSources,
+            ObjectSrc = NoneSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
 
@@ -459,11 +467,11 @@ public static class SecurePresets
     public static NetSecureHeadersOptions NSwag()
     {
         var options = CreateFromStrictAPlus();
-        options.ReferrerPolicyValue = "strict-origin-when-cross-origin";
+        options.ReferrerPolicyValue = StrictOriginWhenCrossOrigin;
 
         options.Csp = new CspOptions
         {
-            DefaultSrc = "'none'",
+            DefaultSrc = NoneSource,
             // NSwag UI loads assets from unpkg (official NSwag client package).
             // Scripts use nonce + strict-dynamic → no unsafe-inline needed for scripts.
             ScriptSrc = "'self' 'nonce-{nonce}' 'strict-dynamic' https://unpkg.com",
@@ -472,11 +480,11 @@ public static class SecurePresets
             ImgSrc = "'self' data: https:",
             FontSrc = "'self' https://unpkg.com",
             ConnectSrc = "'self' https:",
-            WorkerSrc = "'self' blob:",
-            ObjectSrc = "'none'",
-            BaseUri = "'none'",
-            FormAction = "'self'",
-            FrameAncestors = "'none'",
+            WorkerSrc = SelfBlobSources,
+            ObjectSrc = NoneSource,
+            BaseUri = NoneSource,
+            FormAction = SelfSource,
+            FrameAncestors = NoneSource,
             EnableUpgradeInsecureRequests = true
         };
 

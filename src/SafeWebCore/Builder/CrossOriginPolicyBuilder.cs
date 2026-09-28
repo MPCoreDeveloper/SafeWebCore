@@ -5,9 +5,11 @@ namespace SafeWebCore.Builder;
 /// </summary>
 public sealed class CrossOriginPolicyBuilder
 {
+    private const string SameOrigin = "same-origin";
+
     private string _coep = "require-corp";
-    private string _coop = "same-origin";
-    private string _corp = "same-origin";
+    private string _coop = SameOrigin;
+    private string _corp = SameOrigin;
 
     /// <summary>Sets COEP to <c>require-corp</c>.</summary>
     public CrossOriginPolicyBuilder CoepRequireCorp() { _coep = "require-corp"; return this; }
@@ -19,13 +21,13 @@ public sealed class CrossOriginPolicyBuilder
     public CrossOriginPolicyBuilder CoopUnsafeNone() { _coop = "unsafe-none"; return this; }
 
     /// <summary>Sets COOP to <c>same-origin</c>.</summary>
-    public CrossOriginPolicyBuilder CoopSameOrigin() { _coop = "same-origin"; return this; }
+    public CrossOriginPolicyBuilder CoopSameOrigin() { _coop = SameOrigin; return this; }
 
     /// <summary>Sets COOP to <c>same-origin-allow-popups</c>.</summary>
     public CrossOriginPolicyBuilder CoopSameOriginAllowPopups() { _coop = "same-origin-allow-popups"; return this; }
 
     /// <summary>Sets CORP to <c>same-origin</c>.</summary>
-    public CrossOriginPolicyBuilder CorpSameOrigin() { _corp = "same-origin"; return this; }
+    public CrossOriginPolicyBuilder CorpSameOrigin() { _corp = SameOrigin; return this; }
 
     /// <summary>Sets CORP to <c>same-site</c>.</summary>
     public CrossOriginPolicyBuilder CorpSameSite() { _corp = "same-site"; return this; }
