@@ -60,15 +60,11 @@ jobs:
             echo "::warning::NUGET_API_KEY secret is not set. Skipping NuGet publish."
             exit 0
           fi
+          # A single glob pushes every package file, symbol packages included: 'dotnet nuget push'
+          # also matches '*.snupkg' with the '*.nupkg' pattern (verified on run 36374600399,
+          # 2026-09-28), so a separate symbols-only push would only report "already exists"
+          # conflicts. Keep the glob, not two pushes.
           dotnet nuget push "artifacts/nuget/*.nupkg" \
             --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-          if ls artifacts/nuget/*.snupkg >/dev/null 2>&1; then
-            dotnet nuget push "artifacts/nuget/*.snupkg" \
-              --api-key "$NUGET_API_KEY" \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
-          else
-            echo "::notice::No .snupkg symbol package was produced."
-          fi
