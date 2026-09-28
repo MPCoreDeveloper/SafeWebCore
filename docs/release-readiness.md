@@ -31,6 +31,7 @@ snapshot.
 | Tag + push | ✅ Tag `v1.8.0` (three-part form; the remote's older tags are mixed) points at release commit `9773184` → `nuget-publish.yml` run `36374600399` packed all five and pushed with `--skip-duplicate`. Only `SafeWebCore` 1.8.0 and `SafeWebCore.FraudDetection` 1.1.0 were new there; `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10) and the two `1.0.0-preview.1` packages were skipped as duplicates |
 | Publication | ✅ nuget.org carries `SafeWebCore` **1.8.0** and `SafeWebCore.FraudDetection` **1.1.0** (published 2026-09-28 03:40Z) plus both `.snupkg` symbol packages (`/api/v2/symbolpackage`). Verified by downloading both `.nupkg` files back from the flat container: `icon.png`, the readme (`PACKAGE.md` / `README.md`), `repository commit = 9773184` and the 1.8.0/1.1.0 release notes are all present in the published nuspecs. Bear in mind the v3 index lagged the push by ~5 minutes — the flat container is where a new version shows up first |
 | Git | ✅ All 1.8.0 work committed on `master`; release prep and the packaging/baseline change are separate commits |
+| Static analysis | ✅ SonarCloud Automatic Analysis on `master`: **0 open issues**, quality gate **OK** over 5,798 analysed lines — 0 code smells, 0.0 % duplication, A on maintainability, reliability and security (verified 2026-09-28). The full set is 353 fixed, 8 `Won't fix` and 2 `False positive`; the triage rules, the evidence and the ten accepted findings are recorded in [SonarCloud Triage](development/sonarcloud-triage.md) |
 
 Still genuinely open from the original audit — none of it blocks 1.8.0: a CI performance gate, analyzer
 unit tests, symbol/SourceLink parity for `SafeWebCore.JwtBearer` (it needs a higher JwtBearer version to
@@ -261,3 +262,4 @@ Git:            dirty working tree with Unreleased feature work
 - [NuGet packages & candidates](nuget-packages.md) — package-level readiness and push order
 - [Roadmap](roadmap.md) — feature themes by version band
 - [Backward compatibility policy](development/backward-compatibility-policy.md)
+- [SonarCloud triage](development/sonarcloud-triage.md) — analysis scope, triage rules and the accepted findings behind the zero-issue gate
