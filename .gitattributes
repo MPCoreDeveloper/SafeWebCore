@@ -1,0 +1,19 @@
+# GitHub language statistics (Linguist).
+#
+# Linguist measures bytes per language, not the value of the code. The BMad Method tooling
+# that lives next to the product (.agents/skills, _bmad runtime scripts) and the artifacts it
+# renders (planning decks, brain-selector assets) dwarf the C# sources, so the language bar
+# reported Python/HTML instead of C#. These files stay in the repository and in the file tree;
+# they are only taken out of the language statistics.
+#
+#   linguist-vendored       installed/third-party tooling that is copied into the repository
+#   linguist-documentation  prose and generated artifacts, never product code
+#
+# Verify with: git check-attr linguist-vendored linguist-documentation -- <path>
+.agents/**       linguist-vendored
+_bmad/**         linguist-vendored
+_bmad-output/**  linguist-documentation
+
+# Already detected as documentation by Linguist's own heuristic (docs/, doc/); stated
+# explicitly so the statistics do not depend on heuristic changes.
+docs/**          linguist-documentation

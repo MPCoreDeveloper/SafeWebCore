@@ -69,9 +69,10 @@ Invoke a skill by name in your coding agent; a bare story, issue link or change 
 | Close out an epic | `bmad-retrospective` |
 | What to do next | `bmad` (help / status) |
 
-`bmad-project-context` is the recommended first step for an existing codebase like this one and has **not** been run
-yet, so there is no `AGENTS.md` in the repository. It is a conversational skill: you bring the rules (for example
+`bmad-project-context` is the recommended first step for an existing codebase like this one and **has** been run:
+`AGENTS.md` holds the verified project context. It is a conversational skill: you bring the rules (for example
 backward compatibility, xUnit v3, XML documentation on public APIs) and it verifies the rest against the repository.
+Re-run it when conventions, commands or the project layout change.
 
 ## Guardrails this repository already has
 
@@ -83,3 +84,18 @@ BMad does not replace the existing repository rules; the skills must respect the
   public APIs, conventions from `.editorconfig`.
 - **Existing instructions** — `.github/copilot-instructions.md` stays authoritative for Copilot; add new team rules to
   `AGENTS.md` through `bmad-project-context` instead of duplicating them in several files.
+
+## Repository tooling and code-analysis scope
+
+Everything the setup added is committed, but none of it is product code: it is Python, HTML and Markdown, and it
+outweighs the C# sources in bytes. Two root files keep it out of the automated code metrics.
+
+| File | Effect |
+|------|--------|
+| `.gitattributes` | Marks `.agents/**` and `_bmad/**` as `linguist-vendored` and `_bmad-output/**` plus `docs/**` as `linguist-documentation`, so GitHub's language bar reports the product (C#) instead of the tooling. The files stay in the tree and in the repository. |
+| `sonar-project.properties` | `sonar.exclusions` for `.agents/**`, `_bmad/**`, `_bmad-output/**`, `docs/**` and build output, so the SonarQube Cloud quality gate (Automatic Analysis, GitHub App) only judges SafeWebCore's own code. |
+
+Why this matters: `_bmad/scripts/` is a byte-identical copy of `.agents/skills/bmad/scripts/` (17 of 17 files,
+262 KB). Analysing both trees counted every runtime script twice, which produced 99 % copy-paste blocks, 58.5 %
+duplicated lines on "new code", all six reported vulnerabilities and 325 of 327 issues — none of them in
+SafeWebCore. Keep both entries if you rename or remove these folders.
