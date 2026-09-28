@@ -83,8 +83,12 @@ public sealed class SecurityEventDispatcherTests
         // Arrange - the metrics dependency is optional, so the backward-compatible constructor must work
         var dispatcher = new SecurityEventDispatcher([]);
 
-        // Act + Assert - must not throw
-        await dispatcher.EmitAsync(CreateEvent(), TestContext.Current.CancellationToken);
+        // Act - the call must complete without throwing
+        var exception = await Record.ExceptionAsync(
+            () => dispatcher.EmitAsync(CreateEvent(), TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.Null(exception);
     }
 
     private static SecurityEvent CreateEvent()

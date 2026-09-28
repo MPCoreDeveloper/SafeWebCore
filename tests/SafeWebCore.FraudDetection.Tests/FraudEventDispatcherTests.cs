@@ -67,8 +67,11 @@ public sealed class FraudEventDispatcherTests
         // Arrange - the metrics dependency is optional, so no counter may be required
         var dispatcher = new FraudEventDispatcher([]);
 
-        // Act + Assert - must not throw
-        dispatcher.Dispatch(CreateEvent());
+        // Act - the call must complete without throwing
+        var exception = Record.Exception(() => dispatcher.Dispatch(CreateEvent()));
+
+        // Assert
+        Assert.Null(exception);
     }
 
     private static FraudEvent CreateEvent()
