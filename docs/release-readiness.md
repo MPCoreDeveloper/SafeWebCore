@@ -1,22 +1,23 @@
 ﻿# SafeWebCore — Release Readiness Assessment
 
 > **Superseded for version facts.** This audit is the 2026-07-25 snapshot taken while 1.3.5 was
-> published (`cc3148b`). The published set as of 2026-09-27 is: `SafeWebCore` 1.0.0, 1.1.0, 1.2.0,
-> 1.3.0, 1.3.5, 1.6.0, 1.7.0; `SafeWebCore.FraudDetection` and `SafeWebCore.JwtBearer` 1.0.0;
-> `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1. Use
+> published (`cc3148b`). The published set as of 2026-09-28 is: `SafeWebCore` 1.0.0, 1.1.0, 1.2.0,
+> 1.3.0, 1.3.5, 1.6.0, 1.7.0, 1.8.0; `SafeWebCore.FraudDetection` 1.0.0, 1.1.0; `SafeWebCore.JwtBearer`
+> 1.0.0; `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1. Use
 > [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
 > SemVer form.
 >
-> **The workspace carries 1.8.0** (version bumped, changelog dated, tagged `v1.8.0` on 2026-09-27 — the
-> tag push is the publish step). Everything below the release-prep section is the frozen 2026-07-25 audit
-> and does **not** describe 1.8.0.
+> **1.8.0 shipped on 2026-09-28:** tagged `v1.8.0` (on 2026-09-27) and published to nuget.org by
+> `nuget-publish.yml` (run `36374600399`), together with `SafeWebCore.FraudDetection` 1.1.0 and both
+> `.snupkg` symbol packages. Everything below the release section is the frozen 2026-07-25 audit and
+> does **not** describe 1.8.0.
 
 ---
 
-## Release-prep state for 1.8.0 (2026-09-27)
+## Release state for 1.8.0 (published 2026-09-28)
 
-The live status of the release the workspace is prepared for. The 2026-07-25 audit below stays frozen
-as the historical snapshot.
+The live status of the 1.8.0 release. The 2026-07-25 audit below stays frozen as the historical
+snapshot.
 
 | Item | State |
 |------|-------|
@@ -27,13 +28,16 @@ as the historical snapshot.
 | Package docs | ✅ `README.md` and `PACKAGE.md` state 1.8.0 with the new notes; `<PackageReleaseNotes>` rewritten in the csproj (it lands in the nuspec) |
 | Pack | ✅ `dotnet pack` produces `SafeWebCore.1.8.0.nupkg` (~89 KB) + `.snupkg` (~26 KB) and `SafeWebCore.FraudDetection.1.1.0.nupkg` (~77 KB) + `.snupkg` (~24 KB). Both nuspecs carry the right version, release notes, `icon.png` and a `repository` element with the release commit; the FraudDetection package now has the same metadata shape as core (verified 2026-09-27) |
 | PublicAPI | ✅ Promoted before the tag — 11 core, 55 `SafeWebCore.FraudDetection` and 51 `SafeWebCore.JwtBearer` entries moved from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt`; only `#nullable enable` remains in the three Unshipped files, so `RS0037` now guards the shipped surface |
-| Tag + push | ✅ Tag `v1.8.0` (three-part form; the remote's older tags are mixed) points at this release commit → `nuget-publish.yml` packs all five and pushes with `--skip-duplicate`. Only `SafeWebCore` 1.8.0 and `SafeWebCore.FraudDetection` 1.1.0 are new there; `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10) and the two `1.0.0-preview.1` packages are skipped |
+| Tag + push | ✅ Tag `v1.8.0` (three-part form; the remote's older tags are mixed) points at release commit `9773184` → `nuget-publish.yml` run `36374600399` packed all five and pushed with `--skip-duplicate`. Only `SafeWebCore` 1.8.0 and `SafeWebCore.FraudDetection` 1.1.0 were new there; `SafeWebCore.JwtBearer` 1.0.0 (published 2026-09-10) and the two `1.0.0-preview.1` packages were skipped as duplicates |
+| Publication | ✅ nuget.org carries `SafeWebCore` **1.8.0** and `SafeWebCore.FraudDetection` **1.1.0** (published 2026-09-28 03:40Z) plus both `.snupkg` symbol packages (`/api/v2/symbolpackage`). Verified by downloading both `.nupkg` files back from the flat container: `icon.png`, the readme (`PACKAGE.md` / `README.md`), `repository commit = 9773184` and the 1.8.0/1.1.0 release notes are all present in the published nuspecs. Bear in mind the v3 index lagged the push by ~5 minutes — the flat container is where a new version shows up first |
 | Git | ✅ All 1.8.0 work committed on `master`; release prep and the packaging/baseline change are separate commits |
 
 Still genuinely open from the original audit — none of it blocks 1.8.0: a CI performance gate, analyzer
 unit tests, symbol/SourceLink parity for `SafeWebCore.JwtBearer` (it needs a higher JwtBearer version to
 reach nuget.org), and the optional flip of `RS0016`/`RS0017` from warning to error now that the baseline
-is clean.
+is clean. The publish also carried one action item: CI warned that the `NUGET_API_KEY` GitHub secret
+expires within days of 2026-09-28, so renew it before the next release (a missing or expired key makes the
+push step warn and exit successfully, which looks identical to a successful publish).
 
 
 **Audit date:** 2026-07-25  

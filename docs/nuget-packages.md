@@ -2,7 +2,7 @@
 
 This document describes every packable project: identity, contents, publish status, readiness, and recommended release sequencing.
 
-**Last audited:** 2026-09-27 (version facts re-verified against the nuget.org flat-container API)
+**Last audited:** 2026-09-28 (version facts re-verified against the nuget.org flat-container API; the 1.8.0 / 1.1.0 publication was confirmed the same day by downloading both packages back from nuget.org)
 **Local pack output (verified):** `artifacts/nupkg/`
 
 > **Canonical version form:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N`
@@ -13,11 +13,11 @@ This document describes every packable project: identity, contents, publish stat
 
 ## Quick status
 
-| PackageId | csproj version | nuget.org (verified 2026-09-27) | Local pack | Recommendation |
+| PackageId | csproj version | nuget.org (verified 2026-09-28) | Local pack | Recommendation |
 |-----------|----------------|--------------------------------|------------|----------------|
-| **SafeWebCore** | `1.8.0` | **Published**: `1.0.0`, `1.1.0`, `1.2.0`, `1.3.0`, `1.3.5`, `1.6.0`, `1.7.0` | `SafeWebCore.1.8.0.nupkg` + `.snupkg` | Version bumped and changelog dated for **1.8.0** (2026-09-27); remaining step is the tag + push |
-| **SafeWebCore.FraudDetection** | `1.1.0` | **Published**: `1.0.0` | `SafeWebCore.FraudDetection.1.1.0.nupkg` | Next release **1.1.0** — three-part, because `1.0.0.0` normalizes to the published `1.0.0` |
-| **SafeWebCore.JwtBearer** | `1.0.0` | **Published**: `1.0.0` (2026-09-10) | `SafeWebCore.JwtBearer.1.0.0.nupkg` | Published — JWT authority fail-fast + token hardening; the code is identical to HEAD, so the `v1.8.0` push is skipped as a duplicate |
+| **SafeWebCore** | `1.8.0` | **Published**: `1.0.0`, `1.1.0`, `1.2.0`, `1.3.0`, `1.3.5`, `1.6.0`, `1.7.0`, `1.8.0` (2026-09-28) | `SafeWebCore.1.8.0.nupkg` + `.snupkg` | **1.8.0 released** — tagged `v1.8.0` and pushed together with the symbol package; the next cycle is the empty `[Unreleased]` section |
+| **SafeWebCore.FraudDetection** | `1.1.0` | **Published**: `1.0.0`, `1.1.0` (2026-09-28) | `SafeWebCore.FraudDetection.1.1.0.nupkg` + `.snupkg` | **1.1.0 released** with the `v1.8.0` tag — three-part, because `1.0.0.0` normalizes to the published `1.0.0` |
+| **SafeWebCore.JwtBearer** | `1.0.0` | **Published**: `1.0.0` (2026-09-10) | `SafeWebCore.JwtBearer.1.0.0.nupkg` | Published — JWT authority fail-fast + token hardening; the code is identical to HEAD, so the `v1.8.0` push was skipped as a duplicate |
 | **SafeWebCore.Analyzers** | `1.0.0-preview.1` | **Published**: `1.0.0-preview.1` | `SafeWebCore.Analyzers.1.0.0-preview.1.nupkg` | Preview published; keep publishing as **preview** only |
 | **SafeWebCore.Testing** | `1.0.0-preview.1` | **Published**: `1.0.0-preview.1` | `SafeWebCore.Testing.1.0.0-preview.1.nupkg` | Preview published; keep publishing as **preview** only |
 
@@ -54,7 +54,8 @@ Pack results for the 1.8.0 release prep (2026-09-27, verified from the files act
 |------|------|-------|
 | `SafeWebCore.1.8.0.nupkg` | ~89 KB | nuspec `<version>` is `1.8.0` and the v1.8.0 `releaseNotes` are embedded; contents: `PACKAGE.md`, `icon.png`, `lib/net10.0/SafeWebCore.dll` + `.xml` |
 | `SafeWebCore.1.8.0.snupkg` | ~26 KB | symbols / SourceLink |
-| `SafeWebCore.FraudDetection.1.1.0.nupkg` | ~77 KB | three-part version; icon and symbols still missing |
+| `SafeWebCore.FraudDetection.1.1.0.nupkg` | ~77 KB | three-part version; contents: `README.md`, `icon.png`, `lib/net10.0/SafeWebCore.FraudDetection.dll` + `.xml` |
+| `SafeWebCore.FraudDetection.1.1.0.snupkg` | ~24 KB | symbols / SourceLink — parity with core since 2026-09-27 |
 
 ---
 
@@ -65,7 +66,7 @@ Pack results for the 1.8.0 release prep (2026-09-27, verified from the files act
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore` |
-| Current csproj Version | `1.8.0` (latest on nuget.org: `1.7.0`) |
+| Current csproj Version | `1.8.0` (published 2026-09-28; `1.7.0` was the previous release) |
 | Authors | MPCoreDeveloper |
 | Company | Posseth Software |
 | License | MIT (`PackageLicenseExpression`) |
@@ -100,16 +101,16 @@ dotnet add package SafeWebCore
 
 | Layer | State |
 |-------|--------|
-| nuget.org latest | **1.7.0** |
+| nuget.org latest | **1.8.0** (published 2026-09-28) |
 | csproj `<Version>` | **1.8.0** (bumped 2026-09-27) |
 | Workspace code | The **1.8.0** work, dated `[1.8.0] — 2026-09-27` in `CHANGELOG.md` |
 
-**Implication:** packing the current workspace produces `SafeWebCore.1.8.0.nupkg`, which is a genuinely new version — the published 1.7.0 keeps its own bits. Release-prep state:
+**Implication:** `SafeWebCore.1.8.0.nupkg` is published (2026-09-28) and was a genuinely new version — the published 1.7.0 keeps its own bits. Release state:
 
 1. ✅ **1.8.0** picked and set as `<Version>` in `SafeWebCore.csproj`. Never reuse a version nuget.org already carries.
 2. ✅ `CHANGELOG.md` `[Unreleased]` promoted to the dated `[1.8.0] — 2026-09-27` section, with the stale 1.7.0-era duplicates (path-policy inheritance, `ApplyPreset`/`Clone`) removed and an empty `[Unreleased]` placeholder left for the next cycle.
 3. ✅ `PACKAGE.md` and `README.md` state 1.8.0 with the new notes, and `<PackageReleaseNotes>` in the csproj carries the 1.8.0 summary that lands in the nuspec.
-4. ⏳ **At tag/publish time:** promote the new `PublicAPI.Unshipped.txt` entries into `PublicAPI.Shipped.txt`. That flip claims the surface has shipped, so it belongs with the tag rather than with the version bump.
+4. ✅ **Promoted at tag/publish time (2026-09-28):** the new `PublicAPI.Unshipped.txt` entries moved into `PublicAPI.Shipped.txt` in the release commit. That flip claims the surface has shipped, so it belongs with the tag rather than with the version bump.
 5. Never overwrite an already-published version on nuget.org.
 
 ## Packaging strengths
@@ -140,7 +141,7 @@ dotnet add package SafeWebCore
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore.FraudDetection` |
-| Version | `1.1.0` (csproj; published on nuget.org is `1.0.0`) |
+| Version | `1.1.0` (csproj and on nuget.org since 2026-09-28; `1.0.0` was the first release) |
 | Authors | MPCoreDeveloper |
 | Company | Posseth Software |
 | License | MIT |
@@ -149,7 +150,7 @@ dotnet add package SafeWebCore
 | TFM | `net10.0` |
 | Symbols | `.snupkg` + SourceLink — parity with core since 2026-09-27 |
 | Release notes | `PackageReleaseNotes` for 1.1.0 embedded in the nuspec (1 161 chars) |
-| nuget.org | **Published** — `1.0.0` |
+| nuget.org | **Published** — `1.0.0`, `1.1.0` (2026-09-28) |
 
 ## Package contents (verified)
 
@@ -197,7 +198,7 @@ dotnet add package SafeWebCore.FraudDetection
 | Example app using the module | **Missing** |
 | In solution test project for CI | ✅ `tests/SafeWebCore.FraudDetection.Tests` is in `SafeWebCore.slnx` |
 | Changelog entry for the next publish | ✅ `[1.8.0]` section plus the embedded release notes |
-| nuget.org listing | ✅ `1.0.0` published; `1.1.0` ships with the `v1.8.0` tag |
+| nuget.org listing | ✅ `1.0.0` and `1.1.0` published (2026-09-28, with the `v1.8.0` tag) |
 
 ## Checklist for the next release (FraudDetection 1.1.0)
 
