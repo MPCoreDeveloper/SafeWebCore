@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SafeWebCore.Abstractions;
@@ -16,16 +15,8 @@ namespace SafeWebCore.Middleware;
 /// </summary>
 public sealed class NetSecureHeadersMiddleware : IMiddleware
 {
-    private sealed record ResolvedPathPolicy(
-        PathString Prefix,
-        NetSecureHeadersOptions Options,
-        string? CspTemplate,
-        string? ReportingEndpointsValue);
-
     private readonly INonceService _nonceService;
-    private readonly NetSecureHeadersOptions _defaultOptions;
-    private readonly string? _defaultCspTemplate;
-    private readonly string? _defaultReportingEndpointsValue;
+    private readonly ResolvedPathPolicy _defaultPathPolicy;
     private readonly List<ResolvedPathPolicy> _pathPolicies;
     private readonly SecurityEventDispatcher _eventDispatcher;
     private readonly SafeWebCoreMetrics _metrics;
@@ -63,10 +54,12 @@ public sealed class NetSecureHeadersMiddleware : IMiddleware
         ArgumentNullException.ThrowIfNull(eventDispatcher);
 
         _nonceService = nonceService;
-        _defaultOptions = options.Value;
-        _defaultCspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
-        _defaultReportingEndpointsValue = BuildReportingEndpointsValue(options.Value.ReportingEndpoints);
-        _pathPolicies = BuildPathPolicies(options.Value.PathPolicies);
+        _defaultPathPolicy = new ResolvedPathPolicy(
+            default,
+            options.Value,
+            options.Value.EnableCsp ? options.Value.Csp.Build() : null,
+            PathPolicyResolver.BuildReportingEndpointsValue(options.Value.ReportingEndpoints));
+        _pathPolicies = PathPolicyResolver.Build(options.Value.PathPolicies);
         _eventDispatcher = eventDispatcher;
         _metrics = metrics ?? new SafeWebCoreMetrics();
     }
@@ -90,7 +83,8 @@ public sealed class NetSecureHeadersMiddleware : IMiddleware
         }
 
         var endpointCspMode = endpoint?.Metadata.GetMetadata<CspModeAttribute>()?.Mode;
-        var (effectiveOptions, matchedPathPolicy, cspTemplate, reportingEndpointsValue) = ResolvePolicy(context.Request.Path);
+        var (effectiveOptions, matchedPathPolicy, cspTemplate, reportingEndpointsValue) =
+            PathPolicyResolver.ResolveFor(_pathPolicies, context.Request.Path, _defaultPathPolicy);
 
         // Generate per-request nonce and expose via HttpContext.Items
         var nonce = _nonceService.GenerateNonce();
@@ -145,73 +139,6 @@ public sealed class NetSecureHeadersMiddleware : IMiddleware
         }
 
         await next(context);
-    }
-
-    private static List<ResolvedPathPolicy> BuildPathPolicies(List<PathPolicyOptions> configuredPolicies)
-    {
-        if (configuredPolicies.Count == 0)
-            return [];
-
-        var resolvedPolicies = new List<ResolvedPathPolicy>(configuredPolicies.Count);
-
-        foreach (var policy in configuredPolicies)
-        {
-            if (string.IsNullOrWhiteSpace(policy.PathPrefix))
-                continue;
-
-            var normalizedPrefix = policy.PathPrefix.StartsWith('/')
-                ? policy.PathPrefix
-                : $"/{policy.PathPrefix}";
-
-            var cspTemplate = policy.Options.EnableCsp
-                ? policy.Options.Csp.Build()
-                : null;
-
-            var reportingEndpointsValue = BuildReportingEndpointsValue(policy.Options.ReportingEndpoints);
-
-            resolvedPolicies.Add(new ResolvedPathPolicy(
-                new PathString(normalizedPrefix),
-                policy.Options,
-                cspTemplate,
-                reportingEndpointsValue));
-        }
-
-        resolvedPolicies.Sort(static (a, b) =>
-            b.Prefix.Value!.Length.CompareTo(a.Prefix.Value!.Length));
-
-        return resolvedPolicies;
-    }
-
-    private (NetSecureHeadersOptions Options, string? MatchedPathPolicy, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
-    {
-        foreach (var policy in _pathPolicies)
-        {
-            if (!requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            return (policy.Options, policy.Prefix.Value, policy.CspTemplate, policy.ReportingEndpointsValue);
-        }
-
-        return (_defaultOptions, null, _defaultCspTemplate, _defaultReportingEndpointsValue);
-    }
-
-    private static string? BuildReportingEndpointsValue(List<ReportingEndpointOptions> endpoints)
-    {
-        if (endpoints.Count == 0)
-            return null;
-
-        var builder = new StringBuilder(endpoints.Count * 48);
-
-        for (var index = 0; index < endpoints.Count; index++)
-        {
-            if (index > 0)
-                builder.Append(", ");
-
-            var endpoint = endpoints[index];
-            builder.Append(endpoint.Group).Append("=\"").Append(endpoint.Url).Append('"');
-        }
-
-        return builder.ToString();
     }
 
     private static void AddSecurityHeaders(

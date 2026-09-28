@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — the work below shipped as **1.8.0** on 2026-09-27. New entries start here.
+### Changed
+- Internal deduplication of the fraud detectors and the security-header pipeline — the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in `GeoCulturalConsistencyDetector` / `WesternImpersonationDetector` and in `NetSecureHeadersMiddleware` / `NetSecureHeadersDiagnosticsService`. They now live once, in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers that both call sites use, so a score, a throttle rule or a policy-resolution rule can only change in one place. No public API, default, preset, configuration path or behavior change.
 
 ---
 

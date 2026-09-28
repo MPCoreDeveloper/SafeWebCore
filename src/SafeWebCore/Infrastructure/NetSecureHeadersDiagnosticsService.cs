@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SafeWebCore.Metadata;
@@ -8,21 +7,19 @@ namespace SafeWebCore.Infrastructure;
 
 internal sealed class NetSecureHeadersDiagnosticsService(IOptions<NetSecureHeadersOptions> options) : INetSecureHeadersDiagnosticsService
 {
-    private sealed record ResolvedPathPolicy(
-        PathString Prefix,
-        NetSecureHeadersOptions Options,
-        string? CspTemplate,
-        string? ReportingEndpointsValue);
+    private readonly ResolvedPathPolicy _defaultPathPolicy = new(
+        default,
+        options.Value,
+        options.Value.EnableCsp ? options.Value.Csp.Build() : null,
+        PathPolicyResolver.BuildReportingEndpointsValue(options.Value.ReportingEndpoints));
 
-    private readonly NetSecureHeadersOptions _defaultOptions = options.Value;
-    private readonly string? _defaultCspTemplate = options.Value.EnableCsp ? options.Value.Csp.Build() : null;
-    private readonly string? _defaultReportingEndpointsValue = BuildReportingEndpointsValue(options.Value.ReportingEndpoints);
-    private readonly List<ResolvedPathPolicy> _pathPolicies = BuildPathPolicies(options.Value.PathPolicies);
+    private readonly List<ResolvedPathPolicy> _pathPolicies = PathPolicyResolver.Build(options.Value.PathPolicies);
 
     public object CreateSnapshot(string? path = null, CspEndpointMode? endpointCspMode = null)
     {
         var normalizedPath = NormalizePath(path);
-        var (effectiveOptions, matchedPathPolicy, cspTemplate, reportingEndpointsValue) = ResolvePolicy(new PathString(normalizedPath));
+        var (effectiveOptions, matchedPathPolicy, cspTemplate, reportingEndpointsValue) =
+            PathPolicyResolver.ResolveFor(_pathPolicies, new PathString(normalizedPath), _defaultPathPolicy);
         var headers = BuildHeaders(effectiveOptions, cspTemplate, reportingEndpointsValue, endpointCspMode);
         var warnings = BuildWarnings(effectiveOptions, matchedPathPolicy, endpointCspMode);
 
@@ -37,21 +34,6 @@ internal sealed class NetSecureHeadersDiagnosticsService(IOptions<NetSecureHeade
             _pathPolicies.Select(policy => policy.Prefix.Value!).ToArray(),
             headers,
             warnings);
-    }
-
-    private (NetSecureHeadersOptions Options, string? MatchedPathPolicy, string? CspTemplate, string? ReportingEndpointsValue) ResolvePolicy(PathString requestPath)
-    {
-        foreach (var policy in _pathPolicies)
-        {
-            if (!requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return (policy.Options, policy.Prefix.Value, policy.CspTemplate, policy.ReportingEndpointsValue);
-        }
-
-        return (_defaultOptions, null, _defaultCspTemplate, _defaultReportingEndpointsValue);
     }
 
     private static Dictionary<string, string> BuildHeaders(
@@ -144,60 +126,6 @@ internal sealed class NetSecureHeadersDiagnosticsService(IOptions<NetSecureHeade
         }
 
         return [.. warnings];
-    }
-
-    private static List<ResolvedPathPolicy> BuildPathPolicies(List<PathPolicyOptions> configuredPolicies)
-    {
-        if (configuredPolicies.Count == 0)
-            return [];
-
-        var resolvedPolicies = new List<ResolvedPathPolicy>(configuredPolicies.Count);
-
-        foreach (var policy in configuredPolicies)
-        {
-            if (string.IsNullOrWhiteSpace(policy.PathPrefix))
-                continue;
-
-            var normalizedPrefix = policy.PathPrefix.StartsWith('/')
-                ? policy.PathPrefix
-                : $"/{policy.PathPrefix}";
-
-            var cspTemplate = policy.Options.EnableCsp
-                ? policy.Options.Csp.Build()
-                : null;
-
-            var reportingEndpointsValue = BuildReportingEndpointsValue(policy.Options.ReportingEndpoints);
-
-            resolvedPolicies.Add(new ResolvedPathPolicy(
-                new PathString(normalizedPrefix),
-                policy.Options,
-                cspTemplate,
-                reportingEndpointsValue));
-        }
-
-        resolvedPolicies.Sort(static (a, b) =>
-            b.Prefix.Value!.Length.CompareTo(a.Prefix.Value!.Length));
-
-        return resolvedPolicies;
-    }
-
-    private static string? BuildReportingEndpointsValue(List<ReportingEndpointOptions> endpoints)
-    {
-        if (endpoints.Count == 0)
-            return null;
-
-        var builder = new StringBuilder(endpoints.Count * 48);
-
-        for (var index = 0; index < endpoints.Count; index++)
-        {
-            if (index > 0)
-                builder.Append(", ");
-
-            var endpoint = endpoints[index];
-            builder.Append(endpoint.Group).Append("=\"").Append(endpoint.Url).Append('"');
-        }
-
-        return builder.ToString();
     }
 
     private static string NormalizePath(string? path)

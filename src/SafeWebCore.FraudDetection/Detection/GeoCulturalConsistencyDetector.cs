@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SafeWebCore.FraudDetection.Abstractions;
 using SafeWebCore.FraudDetection.Infrastructure;
@@ -44,12 +43,6 @@ namespace SafeWebCore.FraudDetection.Detection;
 /// </remarks>
 public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
 {
-    private const int ZapHeaderScore = 80;
-    private const int HeaderScore = 50;
-    private const int UserAgentScore = 35;
-    private const int PathProbeScore = 20;
-    private const int BurstScore = 30;
-
     private readonly IFraudDetectionOptionsResolver? _optionsResolver;
     private readonly GeoCulturalConsistencyOptions? _directOptions;
     private readonly IGeoIpService? _geoIpService;
@@ -57,9 +50,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
     private readonly IFraudEventDispatcher _fraudEventDispatcher;
     private readonly ILogger<GeoCulturalConsistencyDetector> _logger;
     private readonly TimeProvider _timeProvider;
-
-    private readonly ConcurrentDictionary<string, ConcurrentQueue<DateTimeOffset>> _requestWindows = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, DateTimeOffset> _lastNotifications = new(StringComparer.Ordinal);
+    private readonly PenTestSignalAnalyzer _penTestSignals = new();
 
     /// <summary>
     /// Creates a detector using direct options (primarily for testing or simple scenarios).
@@ -126,7 +117,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
         var options = ResolveGeoOptions(data.TenantId);
         List<string> triggers = [];
 
-        if (IsAuthorizedPenTestBypass(data, options.PenTestDetection))
+        if (PenTestSignalAnalyzer.IsAuthorizedPenTestBypass(data, options.PenTestDetection))
         {
             triggers.Add(FraudTrigger.PenTestBypassAuthorized);
 
@@ -170,35 +161,9 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
             action = FraudVerdictMapping.DetermineAction(verdict);
         }
 
-        bool scannerDetected = false;
-        bool emailSent = false;
-
-        if (options.EnablePenTestDetection)
-        {
-            var scanner = EvaluateScannerSignals(enriched, options.PenTestDetection, triggers);
-            scannerDetected = scanner.IsDetected;
-
-            if (scannerDetected)
-            {
-                if (ShouldSendNotification(enriched, options.PenTestDetection))
-                {
-                    _notificationSender.SendAuthorizationCheck(new PenTestAuthorizationNotification
-                    {
-                        Recipients = options.PenTestDetection.AuthorizationCheckRecipients,
-                        Subject = options.PenTestDetection.AuthorizationCheckSubject,
-                        IpAddress = enriched.IpAddress,
-                        RequestPath = enriched.RequestPath,
-                        Triggers = triggers,
-                        TenantId = enriched.TenantId
-                    });
-
-                    emailSent = true;
-                    StoreNotificationTimestamp(enriched);
-                }
-
-                action = FraudVerdictMapping.MaxSeverity(action, options.PenTestDetection.ScannerRecommendedAction);
-            }
-        }
+        var penTestResult = _penTestSignals.EvaluateAndNotify(
+            enriched, options, triggers, _notificationSender, _timeProvider, action);
+        action = penTestResult.Action;
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -208,7 +173,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
                 finalScore,
                 verdict,
                 action,
-                scannerDetected,
+                penTestResult.ScannerDetected,
                 triggers.Count);
         }
 
@@ -222,10 +187,10 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
             IsFakeWestern = verdict is FraudVerdict.RegionImpersonation,
             IsNotInWesternCountry = isNotInExpectedRegion,
 
-            IsPenTestScannerDetected = scannerDetected,
+            IsPenTestScannerDetected = penTestResult.ScannerDetected,
             IsAuthorizedPenTest = false,
             IsDetectionBypassed = false,
-            PenTestAuthorizationEmailSent = emailSent,
+            PenTestAuthorizationEmailSent = penTestResult.EmailSent,
             SuspicionScore = finalScore,
             Risk = RiskScore.FromScoreAndVerdict(finalScore, verdict),
             Triggers = triggers,
@@ -264,125 +229,6 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
 
         return _optionsResolver.GetCurrent(tenantId);
     }
-
-    private static bool IsAuthorizedPenTestBypass(ClientFingerprintData data, PenTestDetectionOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(options.AuthorizationHeaderName))
-            return false;
-
-        if (!TryGetHeaderValue(data, options.AuthorizationHeaderName, out var suppliedValue))
-            return false;
-
-        if (string.IsNullOrWhiteSpace(options.AuthorizationHeaderSecret))
-            return !string.IsNullOrWhiteSpace(suppliedValue);
-
-        return string.Equals(
-            suppliedValue,
-            options.AuthorizationHeaderSecret,
-            StringComparison.Ordinal);
-    }
-
-    private (bool IsDetected, int Score) EvaluateScannerSignals(
-        ClientFingerprintData data,
-        PenTestDetectionOptions options,
-        List<string> triggers)
-    {
-        int score = 0;
-
-        if (TryGetHeaderValue(data, "X-ZAP-Initiator", out _))
-        {
-            score += ZapHeaderScore;
-            triggers.Add(FraudTrigger.ScannerZapHeader);
-        }
-
-        foreach (var headerName in options.ScannerHeaders)
-        {
-            if (!TryGetHeaderValue(data, headerName, out _))
-                continue;
-
-            score += HeaderScore;
-            triggers.Add(FraudTrigger.ScannerHeader);
-            break;
-        }
-
-        if (!string.IsNullOrWhiteSpace(data.UserAgent) &&
-            options.ScannerUserAgentTokens.Any(token =>
-                data.UserAgent.Contains(token, StringComparison.OrdinalIgnoreCase)))
-        {
-            score += UserAgentScore;
-            triggers.Add(FraudTrigger.ScannerUserAgent);
-        }
-
-        if (!string.IsNullOrWhiteSpace(data.RequestPath) &&
-            options.ScannerPathFragments.Any(fragment =>
-                data.RequestPath.Contains(fragment, StringComparison.OrdinalIgnoreCase)))
-        {
-            score += PathProbeScore;
-            triggers.Add(FraudTrigger.ScannerPathProbe);
-        }
-
-        if (IsBurstRateExceeded(data, options))
-        {
-            score += BurstScore;
-            triggers.Add(FraudTrigger.ScannerBurstRate);
-        }
-
-        return (score >= options.ScannerScoreThreshold, score);
-    }
-
-    private bool IsBurstRateExceeded(ClientFingerprintData data, PenTestDetectionOptions options)
-    {
-        var sourceKey = GetSourceKey(data);
-        var now = data.RequestTimestampUtc ?? _timeProvider.GetUtcNow();
-
-        var queue = _requestWindows.GetOrAdd(sourceKey, _ => new ConcurrentQueue<DateTimeOffset>());
-        queue.Enqueue(now);
-
-        while (queue.TryPeek(out var ts) && (now - ts) > options.BurstWindow)
-            queue.TryDequeue(out _);
-
-        return queue.Count >= options.BurstRequestThreshold;
-    }
-
-    private bool ShouldSendNotification(ClientFingerprintData data, PenTestDetectionOptions options)
-    {
-        if (!options.SendAuthorizationCheckEmail)
-            return false;
-
-        if (options.AuthorizationCheckRecipients.Count == 0)
-            return false;
-
-        var sourceKey = GetSourceKey(data);
-        var now = data.RequestTimestampUtc ?? _timeProvider.GetUtcNow();
-
-        if (!_lastNotifications.TryGetValue(sourceKey, out var lastSentAt))
-            return true;
-
-        return (now - lastSentAt) >= options.NotificationCooldown;
-    }
-
-    private void StoreNotificationTimestamp(ClientFingerprintData data)
-    {
-        var sourceKey = GetSourceKey(data);
-        _lastNotifications[sourceKey] = data.RequestTimestampUtc ?? _timeProvider.GetUtcNow();
-    }
-
-    private static bool TryGetHeaderValue(ClientFingerprintData data, string headerName, out string value)
-    {
-        value = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(headerName) || data.RequestHeaders.Count == 0)
-            return false;
-
-        if (!data.RequestHeaders.TryGetValue(headerName, out var foundValue))
-            return false;
-
-        value = foundValue ?? string.Empty;
-        return true;
-    }
-
-    private static string GetSourceKey(ClientFingerprintData data)
-        => $"{data.TenantId ?? "default"}:{data.FingerprintVisitorId ?? "unknown"}:{data.IpAddress ?? "unknown"}";
 
     private static FraudVerdict DetermineVerdict(int score, GeoCulturalConsistencyOptions options) => score switch
     {
