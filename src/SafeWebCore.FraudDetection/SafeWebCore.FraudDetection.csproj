@@ -28,11 +28,36 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>
+## v1.1.0 — Fail-closed verdicts, per-sink event isolation, added RiskLevel.Unclassified
+
+**Hardening (the API surface stays additive):**
+- An unrecognized verdict now maps to `RiskLevel.Unclassified` (appended, `= 4`) instead of `Low`, and the shared verdict-to-action mapping maps it to `RecommendedAction.BlockRequest` instead of `NoAction` — an unknown verdict is never reported as safe
+- `FraudEventDispatcher` isolates a throwing `IFraudEventSink` per sink instead of letting it end delivery for every sink registered after it, and counts the swallowed failure in `SafeWebCoreFraudMetrics.FraudEventSinkFailures`
+
+**Also new:**
+- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (the four-part `1.0.0.0` normalizes to the already-published `1.0.0`)
+- Packaging parity with core: `icon.png`, a `.snupkg` symbol package with SourceLink, and these release notes in the nuspec
+
+**Compatibility:** 100% backward compatible on the public surface — everything new is additive. One intentional tightening: a consumer `switch` over `RiskLevel` without a default arm needs an arm for `Unclassified`.
+
+See CHANGELOG.md and docs/ for full details.
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
+  <!-- SourceLink for deterministic builds (parity with SafeWebCore) -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
 
   <!-- Public API surface tracking for backward compatibility (additive, build-time only) -->
   <ItemGroup>
