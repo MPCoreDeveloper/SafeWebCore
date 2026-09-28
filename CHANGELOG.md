@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [SonarCloud Triage](docs/development/sonarcloud-triage.md) — how the analysis is scoped, how a new finding is triaged, and the ten findings that are deliberately accepted: eight `Won't fix` (six `[Obsolete]` members kept for backward compatibility, the instance method that cannot become `static` without breaking callers, and the analyzer package marker) and two `False positive` (`[LoggerMessage]`-generated code that the analyser cannot see).
+
 ### Changed
 - Internal deduplication of the fraud detectors and the security-header pipeline — the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in `GeoCulturalConsistencyDetector` / `WesternImpersonationDetector` and in `NetSecureHeadersMiddleware` / `NetSecureHeadersDiagnosticsService`. They now live once, in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers that both call sites use, so a score, a throttle rule or a policy-resolution rule can only change in one place. No public API, default, preset, configuration path or behavior change.
+- Internal code-quality cleanup with no behavior change: the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file, and the path-policy lookup walks the list by index instead of allocating an enumerator per request. Every emitted header value, directive and policy-resolution outcome is identical.
 
 ---
 
