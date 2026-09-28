@@ -118,23 +118,7 @@ public sealed partial class GeoCulturalConsistencyDetector : IFraudDetector
         List<string> triggers = [];
 
         if (PenTestSignalAnalyzer.IsAuthorizedPenTestBypass(data, options.PenTestDetection))
-        {
-            triggers.Add(FraudTrigger.PenTestBypassAuthorized);
-
-            return new FraudReport
-            {
-                IsAuthorizedPenTest = true,
-                IsDetectionBypassed = true,
-                IsPenTestScannerDetected = false,
-                PenTestAuthorizationEmailSent = false,
-                SuspicionScore = 0,
-                Risk = RiskScore.FromScoreAndVerdict(0, FraudVerdict.Clean),
-                Verdict = FraudVerdict.Clean,
-                RecommendedAction = RecommendedAction.NoAction,
-                Triggers = triggers,
-                TenantId = data.TenantId
-            };
-        }
+            return PenTestSignalAnalyzer.CreateAuthorizedPenTestReport(data, triggers);
 
         var enriched = GeoIpEnricher.Enrich(data, _geoIpService);
         var geoOptions = options.GeoCulturalConsistency;
