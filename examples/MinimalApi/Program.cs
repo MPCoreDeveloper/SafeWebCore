@@ -86,4 +86,4 @@ app.MapGet("/api/status", () => new { status = "ok", time = DateTimeOffset.UtcNo
 app.MapGet("/health", () => Results.Ok(new { healthy = true }))
    .SkipNetSecureHeaders();
 
-app.Run();
+await app.RunAsync();

@@ -4,6 +4,8 @@ using SafeWebCore.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Reporting API endpoint group shared by the default and the path-based CSP policy.
+const string CspEndpointGroup = "csp-endpoint";
 builder.Services.AddControllersWithViews();
 
 // -----------------------------------------------------------------------
@@ -12,11 +14,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddNetSecureHeadersMvcPreset(opts =>
 {
     // Route CSP reports through Reporting API endpoint groups.
-    opts.Csp = opts.Csp with { ReportTo = "csp-endpoint" };
+    opts.Csp = opts.Csp with { ReportTo = CspEndpointGroup };
 
     opts.ReportingEndpoints.Add(new()
     {
-        Group = "csp-endpoint",
+        Group = CspEndpointGroup,
         Url = "https://localhost:5001/csp-report"
     });
 
@@ -54,12 +56,12 @@ builder.Services.AddNetSecureHeadersMvcPreset(opts =>
             EnableCsp = true,
             UseCspReportOnly = true,
             ReferrerPolicyValue = "strict-origin-when-cross-origin",
-            Csp = opts.Csp with { ReportTo = "csp-endpoint" },
+            Csp = opts.Csp with { ReportTo = CspEndpointGroup },
             ReportingEndpoints =
             [
                 new()
                 {
-                    Group = "csp-endpoint",
+                    Group = CspEndpointGroup,
                     Url = "https://localhost:5001/csp-report"
                 }
             ]
@@ -77,4 +79,4 @@ app.UseNetSecureHeaders();
 app.UseCspReport();
 
 app.MapDefaultControllerRoute();
-app.Run();
+await app.RunAsync();
