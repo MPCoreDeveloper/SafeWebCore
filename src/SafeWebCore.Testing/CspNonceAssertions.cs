@@ -17,7 +17,7 @@ public static class CspNonceAssertions
 
         var csp = GetCspValue(response);
         Assert.False(string.IsNullOrEmpty(csp), "Expected a CSP header to be present.");
-        Assert.Contains("'nonce-", csp!);
+        Assert.Contains("'nonce-", csp);
     }
 
     /// <summary>

@@ -103,10 +103,11 @@ internal static class PathPolicyResolver
         PathString requestPath,
         ResolvedPathPolicy defaultPolicy)
     {
-        foreach (var policy in pathPolicies)
+        // PERF: index-based search — it exits on the first match and allocates nothing per request.
+        for (var index = 0; index < pathPolicies.Count; index++)
         {
-            if (requestPath.StartsWithSegments(policy.Prefix, StringComparison.OrdinalIgnoreCase))
-                return policy;
+            if (requestPath.StartsWithSegments(pathPolicies[index].Prefix, StringComparison.OrdinalIgnoreCase))
+                return pathPolicies[index];
         }
 
         return defaultPolicy;

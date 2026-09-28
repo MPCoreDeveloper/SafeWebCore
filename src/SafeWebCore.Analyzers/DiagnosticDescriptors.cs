@@ -21,7 +21,7 @@ internal static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Calling AddNetSecureHeaders* registers services, but the middleware must also be added to the request pipeline using UseNetSecureHeaders(). Without it, no security headers will be emitted.",
         helpLinkUri: "https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/getting-started.md",
-        customTags: new[] { "CompilationEnd" });
+        customTags: "CompilationEnd");
 
     /// <summary>
     /// SWC002: UseCspReportOnly is set to true (often left permanently, causing no enforcement).
@@ -35,7 +35,7 @@ internal static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Setting UseCspReportOnly to true is useful during rollout, but is frequently left on permanently. This results in CSP never actually protecting the application.",
         helpLinkUri: "https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/docs/advanced-configuration.md#csp-report-only-rollout",
-        customTags: new[] { "ReportOnly" });
+        customTags: "ReportOnly");
 
     /// <summary>
     /// SWC003: 'unsafe-inline' used without a nonce.

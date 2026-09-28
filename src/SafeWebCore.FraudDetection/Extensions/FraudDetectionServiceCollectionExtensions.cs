@@ -180,7 +180,6 @@ public static class FraudDetectionServiceCollectionExtensions
         services.TryAddSingleton<IFraudDetector>(sp =>
         {
             var resolver = sp.GetRequiredService<IFraudDetectionOptionsResolver>();
-            var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GeoCulturalConsistencyDetector>>();
             var sender = sp.GetRequiredService<IPenTestAuthorizationNotificationSender>();
             var geoIp = sp.GetService<IGeoIpService>();
             var timeProvider = sp.GetRequiredService<TimeProvider>();
