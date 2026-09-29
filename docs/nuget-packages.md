@@ -2,7 +2,7 @@
 
 This document describes every packable project: identity, contents, publish status, readiness, and recommended release sequencing.
 
-**Last audited:** 2026-09-29 (version facts re-verified against the nuget.org flat-container API; the **1.8.1** patch release was prepared, packed and tagged `v1.8.1` the same day)
+**Last audited:** 2026-09-29 (the **1.8.1** patch release was prepared, packed, tagged `v1.8.1` and published the same day; all five versions were re-verified against the flat-container API afterwards, and each package was downloaded back from nuget.org and its nuspec inspected)
 **Local pack output (verified):** `artifacts/nupkg/`
 
 > **Canonical version form:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N`
@@ -71,6 +71,36 @@ Pack results for the **1.8.1** release prep (2026-09-29, verified from the files
 | `SafeWebCore.Testing.1.0.0-preview.2.nupkg` | 34.0 KB | depends on `SafeWebCore` `1.8.1`, `Microsoft.AspNetCore.Mvc.Testing` `10.0.12` and `xunit.v3.assert` `4.0.1` |
 
 (All sizes and nuspec contents measured from the files this release actually produced, not estimated.)
+
+### Publication evidence (verified 2026-09-29)
+
+All five packages were downloaded back from the flat container after the push and their nuspecs inspected:
+
+| Package | Published | `repository commit` | Notes |
+|---------|-----------|---------------------|-------|
+| `SafeWebCore` 1.8.1 + `.snupkg` | ✅ | `0ae2f24` | release notes, `PACKAGE.md`, `icon.png`, no dependencies |
+| `SafeWebCore.FraudDetection` 1.1.1 + `.snupkg` | ✅ | `0ae2f24` | release notes, `README.md`, `icon.png`, no dependencies |
+| `SafeWebCore.JwtBearer` 1.0.1 + `.snupkg` | ✅ | `0ae2f24` | release notes, dependency `Microsoft.AspNetCore.Authentication.JwtBearer` `10.0.12` |
+| `SafeWebCore.Analyzers` 1.0.0-preview.2 | ✅ | `0ae2f24` | analyzer-only layout, `README.md`, `icon.png`, no dependencies |
+| `SafeWebCore.Testing` 1.0.0-preview.2 | ✅ | `0ae2f24` | dependencies `SafeWebCore` `1.8.1`, `Microsoft.AspNetCore.Mvc.Testing` `10.0.12`, `xunit.v3.assert` `4.0.1` |
+
+Flat-container indexes after publication:
+
+```text
+safewebcore                    ... 1.7.0, 1.8.0, 1.8.1
+safewebcore.frauddetection     1.0.0, 1.1.0, 1.1.1
+safewebcore.jwtbearer          1.0.0, 1.0.1
+safewebcore.analyzers          1.0.0-preview.1, 1.0.0-preview.2
+safewebcore.testing            1.0.0-preview.1, 1.0.0-preview.2
+```
+
+The suffix `0ae2f24` in every nuspec is the `v1.8.1` release commit, so the published bits provably come from the tag and not from a later working tree.
+
+> ⚠️ **The nuget.org API key expires soon.** Both publish runs logged
+> `warn : Your API key expires in 6 days`. Regenerate it at
+> <https://www.nuget.org/account/apikeys> and refresh the `NUGET_API_KEY` repository secret before the next
+> release, or the push step returns a 401. An *empty* secret is worse: the workflows print a warning and
+> `exit 0`, so the job passes while nothing is published.
 
 ---
 
@@ -426,6 +456,14 @@ Everything since the `v1.8.0` tag is internal, so the honest SemVer step is a **
 Kept for reference. `v1.8.0` shipped core **1.8.0** + FraudDetection **1.1.0** on 2026-09-28. Use this shape again when the workspace finally carries additive public API: a `<Version>` above 1.8.1, changelog dated, `README.md`/`PACKAGE.md` updated, `PackageReleaseNotes` rewritten, and the `PublicAPI.Unshipped.txt` → `Shipped.txt` promotion done in the release commit.
 
 Note: `nuget-publish.yml` packs and pushes **every** package found in `artifacts/nuget` on a `v*` tag. Tagging `v1.8.1` therefore publishes all five — core 1.8.1, FraudDetection 1.1.1, JwtBearer 1.0.1 and both `1.0.0-preview.2` packages. That is exactly why every version in the table above was bumped: an unchanged version is silently skipped by `--skip-duplicate`, which is how the JwtBearer `README.md` fix stayed unpublished through the `v1.8.0` run.
+
+There is a **second** publish workflow: `nuget-publish-jwtbearer.yml` triggers on any `master` push that touches
+`src/SafeWebCore.JwtBearer/**`, packs **only** that project and pushes it. It exists so a JwtBearer change does not
+have to wait for a whole release train. In the `v1.8.1` release that workflow won the race (it published 1.0.1 at
+04:49:09Z, ~13 s before the tag run), so the tag run's own JwtBearer push was reported as "already exists" and
+skipped. Both orders are harmless, but it means **a JwtBearer version can go live on nuget.org from a plain
+`master` push** — do not merge a JwtBearer change with a half-prepared version number, and remember that a
+`README.md`-only edit under that folder still publishes the package.
 
 Verified 2026-09-29 against the NuGet flat-container API before tagging: none of the five versions in the `v1.8.1` batch — `SafeWebCore` **1.8.1**, `SafeWebCore.FraudDetection` **1.1.1**, `SafeWebCore.JwtBearer` **1.0.1**, `SafeWebCore.Analyzers` and `SafeWebCore.Testing` **1.0.0-preview.2** — existed on nuget.org, so all five are genuinely new and `--skip-duplicate` has nothing to skip. This also settles the JwtBearer `README.md` item left over from the `v1.8.0` run: 1.0.0 was code-equal to HEAD and only its packaged README differed, by five badge lines, so nuget.org kept the badge-less README until a higher version existed. **1.0.1 is that version.**
 

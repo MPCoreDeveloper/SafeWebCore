@@ -39,9 +39,16 @@ snapshot.
 | PublicAPI | ✅ **Nothing to promote** — all three `PublicAPI.Unshipped.txt` files still hold only `#nullable enable`, because this cycle added no public symbol. `RS0037` continues to guard the unchanged `Shipped.txt` surface |
 | Packaging gap closed | ✅ `SafeWebCore.JwtBearer` gained the `IncludeSymbols` / `snupkg` + SourceLink property group that core and FraudDetection already had, plus release notes. This resolves the "next JwtBearer version" task recorded against 1.0.0 |
 | Dependency maintenance | ✅ `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.11 → 10.0.12 (consumer-visible floor), `Microsoft.AspNetCore.TestHost` 10.0.11 → 10.0.12, `Microsoft.NET.Test.Sdk` 18.9.0 → 18.10.1, `xunit.v3` 4.0.0 → 4.0.1, `xunit.v3.assert` 4.0.0 → 4.0.1, `coverlet.collector` 10.0.1 → 10.1.0. Only latest **stable** versions were taken; `11.0.0-rc.1` was deliberately not applied because it leaves the `net10.0` line. `Microsoft.AspNetCore.Mvc.Testing` stays intentionally floating on `10.0.*` (resolves to 10.0.12) |
-| Tag + push | ✅ Tag `v1.8.1` on the release commit → `nuget-publish.yml` packs all five and pushes with `--skip-duplicate` using the `NUGET_API_KEY` secret |
-| Publication | ✅ All five verified **new** on nuget.org — the flat-container index carried only `1.8.0` / `1.1.0` / `1.0.0` / `1.0.0-preview.1` before the push, so nothing was skipped |
-| Git | ✅ Release prep committed on `master`, with the dependency bumps and the release-docs pass in their own commits |
+| Tag + push | ✅ Annotated tag `v1.8.1` (`0556127`) points at release commit `0ae2f24` and is pushed to `master`. **Two** workflows ran and both finished **success**: `nuget-publish.yml` on the tag (run `36523275407`) and `nuget-publish-jwtbearer.yml` on the `master` push (run `36523272232`), which triggers on `src/SafeWebCore.JwtBearer/**` |
+| Publication | ✅ All five live on nuget.org, `.nupkg` and `.snupkg` alike. The tag run pushed `SafeWebCore` 1.8.1 (+`.snupkg`), `SafeWebCore.FraudDetection` 1.1.1 (+`.snupkg`), `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.2. The JwtBearer workflow won the race and published `SafeWebCore.JwtBearer` 1.0.1 (+`.snupkg`) at 04:49:09Z, so the tag run reported "already exists" and `--skip-duplicate` skipped it — expected and harmless |
+| Publication verified | ✅ All five downloaded back from the flat container and their nuspecs inspected: `<version>` correct, `releaseNotes` embedded, `icon.png` + readme present, and `repository commit = 0ae2f24908933ea7695a0cc76e71aa37916f1c75` (the release commit). Dependencies confirmed: `SafeWebCore.JwtBearer` → `Microsoft.AspNetCore.Authentication.JwtBearer` `10.0.12`; `SafeWebCore.Testing` → `SafeWebCore` `1.8.1`, `Microsoft.AspNetCore.Mvc.Testing` `10.0.12`, `xunit.v3.assert` `4.0.1` |
+| Git | ✅ `5db999a` (test dependency bumps) and `0ae2f24` (release prep) on `master`, tagged **`v1.8.1`** |
+
+> ⚠️ **Action needed before the next release: the nuget.org API key expires.** Both publish runs logged
+> `warn : Your API key expires in 6 days. Visit https://www.nuget.org/account/apikeys to regenerate your API key.`
+> Regenerate it and refresh the `NUGET_API_KEY` repository secret, or the next release's push step fails with a 401.
+> Note that a *missing* secret is worse than a failing one: the workflows branch on an empty variable, print a
+> warning and `exit 0`, so the job goes green while nothing is published.
 
 ### Deliberately still open after 1.8.1
 
