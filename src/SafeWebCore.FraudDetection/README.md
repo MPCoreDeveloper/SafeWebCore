@@ -2,6 +2,8 @@
 
 Optional fraud-detection module for `SafeWebCore`.
 
+**Current version:** 1.1.1
+
 ## What it adds
 
 - **Neutral geo-cultural consistency detection** (recommended): detect strong inconsistencies between observed signals (IP country, timezone, browser language, device fonts) and your configured expected/primary region.

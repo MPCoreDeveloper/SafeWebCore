@@ -494,14 +494,13 @@ SafeWebCore.JwtBearer  (standalone; depends on Microsoft.AspNetCore.Authenticati
 
 # Project maturity matrix
 
-| SafeWebCore.JwtBearer | Production-ready code, unpublished | **Yes** (first release candidate) | `1.0.0` after checklist (packaging/CI) |
-
 | Project | Maturity | Ship as NuGet? | Recommended version policy |
 |---------|----------|----------------|----------------------------|
-| SafeWebCore | Production (published) | **Yes** (already) | SemVer stable; next feature drop → bump beyond 1.3.5 |
-| SafeWebCore.FraudDetection | Production-ready code, unpublished | **Yes** (first release candidate) | `1.0.0` after checklist |
-| SafeWebCore.Analyzers | Preview tooling | **Yes (preview only)** | Keep `*-preview.N` until rules proven |
-| SafeWebCore.Testing | Preview tooling | **Yes (preview only)** | Keep `*-preview.N`; pin deps before stable |
+| SafeWebCore | Production (published) | **Yes** (already) | SemVer stable. Latest: **1.8.1** (2026-09-29). Maintenance-only cycle → `1.8.x`; additive public API → `1.9.0` |
+| SafeWebCore.FraudDetection | Production (published) | **Yes** (already) | Independent identity. Latest: **1.1.1** (2026-09-29) |
+| SafeWebCore.JwtBearer | Production (published) | **Yes** (already) | Independent identity. Latest: **1.0.1** (2026-09-29), which also closed the symbols/SourceLink parity gap left by 1.0.0 |
+| SafeWebCore.Analyzers | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N` until the rules are proven. Latest: **1.0.0-preview.2** |
+| SafeWebCore.Testing | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N`; pin deps before stable. Latest: **1.0.0-preview.2** |
 | *.Tests | Internal | No | — |
 | examples/* | Samples | No | — |
 | Benchmarks | Internal tooling | No | — |

@@ -9,12 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.8.1] — 2026-09-29
+
 ### Added
 - [SonarCloud Triage](docs/development/sonarcloud-triage.md) — how the analysis is scoped, how a new finding is triaged, and the ten findings that are deliberately accepted: eight `Won't fix` (six `[Obsolete]` members kept for backward compatibility, the instance method that cannot become `static` without breaking callers, and the analyzer package marker) and two `False positive` (`[LoggerMessage]`-generated code that the analyser cannot see). Indexed from `docs/README.md` and pointed at from the release-readiness checklist.
 
 ### Changed
+- Dependency maintenance on the latest **stable** releases, with no API, default, preset or behavior change: `SafeWebCore.JwtBearer` moves to `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.12; the test projects to `Microsoft.NET.Test.Sdk` 18.10.1, `xunit.v3` 4.0.1, `Microsoft.AspNetCore.TestHost` 10.0.12 and `coverlet.collector` 10.1.0; and `SafeWebCore.Testing` to `xunit.v3.assert` 4.0.1. `Microsoft.CodeAnalysis.PublicApiAnalyzers` (5.6.0), `Microsoft.CodeAnalysis.Analyzers` / `Microsoft.CodeAnalysis.CSharp` (5.9.0), `xunit.runner.visualstudio` (4.0.0) and `BenchmarkDotNet` (0.15.8) were already on their latest stable release; `Microsoft.AspNetCore.Mvc.Testing` stays floating on `10.0.*` and resolves to 10.0.12.
 - Internal deduplication of the fraud detectors and the security-header pipeline — the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in `GeoCulturalConsistencyDetector` / `WesternImpersonationDetector` and in `NetSecureHeadersMiddleware` / `NetSecureHeadersDiagnosticsService`. They now live once, in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers that both call sites use, so a score, a throttle rule or a policy-resolution rule can only change in one place. No public API, default, preset, configuration path or behavior change.
 - Internal code-quality cleanup with no behavior change: the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file, and the path-policy lookup walks the list by index instead of allocating an enumerator per request. Every emitted header value, directive and policy-resolution outcome is identical.
+
+### Companion packages
+- `SafeWebCore.FraudDetection` **1.1.1** — the same internal cleanup; no public API, default or behavior change.
+- `SafeWebCore.JwtBearer` **1.0.1** — `Microsoft.AspNetCore.Authentication.JwtBearer` dependency updated from 10.0.11 to 10.0.12 (the package now requires that patch or newer). Packaging parity with core and FraudDetection finally lands here too: a `.snupkg` symbol package with SourceLink and deterministic builds, release notes in the nuspec, and the badge-corrected packaged `README.md` that `--skip-duplicate` kept skipping at 1.0.0.
+- `SafeWebCore.Analyzers` and `SafeWebCore.Testing` **1.0.0-preview.2** — the SonarCloud cleanup, plus `xunit.v3.assert` 4.0.1 in Testing. Both stay preview.
+
+### Compatibility
+- ✅ **100% backwards compatible** — internal refactors, dependency maintenance and documentation only. No public API, default, preset, configuration path or behavior change, so a 1.8.0 configuration keeps behaving exactly as before.
+- The public API baselines are unchanged: all three `PublicAPI.Unshipped.txt` files still hold only `#nullable enable`, so no symbol moved from unshipped to shipped in this release.
 
 ---
 
@@ -246,7 +260,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Server header removal
 - Comprehensive documentation and test suite
 
-[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/MPCoreDeveloper/SafeWebCore/compare/v1.3.5...v1.6.0

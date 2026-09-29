@@ -10,7 +10,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.8.0</Version>
+    <Version>1.8.1</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,18 +23,15 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
         <PackageReleaseNotes>
-## v1.8.0 — Event-sink isolation, fail-closed verdicts, header-ownership guard
+## v1.8.1 — Internal cleanup, no behavior change
 
-**Hardening (tightening in a safe direction; the API surface stays additive):**
-- `SecurityEventDispatcher` isolates a throwing `ISecurityEventSink` per sink instead of muting every sink registered after it, and counts the swallowed failure in `SafeWebCoreMetrics.SecurityEventSinkFailures`. `FraudEventDispatcher` does the same in `SafeWebCoreFraudMetrics.FraudEventSinkFailures`
-- Fail-closed verdict mapping: an unrecognized verdict is now `RiskLevel.Unclassified` (appended, `= 4`) instead of `Low`, and the shared `FraudVerdictMapping` maps it to `RecommendedAction.BlockRequest` instead of `NoAction`
-- Startup validation now rejects an `AdditionalHeaders` entry that names a header SafeWebCore owns (HSTS, X-Frame-Options, CSP, NEL, Reporting-Endpoints, ...), because assigning that header replaced the library value — for CSP including the per-request nonce. Use `CustomPolicies` / `IHeaderPolicy` for a deliberate override
+Maintenance patch on the 1.8.0 line. **100% backwards compatible** — the public API surface, defaults, presets and configuration paths are untouched.
 
-**Also new:**
-- `SecurityEventDispatcher(IEnumerable&lt;ISecurityEventSink&gt;, SafeWebCoreMetrics?)` overload for the failure counter; the single-argument constructor keeps working
-- `SafeWebCore.FraudDetection` moves to the three-part version `1.1.0` (the four-part `1.0.0.0` normalizes to the already-published `1.0.0`)
-
-**Compatibility:** 100% backward compatible on the public surface — everything new is additive. Two intentional tightenings are documented in CHANGELOG.md: the `AdditionalHeaders` startup guard, and a consumer `switch` over `RiskLevel` without a default arm needing one arm for `Unclassified`.
+**Changes:**
+- Internal deduplication: the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in `GeoCulturalConsistencyDetector` / `WesternImpersonationDetector` and in `NetSecureHeadersMiddleware` / `NetSecureHeadersDiagnosticsService`. They now live once, in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers that both call sites use, so a score, a throttle rule or a policy-resolution rule can only change in one place
+- Internal code-quality cleanup with no behavior change: the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file, and the path-policy lookup walks the list by index instead of allocating an enumerator per request. Every emitted header value, directive and policy-resolution outcome is identical
+- Docs: a new SonarCloud triage page records how the analysis is scoped and the ten findings that are deliberately accepted
+- Development-only dependencies refreshed to their latest stable releases
 
 See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>

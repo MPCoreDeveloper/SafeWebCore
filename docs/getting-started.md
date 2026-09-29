@@ -14,7 +14,7 @@ dotnet add package SafeWebCore
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="SafeWebCore" Version="1.3.5" />
+<PackageReference Include="SafeWebCore" Version="1.8.1" />
 ```
 
 ## Minimal Setup (A+ in 3 lines)

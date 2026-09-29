@@ -11,7 +11,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore.JwtBearer</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore.JwtBearer</Product>
@@ -28,14 +28,34 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>
+## v1.0.1 — Dependency maintenance
+
+Maintenance patch. **100% backwards compatible** — no public API or behavior change.
+
+- `Microsoft.AspNetCore.Authentication.JwtBearer` dependency updated from 10.0.11 to 10.0.12, so the package now requires that patch or newer
+- Packaging parity with core and `SafeWebCore.FraudDetection`: the package now ships a `.snupkg` symbol package with SourceLink and deterministic builds, and embeds these release notes in the nuspec. This is the first JwtBearer version to carry the badge-corrected packaged `README.md`
+
+See CHANGELOG.md and docs/ for full details.
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!-- SourceLink for deterministic builds (parity with core and FraudDetection) -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
   </ItemGroup>
 
   <!-- Public API surface tracking for backward compatibility (additive, build-time only) -->

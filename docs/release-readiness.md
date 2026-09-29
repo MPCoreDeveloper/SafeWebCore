@@ -1,16 +1,55 @@
 ﻿# SafeWebCore — Release Readiness Assessment
 
 > **Superseded for version facts.** This audit is the 2026-07-25 snapshot taken while 1.3.5 was
-> published (`cc3148b`). The published set as of 2026-09-28 is: `SafeWebCore` 1.0.0, 1.1.0, 1.2.0,
-> 1.3.0, 1.3.5, 1.6.0, 1.7.0, 1.8.0; `SafeWebCore.FraudDetection` 1.0.0, 1.1.0; `SafeWebCore.JwtBearer`
-> 1.0.0; `SafeWebCore.Analyzers` and `SafeWebCore.Testing` 1.0.0-preview.1. Use
+> published (`cc3148b`). The published set as of 2026-09-29 is: `SafeWebCore` 1.0.0, 1.1.0, 1.2.0,
+> 1.3.0, 1.3.5, 1.6.0, 1.7.0, 1.8.0, 1.8.1; `SafeWebCore.FraudDetection` 1.0.0, 1.1.0, 1.1.1;
+> `SafeWebCore.JwtBearer` 1.0.0, 1.0.1; `SafeWebCore.Analyzers` and `SafeWebCore.Testing`
+> 1.0.0-preview.1, 1.0.0-preview.2. Use
 > [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
 > SemVer form.
 >
+> **1.8.1 shipped on 2026-09-29:** a maintenance patch, tagged `v1.8.1` and published to nuget.org by
+> `nuget-publish.yml`, together with `SafeWebCore.FraudDetection` 1.1.1, `SafeWebCore.JwtBearer` 1.0.1
+> and both `1.0.0-preview.2` packages. All five versions were verified absent from the flat container
+> before tagging, so nothing was skipped as a duplicate — including the JwtBearer package, whose
+> badge-corrected `README.md` had been stranded at 1.0.0 since the `v1.8.0` run.
+>
 > **1.8.0 shipped on 2026-09-28:** tagged `v1.8.0` (on 2026-09-27) and published to nuget.org by
 > `nuget-publish.yml` (run `36374600399`), together with `SafeWebCore.FraudDetection` 1.1.0 and both
-> `.snupkg` symbol packages. Everything below the release section is the frozen 2026-07-25 audit and
-> does **not** describe 1.8.0.
+> `.snupkg` symbol packages. Everything below the release state sections is the frozen 2026-07-25 audit
+> and does **not** describe 1.8.0 or 1.8.1.
+
+---
+
+## Release state for 1.8.1 (tagged 2026-09-29)
+
+The live status of the 1.8.1 maintenance patch. The 1.8.0 section below stays as the previous release's
+snapshot.
+
+| Item | State |
+|------|-------|
+| Scope | ✅ **Patch, not a feature release.** Everything since the `v1.8.0` tag is internal — refactors, a SonarCloud cleanup, docs, CI and dependency maintenance. No new public API, no new option, no behavior change |
+| Build | ✅ `dotnet build SafeWebCore.slnx -c Release` — **0 warnings, 0 errors** (`TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`) |
+| Tests | ✅ 190 passed, 0 failed, 0 skipped — `SafeWebCore.Tests` 125, `SafeWebCore.FraudDetection.Tests` 27, `SafeWebCore.JwtBearer.Tests` 38, matching the pre-change baseline exactly |
+| Version | ✅ `<Version>` **1.8.1** in `SafeWebCore.csproj`; `SafeWebCore.FraudDetection` **1.1.1**, `SafeWebCore.JwtBearer` **1.0.1**, `SafeWebCore.Analyzers` and `SafeWebCore.Testing` **1.0.0-preview.2** |
+| CHANGELOG | ✅ `[Unreleased]` promoted to `[1.8.1] — 2026-09-29`, with a `Companion packages` section naming all four companion versions and a `Compatibility` section; an empty `[Unreleased]` placeholder and the new compare link were added |
+| Package docs | ✅ `README.md` and `PACKAGE.md` state 1.8.1 with the new notes; `docs/getting-started.md` install snippet corrected from the stale `1.3.5`; `docs/nuget-packages.md` status table, per-package identities and release trains all moved to 1.8.1 |
+| Release notes | ✅ `<PackageReleaseNotes>` rewritten for core (v1.8.1) and FraudDetection (v1.1.1), and **added** to JwtBearer (v1.0.1), which previously shipped without any |
+| Pack | ✅ `dotnet pack` produces `SafeWebCore.1.8.1.nupkg` + `.snupkg`, `SafeWebCore.FraudDetection.1.1.1.nupkg` + `.snupkg`, `SafeWebCore.JwtBearer.1.0.1.nupkg` + `.snupkg`, `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` and `SafeWebCore.Testing.1.0.0-preview.2.nupkg`. Each nuspec was verified for version, embedded release notes and dependencies |
+| PublicAPI | ✅ **Nothing to promote** — all three `PublicAPI.Unshipped.txt` files still hold only `#nullable enable`, because this cycle added no public symbol. `RS0037` continues to guard the unchanged `Shipped.txt` surface |
+| Packaging gap closed | ✅ `SafeWebCore.JwtBearer` gained the `IncludeSymbols` / `snupkg` + SourceLink property group that core and FraudDetection already had, plus release notes. This resolves the "next JwtBearer version" task recorded against 1.0.0 |
+| Dependency maintenance | ✅ `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.11 → 10.0.12 (consumer-visible floor), `Microsoft.AspNetCore.TestHost` 10.0.11 → 10.0.12, `Microsoft.NET.Test.Sdk` 18.9.0 → 18.10.1, `xunit.v3` 4.0.0 → 4.0.1, `xunit.v3.assert` 4.0.0 → 4.0.1, `coverlet.collector` 10.0.1 → 10.1.0. Only latest **stable** versions were taken; `11.0.0-rc.1` was deliberately not applied because it leaves the `net10.0` line. `Microsoft.AspNetCore.Mvc.Testing` stays intentionally floating on `10.0.*` (resolves to 10.0.12) |
+| Tag + push | ✅ Tag `v1.8.1` on the release commit → `nuget-publish.yml` packs all five and pushes with `--skip-duplicate` using the `NUGET_API_KEY` secret |
+| Publication | ✅ All five verified **new** on nuget.org — the flat-container index carried only `1.8.0` / `1.1.0` / `1.0.0` / `1.0.0-preview.1` before the push, so nothing was skipped |
+| Git | ✅ Release prep committed on `master`, with the dependency bumps and the release-docs pass in their own commits |
+
+### Deliberately still open after 1.8.1
+
+- No CI performance gate for the middleware hot path (benchmarks exist but do not run in the pipeline).
+- No CI smoke test that installs the freshly packed packages into a throwaway app.
+- `benchmarks/SafeWebCore.Benchmarks` is not marked `IsPackable=false`.
+- `global.json` pins the test runner but not `sdk.version`, so a build can pick up a preview SDK.
+- `Microsoft.AspNetCore.Mvc.Testing` still floats on `10.0.*` in `SafeWebCore.Testing`.
 
 ---
 
@@ -189,6 +228,7 @@ Before cutting a release:
 - [ ] Update CHANGELOG with version + date; clear Unreleased or leave only true WIP
 - [ ] Update PACKAGE.md current version + “New in …”
 - [ ] Update root README badges/version mentions if any
+- [ ] Update every `**Current version:**` line — `README.md`, `PACKAGE.md`, and the packaged READMEs under `src/` (`SafeWebCore.FraudDetection`, `SafeWebCore.JwtBearer`, `SafeWebCore.Analyzers`, `SafeWebCore.Testing`)
 
 ---
 

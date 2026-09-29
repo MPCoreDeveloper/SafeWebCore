@@ -1,6 +1,8 @@
 # SafeWebCore.Analyzers
 
-`SafeWebCore.Analyzers` is the ` v1.5 and newer ` tooling package for SafeWebCore.
+`SafeWebCore.Analyzers` is the tooling package for SafeWebCore (`v1.5` and newer).
+
+**Current version:** 1.0.0-preview.2
 
 ## Purpose
 

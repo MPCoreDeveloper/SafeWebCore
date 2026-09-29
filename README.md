@@ -10,7 +10,7 @@
 
 **SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
-**Current version:** 1.8.0
+**Current version:** 1.8.1
 
 ---
 
@@ -100,16 +100,16 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.8.0
+## 🆕 What's New in v1.8.1
 
-v1.8.0 is a **hardening** release — 100% backwards compatible with v1.7.0 and earlier on the public API surface.
+v1.8.1 is a **maintenance** release — 100% backwards compatible with v1.8.0 and earlier: no public API, default, preset or configuration change, and no behavior change.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Event-sink isolation** | A throwing `ISecurityEventSink` / `IFraudEventSink` no longer mutes the sinks registered after it; both dispatchers isolate each sink and count the swallowed failure (`security_event_sink_failures_total`, `fraud_event_sink_failures_total`) |
-| **Fail-closed verdicts** | An unrecognized fraud verdict maps to `RiskLevel.Unclassified` (never `Low`) and `RecommendedAction.BlockRequest` (never `NoAction`); one shared mapping replaces the duplicated copies in both detectors |
-| **Header-ownership guard** | Startup validation rejects an `AdditionalHeaders` entry that names a library-owned header (HSTS, CSP, NEL, Reporting-Endpoints, ...), because it replaced the value the library emits — for CSP including the per-request nonce. `CustomPolicies` stays the deliberate override |
-| **Versioning** | `SafeWebCore.FraudDetection` moves to the three-part `1.1.0` (the four-part `1.0.0.0` normalized to the already-published `1.0.0`) |
+| **Internal deduplication** | The pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in both fraud detectors and in the middleware/diagnostics pair; they now live once in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers, so a score, a throttle rule or a policy-resolution rule can only change in one place |
+| **Allocation cleanup** | The path-policy lookup walks the list by index instead of allocating an enumerator per request, and the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file — every emitted header value, directive and policy-resolution outcome is identical |
+| **Dependency maintenance** | Development-only packages (test SDK, xunit, coverlet, `PublicApiAnalyzers`) refreshed to their latest stable releases; `SafeWebCore.JwtBearer` moves its `Microsoft.AspNetCore.Authentication.JwtBearer` floor to 10.0.12 |
+| **Docs** | New [SonarCloud triage](docs/development/sonarcloud-triage.md) page records how the analysis is scoped and the ten findings that are deliberately accepted |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 

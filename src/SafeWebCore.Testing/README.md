@@ -2,6 +2,8 @@
 
 Consumer-facing testing helpers for SafeWebCore.
 
+**Current version:** 1.0.0-preview.2
+
 ## Features
 
 - Assert common security headers are present with expected values

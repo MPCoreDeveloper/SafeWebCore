@@ -20,7 +20,7 @@
 
     <!-- Package metadata -->
     <PackageId>SafeWebCore.Analyzers</PackageId>
-    <Version>1.0.0-preview.1</Version>
+    <Version>1.0.0-preview.2</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore.Analyzers</Product>
