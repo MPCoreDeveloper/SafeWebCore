@@ -32,6 +32,10 @@ issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the
 `.github/**` stays **in** scope on purpose: `githubactions:S7637` reports an unpinned third-party action as a
 vulnerability, and that check is what keeps every non-GitHub action pinned to a full commit SHA.
 
+`tools/**` (the manual builder of Chapter 20) is maintenance tooling that is neither packed nor referenced by the
+product, so it stays **out** of the analysis scope. It is still covered by the repository's .NET analyzers and by
+`TreatWarningsAsErrors`, because it is compiled with the solution on every push.
+
 ### Verified state — 2026-11-15, all four ratings A
 
 | Metric | Value |
