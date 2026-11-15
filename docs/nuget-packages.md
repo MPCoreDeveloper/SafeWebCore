@@ -1,9 +1,9 @@
-﻿# SafeWebCore — NuGet Packages & Candidates
+# SafeWebCore — NuGet Packages & Candidates
 
 This document describes every packable project: identity, contents, publish status, readiness, and recommended release sequencing.
 
-**Last audited:** 2026-09-29 (the **1.8.1** patch release was prepared, packed, tagged `v1.8.1` and published the same day; all five versions were re-verified against the flat-container API afterwards, and each package was downloaded back from nuget.org and its nuspec inspected)
-**Local pack output (verified):** `artifacts/nupkg/`
+**Last audited:** 2026-11-15 (the **1.9.0** multi-targeting release was prepared: versions bumped, all five packages packed locally and every nuspec inspected; **not yet tagged or published** — the tag push is the last box on the release checklist below)
+**Local pack output (verified):** `artifacts/nupkg-1.9.0/`
 
 > **Canonical version form:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N`
 > suffix. The four-part form is not used, and a version nuget.org already carries is never reused.
@@ -13,17 +13,61 @@ This document describes every packable project: identity, contents, publish stat
 
 ## Quick status
 
-| PackageId | csproj version | nuget.org (verified 2026-09-29) | Local pack | Recommendation |
-|-----------|----------------|--------------------------------|------------|----------------|
-| **SafeWebCore** | `1.8.1` | **Published**: `1.0.0`, `1.1.0`, `1.2.0`, `1.3.0`, `1.3.5`, `1.6.0`, `1.7.0`, `1.8.0` (2026-09-28), **`1.8.1`** (2026-09-29) | `SafeWebCore.1.8.1.nupkg` + `.snupkg` | **1.8.1 released** — maintenance patch on the 1.8.0 line, tagged `v1.8.1`; internal refactors, docs and dependency maintenance only |
-| **SafeWebCore.FraudDetection** | `1.1.1` | **Published**: `1.0.0`, `1.1.0` (2026-09-28), **`1.1.1`** (2026-09-29) | `SafeWebCore.FraudDetection.1.1.1.nupkg` + `.snupkg` | **1.1.1 released** with the `v1.8.1` tag — three-part, because `1.0.0.0` normalizes to the published `1.0.0` |
-| **SafeWebCore.JwtBearer** | `1.0.1` | **Published**: `1.0.0` (2026-09-10), **`1.0.1`** (2026-09-29) | `SafeWebCore.JwtBearer.1.0.1.nupkg` | **1.0.1 released** — the `Microsoft.AspNetCore.Authentication.JwtBearer` floor moves 10.0.11 → 10.0.12 and the nuspec now carries release notes. This is the bump that finally ships the badge-corrected packaged `README.md` |
-| **SafeWebCore.Analyzers** | `1.0.0-preview.2` | **Published**: `1.0.0-preview.1`, **`1.0.0-preview.2`** (2026-09-29) | `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` | Preview published with the SonarCloud cleanup; keep publishing as **preview** only |
-| **SafeWebCore.Testing** | `1.0.0-preview.2` | **Published**: `1.0.0-preview.1`, **`1.0.0-preview.2`** (2026-09-29) | `SafeWebCore.Testing.1.0.0-preview.2.nupkg` | Preview published with the SonarCloud cleanup and `xunit.v3.assert` 4.0.1; keep publishing as **preview** only |
+| PackageId | csproj version | nuget.org already has (verified 2026-09-29) | Local pack (2026-11-15) | Recommendation for 1.9.0 |
+|-----------|----------------|--------------------------------------------|-------------------------|--------------------------|
+| **SafeWebCore** | `1.9.0` | `1.0.0` … `1.7.0`, `1.8.0`, `1.8.1` | `SafeWebCore.1.9.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0`; `lib/net10.0` unchanged |
+| **SafeWebCore.FraudDetection** | `1.2.0` | `1.0.0`, `1.1.0`, `1.1.1` | `SafeWebCore.FraudDetection.1.2.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0`; no code change |
+| **SafeWebCore.JwtBearer** | `1.1.0` | `1.0.0`, `1.0.1` | `SafeWebCore.JwtBearer.1.1.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0` and the per-target `JwtBearer` dependency |
+| **SafeWebCore.Analyzers** | `1.0.0-preview.2` | `1.0.0-preview.1`, `1.0.0-preview.2` | `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` | **Unchanged** — `--skip-duplicate` skips it; bump only when its source changes |
+| **SafeWebCore.Testing** | `1.0.0-preview.3` | `1.0.0-preview.1`, `1.0.0-preview.2` | `SafeWebCore.Testing.1.0.0-preview.3.nupkg` | **Publish** (preview) — adds `lib/net11.0` and the per-target `Mvc.Testing` dependency |
 
 Non-packable (not NuGet candidates): test projects, examples, benchmarks.
 
 ---
+
+## Release 1.9.0 — prepared 2026-11-15 (not yet tagged)
+
+The next release ships the **multi-targeting** work: every runtime package gains a `lib/net11.0` asset next to the
+unchanged `lib/net10.0` one. Adding a target framework is additive, so SemVer says **minor**: core moves 1.8.1 →
+**1.9.0**, not a patch. No public API, default, preset or configuration path changes on either target.
+
+| Order | Package | Version | Pack (verified locally) | What changed |
+|-------|---------|---------|-------------------------|--------------|
+| 1 | SafeWebCore | **1.9.0** | `SafeWebCore.1.9.0.nupkg` 145.8 KB + `.snupkg` 48.5 KB | `lib/net11.0` added; C# 15 collection-expression arguments; no API or behavior change |
+| 2 | SafeWebCore.FraudDetection | **1.2.0** | `SafeWebCore.FraudDetection.1.2.0.nupkg` 122.5 KB + `.snupkg` 44.0 KB | `lib/net11.0` added; no code change |
+| 3 | SafeWebCore.JwtBearer | **1.1.0** | `SafeWebCore.JwtBearer.1.1.0.nupkg` 72.4 KB + `.snupkg` 35.7 KB | `lib/net11.0`; `Microsoft.AspNetCore.Authentication.JwtBearer` per target (10.0.12 / 11.0.0); `System.Threading.Lock` |
+| 4 | SafeWebCore.Testing | **1.0.0-preview.3** | `SafeWebCore.Testing.1.0.0-preview.3.nupkg` 39.3 KB | `lib/net11.0`; `Microsoft.AspNetCore.Mvc.Testing` per target (`10.0.*` / `11.0.*`) |
+| 5 | SafeWebCore.Analyzers | **1.0.0-preview.2** (unchanged) | `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` 36.3 KB | Nothing — `--skip-duplicate` skips it, so a release does not need it bumped |
+
+Every `.nupkg` above was opened and its nuspec read back: `<version>` matches the table, the 1.9.0/1.2.0/1.1.0 release
+notes are embedded, each runtime package contains **both** `lib/net10.0` and `lib/net11.0` (core is
+`PACKAGE.md`, `icon.png`, `lib/net10.0/SafeWebCore.dll` + `.xml`, `lib/net11.0/SafeWebCore.dll` + `.xml`), and the
+_packaged_ readme states the new version (`PACKAGE.md` in core, `README.md` in the three companions). The sizes grew
+because the packages now carry two builds of the same assembly — and because the packed readme is part of the artifact,
+**pack after editing it**, not before.
+
+### Release checklist — only the tag is left
+
+- [x] Five `<Version>` values set (Analyzers deliberately left at `1.0.0-preview.2`)
+- [x] `PackageReleaseNotes` rewritten for core, FraudDetection and JwtBearer
+- [x] `CHANGELOG.md` carries the dated `## [1.9.0] — 2026-11-15` section with the compatibility verdict
+- [x] `README.md`, `PACKAGE.md`, `docs/getting-started.md`, `docs/projects.md` and this page state the new versions
+- [x] `dotnet build` 0 warnings / 0 errors and `dotnet test` 380 passed (190 per target framework)
+- [x] Packaged readmes state the new version — `PACKAGE.md` inside the core package, `README.md` inside the three companions (packed **after** the readme edits)
+- [x] Public API unchanged on both targets — no `PublicAPI.Unshipped.txt` → `Shipped.txt` promotion needed
+- [x] SonarC# pre-check reports only the eight accepted `Won't fix` findings
+- [ ] **Tag `v1.9.0` and push** (`publish-nuget.yml` packs, exchanges the OIDC token, pushes all five with `--skip-duplicate`). Prerequisites: the `NUGET_USER` secret and a nuget.org trusted-publishing policy naming `publish-nuget.yml` — see [Publishing](#publishing-nugetorg-trusted-publishing)
+- [ ] After the push: confirm the four new versions on the flat-container API and that the published core package carries `lib/net11.0`
+
+Before tagging, re-check that none of the four versions already exists. Verified against the flat-container API on
+**2026-11-15**: the newest published versions are `1.8.1` (core), `1.1.1` (FraudDetection), `1.0.1` (JwtBearer) and
+`1.0.0-preview.2` (Testing), so `1.9.0`, `1.2.0`, `1.1.0` and `1.0.0-preview.3` are all free:
+
+```powershell
+foreach ($id in 'safewebcore','safewebcore.frauddetection','safewebcore.jwtbearer','safewebcore.testing') {
+  "$id -> " + ((Invoke-RestMethod "https://api.nuget.org/v3-flatcontainer/$id/index.json").versions -join ', ')
+}
+```
 
 ## How to pack locally
 
@@ -96,11 +140,36 @@ safewebcore.testing            1.0.0-preview.1, 1.0.0-preview.2
 
 The suffix `0ae2f24` in every nuspec is the `v1.8.1` release commit, so the published bits provably come from the tag and not from a later working tree.
 
-> ⚠️ **The nuget.org API key expires soon.** Both publish runs logged
-> `warn : Your API key expires in 6 days`. Regenerate it at
-> <https://www.nuget.org/account/apikeys> and refresh the `NUGET_API_KEY` repository secret before the next
-> release, or the push step returns a 401. An *empty* secret is worse: the workflows print a warning and
-> `exit 0`, so the job passes while nothing is published.
+## Publishing (nuget.org trusted publishing)
+
+Publishing is keyless. `.github/workflows/publish-nuget.yml` asks GitHub for an OIDC token, exchanges it at
+`https://www.nuget.org/api/v2/token` for an API key that is valid for **one hour**, and pushes with that key. No
+`NUGET_API_KEY` secret is stored or needed any more — removing the long-lived key is the point of trusted publishing.
+
+The nuget.org policy must match the run exactly (case-insensitive):
+
+| Policy field | Value |
+|--------------|-------|
+| Repository Owner | `MPCoreDeveloper` |
+| Repository | `SafeWebCore` |
+| Workflow File | `publish-nuget.yml` — the file name only, no `.github/workflows/` prefix |
+| Environment | left empty, unless the workflow declares the same `environment:` on the publish job |
+
+Required repository secret: **`NUGET_USER`**, the nuget.org account that owns the policy. The workflow fails with an
+explicit `::error::` when it is missing — unlike the retired API-key branch, which printed a warning and `exit 0`, so a
+green job proved nothing had been published.
+
+How a release publishes:
+
+1. **Tag push (`v*`)** — `build-test-pack` restores, builds, tests every target framework and packs all five packages;
+   the `publish` job then logs in and pushes with `--skip-duplicate`.
+2. **Manual `workflow_dispatch`** — the same pipeline; the push runs only when the `publish` input is checked, so a
+   dispatch without it yields a verified pack artifact and never touches nuget.org. Use this to exercise the trusted
+   publishing policy before creating a tag.
+
+A one-off push from a workstation is a different path: trusted publishing issues keys only to the workflow, so
+`dotnet nuget push` locally needs a scoped key created at <https://www.nuget.org/account/apikeys> for that push, and
+deleted afterwards.
 
 ---
 
@@ -111,7 +180,7 @@ The suffix `0ae2f24` in every nuspec is the `v1.8.1` release commit, so the publ
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore` |
-| Current csproj Version | `1.8.1` (tagged `v1.8.1` on 2026-09-29; `1.8.0` was the previous release) |
+| Current csproj Version | `1.9.0` (release prepared 2026-11-15, not yet tagged; `1.8.1` was the previous release) |
 | Authors | MPCoreDeveloper |
 | Company | Posseth Software |
 | License | MIT (`PackageLicenseExpression`) |
@@ -119,7 +188,7 @@ The suffix `0ae2f24` in every nuspec is the `v1.8.1` release commit, so the publ
 | NuGet gallery | https://www.nuget.org/packages/SafeWebCore |
 | Readme in package | `PACKAGE.md` (repo root) |
 | Icon | `icon.png` |
-| TFM | `net10.0` |
+| TFM | `net10.0` + `net11.0` |
 | Symbols | `snupkg` enabled |
 
 ## Package contents (verified)
@@ -130,6 +199,8 @@ PACKAGE.md
 icon.png
 lib/net10.0/SafeWebCore.dll
 lib/net10.0/SafeWebCore.xml
+lib/net11.0/SafeWebCore.dll
+lib/net11.0/SafeWebCore.xml
 ```
 
 Plus companion `SafeWebCore.1.8.1.snupkg` for symbols/SourceLink debugging.
@@ -172,10 +243,10 @@ dotnet add package SafeWebCore
 ## Packaging gaps for next release
 
 - [x] Version bumped for the change set being released — **1.8.1** in `SafeWebCore.csproj` (2026-09-29)
-- [x] `PACKAGE.md` and `README.md` state the current version (both say 1.8.1)
+- [x] `PACKAGE.md` and `README.md` state the current version (both say 1.9.0)
 - [x] `docs/getting-started.md` install snippet corrected from the stale `Version="1.3.5"` to the shipped `1.8.1`
 - [x] Broken doc links in `PACKAGE.md` still point at old `docs/roadmap-v1.2.md` paths (now under `docs/archive/`)
-- [x] CI pack + push workflow present — `.github/workflows/ci.yml` (build/test/pack on push + PR) and `nuget-publish.yml` (pack + `dotnet nuget push` on a `v*` tag, with `--skip-duplicate`)
+- [x] CI pack + push workflow present — `.github/workflows/ci.yml` (build/test/pack on push + PR) and `publish-nuget.yml` (pack + `dotnet nuget push` on a `v*` tag or a manual run, with `--skip-duplicate`)
 - [x] Git tags are mixed: the remote carries `V1.0.0.0`, `V1.1.0.0`, `V1.2.0.0`, `V1.3.0.0`, `V1.6.0.0.0`, `v1.7.0` and `v1.8.0` (there is no tag for 1.3.5). This release is tagged **`v1.8.1`**; the three-part `vX.Y.Z` form is canonical from here on (spine AD-17)
 - [x] PublicAPI promotion checked for 1.8.1 — **nothing to promote**: all three `PublicAPI.Unshipped.txt` files still hold only `#nullable enable`, because this cycle added no public symbol. The 11 core entries promoted on 2026-09-27 keep the `Shipped.txt` baseline claiming exactly the surface that shipped through 1.7.0 and 1.8.0
 - [x] Promoted `PublicAPI.Unshipped.txt` → `PublicAPI.Shipped.txt` before the tag — **11 core entries** moved on 2026-09-27, so the 450-line shipped baseline claims exactly the surface that shipped through 1.7.0 and 1.8.0
@@ -191,13 +262,13 @@ dotnet add package SafeWebCore
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore.FraudDetection` |
-| Version | `1.1.1` (csproj; tagged `v1.8.1` on 2026-09-29 — `1.0.0` was the first release, `1.1.0` the previous one) |
+| Version | `1.2.0` (csproj; release prepared 2026-11-15, not yet tagged — `1.1.1` was the previous release) |
 | Authors | MPCoreDeveloper |
 | Company | Posseth Software |
 | License | MIT |
 | Readme | `src/SafeWebCore.FraudDetection/README.md` |
 | Icon | `icon.png` — reuses the root icon, packed since 2026-09-27 |
-| TFM | `net10.0` |
+| TFM | `net10.0` + `net11.0` |
 | Symbols | `.snupkg` + SourceLink — parity with core since 2026-09-27 |
 | Release notes | `PackageReleaseNotes` for 1.1.1 embedded in the nuspec |
 | nuget.org | **Published** — `1.0.0`, `1.1.0` (2026-09-28), `1.1.1` (2026-09-29) |
@@ -210,9 +281,11 @@ README.md
 icon.png
 lib/net10.0/SafeWebCore.FraudDetection.dll
 lib/net10.0/SafeWebCore.FraudDetection.xml
+lib/net11.0/SafeWebCore.FraudDetection.dll
+lib/net11.0/SafeWebCore.FraudDetection.xml
 ```
 
-Symbol package: `SafeWebCore.FraudDetection.1.1.1.snupkg` → `lib/net10.0/SafeWebCore.FraudDetection.pdb`.
+Symbol package: `SafeWebCore.FraudDetection.1.1.1.snupkg` → `lib/net10.0/SafeWebCore.FraudDetection.pdb` and `lib/net11.0/SafeWebCore.FraudDetection.pdb`.
 
 ## What consumers get
 
@@ -258,7 +331,7 @@ dotnet add package SafeWebCore.FraudDetection
 4. Add a short “Getting started with FraudDetection” link from root README / docs index.
 5. Prefer an example or recipe showing registration + `Analyze` + sink.
 6. ~~Tag git appropriately; document multi-package versioning~~ — done: `v1.8.0` covers core 1.8.0 + fraud 1.1.0, and `v1.8.1` covers core 1.8.1 + fraud 1.1.1 (see the versioning note below).
-7. The tag push publishes it (`nuget-publish.yml` pushes every package with `--skip-duplicate`); the manual equivalent stays: `dotnet nuget push artifacts/nuget/SafeWebCore.FraudDetection.1.1.1.nupkg --source https://api.nuget.org/v3/index.json`
+7. The tag push publishes it (`publish-nuget.yml` pushes every package with `--skip-duplicate`); the manual equivalent stays: `dotnet nuget push artifacts/nuget/SafeWebCore.FraudDetection.1.1.1.nupkg --source https://api.nuget.org/v3/index.json`
 
 ### Versioning strategy note
 
@@ -273,13 +346,14 @@ Core ships **1.8.1** and FraudDetection **1.1.1** from the same `v1.8.1` tag (**
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore.JwtBearer` |
-| Version | `1.0.1` (csproj; tagged `v1.8.1` on 2026-09-29) |
+| Version | `1.1.0` (csproj; release prepared 2026-11-15, not yet tagged — `1.0.1` was the previous release) |
 | Authors / Company | MPCoreDeveloper / Posseth Software |
 | License | MIT |
 | Project URL | https://github.com/MPCoreDeveloper/SafeWebCore |
 | Readme in package | `src/SafeWebCore.JwtBearer/README.md` |
 | Icon | `icon.png` |
-| TFM | `net10.0` |
+| TFM | `net10.0` + `net11.0` |
+| Depends on | `Microsoft.AspNetCore.Authentication.JwtBearer` `10.0.12` (`net10.0`) / `11.0.0` (`net11.0`) — each ASP.NET Core major ships for its own runtime |
 
 ## Purpose
 
@@ -308,9 +382,9 @@ dotnet add package SafeWebCore.JwtBearer
 | Unit + integration tests (xUnit v3) | ✅ (38 as of 2026-09-27, incl. Stephan's reproduction) |
 | Public API baseline (`PublicAPI.*.txt`) | ✅ Curated 2026-09-27 — the 2 `RS0016`/`RS0017` warnings came from the declaration form in `JwtAuthorityValidationGuard`, and all 51 entries were promoted into `PublicAPI.Shipped.txt` before the `v1.8.0` tag |
 | README + icon packed | ✅ (verified) |
-| `ci.yml` / `nuget-publish.yml` pack step | ✅ (added) |
+| `ci.yml` / `publish-nuget.yml` pack step | ✅ (added) |
 | Symbol package / SourceLink | ✅ Enabled 2026-09-29 — 1.0.1 adds the `IncludeSymbols` / `snupkg` + SourceLink property group, so this package now ships a `.snupkg` like core and FraudDetection. This closes the gap recorded against 1.0.0 |
-| NuGet dependency | `Microsoft.AspNetCore.Authentication.JwtBearer` **10.0.12** (raised from 10.0.11 in 1.0.1) |
+| NuGet dependency | `Microsoft.AspNetCore.Authentication.JwtBearer` **10.0.12** on `net10.0` (raised from 10.0.11 in 1.0.1) and **11.0.0** on `net11.0` |
 | nuget.org listing | ✅ `1.0.0` published 2026-09-10; `1.0.1` with the `v1.8.1` tag (2026-09-29) |
 
 ### Packaging gap closed in 1.0.1
@@ -325,7 +399,7 @@ nuget.org instead of being skipped as a duplicate.
 
 ```bash
 dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c Release -o artifacts/nupkg
-dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.1.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.1.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
 ```
 
 # Package 3 — SafeWebCore.Analyzers (preview candidate)
@@ -335,7 +409,7 @@ dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.1.nupkg --api-key %N
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore.Analyzers` |
-| Version | `1.0.0-preview.2` (tagged `v1.8.1` on 2026-09-29) |
+| Version | `1.0.0-preview.2` (published 2026-09-29; unchanged for 1.9.0 because its source did not change) |
 | TFM | `netstandard2.0` |
 | Packaging style | Analyzer-only (`IncludeBuildOutput=false`) |
 | DLL path in nupkg | `analyzers/dotnet/cs/SafeWebCore.Analyzers.dll` |
@@ -395,10 +469,10 @@ No `lib/` folder (correct for pure analyzers).
 | Field | Value |
 |-------|--------|
 | PackageId | `SafeWebCore.Testing` |
-| Version | `1.0.0-preview.2` (tagged `v1.8.1` on 2026-09-29) |
-| TFM | `net10.0` |
+| Version | `1.0.0-preview.3` (csproj; release prepared 2026-11-15, not yet tagged — `1.0.0-preview.2` was the previous one) |
+| TFM | `net10.0` + `net11.0` |
 | Depends on | `SafeWebCore` (project → becomes package dependency on pack) |
-| Also depends on | `Microsoft.AspNetCore.Mvc.Testing` `10.0.*` (floating), `xunit.v3.assert` `4.0.1` (pinned) |
+| Also depends on | `Microsoft.AspNetCore.Mvc.Testing` `10.0.*` (floating, `net10.0`) / `11.0.*` (floating, `net11.0`), `xunit.v3.assert` `4.0.1` (pinned) |
 | Readme | `src/SafeWebCore.Testing/README.md` |
 | nuget.org | **Published** — `1.0.0-preview.1`, `1.0.0-preview.2` (2026-09-29) |
 
@@ -409,6 +483,8 @@ SafeWebCore.Testing.nuspec
 README.md
 lib/net10.0/SafeWebCore.Testing.dll
 lib/net10.0/SafeWebCore.Testing.xml
+lib/net11.0/SafeWebCore.Testing.dll
+lib/net11.0/SafeWebCore.Testing.xml
 ```
 
 ## API surface (small, focused)
@@ -432,14 +508,19 @@ lib/net10.0/SafeWebCore.Testing.xml
 
 ## Publish guidance
 
-- Published as preview (`1.0.0-preview.2`, with the `v1.8.1` tag on 2026-09-29).
-- The `SafeWebCore` dependency resolves to a version that is live on nuget.org in the same batch: `1.0.0-preview.2` packs a dependency on core **1.8.1**, and both ship from the `v1.8.1` tag, so no consumer can resolve a core version that does not exist yet.
+- Next release: **`1.0.0-preview.3`**, shipping with `v1.9.0` (adds `lib/net11.0` and the per-target `Mvc.Testing` dependency). Still preview.
+- The `SafeWebCore` dependency resolves to a version that is live on nuget.org in the same batch: `1.0.0-preview.3` packs a dependency on core **1.9.0**, and both ship from the `v1.9.0` tag, so no consumer can resolve a core version that does not exist yet.
+- Previously published: `1.0.0-preview.2` with the `v1.8.1` tag (2026-09-29).
 
 ---
 
 ## Recommended release trains
 
-### Train A — Maintenance patch (**selected for the current workspace**)
+### Train A — Multi-targeting release `v1.9.0` (**selected for the current workspace**)
+
+Ships the framework work described under [Release 1.9.0](#release-190--prepared-2026-11-15-not-yet-tagged). SemVer is a **minor** bump because a new target-framework asset is additive: core `1.9.0`, FraudDetection `1.2.0`, JwtBearer `1.1.0`, Testing `1.0.0-preview.3`, and Analyzers left at `1.0.0-preview.2` (unchanged source, so `--skip-duplicate` skips it).
+
+### Train A′ — Maintenance patch (shipped as `v1.8.1`)
 
 Everything since the `v1.8.0` tag is internal, so the honest SemVer step is a **patch**, not a feature release: bump core to `1.8.1`, bump each companion whose bits actually changed, and ship the set from one `v1.8.1` tag.
 
@@ -455,15 +536,15 @@ Everything since the `v1.8.0` tag is internal, so the honest SemVer step is a **
 
 Kept for reference. `v1.8.0` shipped core **1.8.0** + FraudDetection **1.1.0** on 2026-09-28. Use this shape again when the workspace finally carries additive public API: a `<Version>` above 1.8.1, changelog dated, `README.md`/`PACKAGE.md` updated, `PackageReleaseNotes` rewritten, and the `PublicAPI.Unshipped.txt` → `Shipped.txt` promotion done in the release commit.
 
-Note: `nuget-publish.yml` packs and pushes **every** package found in `artifacts/nuget` on a `v*` tag. Tagging `v1.8.1` therefore publishes all five — core 1.8.1, FraudDetection 1.1.1, JwtBearer 1.0.1 and both `1.0.0-preview.2` packages. That is exactly why every version in the table above was bumped: an unchanged version is silently skipped by `--skip-duplicate`, which is how the JwtBearer `README.md` fix stayed unpublished through the `v1.8.0` run.
+Note: `publish-nuget.yml` packs and pushes **every** package found in `artifacts/nuget` on a `v*` tag. Tagging `v1.8.1` therefore publishes all five — core 1.8.1, FraudDetection 1.1.1, JwtBearer 1.0.1 and both `1.0.0-preview.2` packages. That is exactly why every version in the table above was bumped: an unchanged version is silently skipped by `--skip-duplicate`, which is how the JwtBearer `README.md` fix stayed unpublished through the `v1.8.0` run.
 
-There is a **second** publish workflow: `nuget-publish-jwtbearer.yml` triggers on any `master` push that touches
-`src/SafeWebCore.JwtBearer/**`, packs **only** that project and pushes it. It exists so a JwtBearer change does not
-have to wait for a whole release train. In the `v1.8.1` release that workflow won the race (it published 1.0.1 at
-04:49:09Z, ~13 s before the tag run), so the tag run's own JwtBearer push was reported as "already exists" and
-skipped. Both orders are harmless, but it means **a JwtBearer version can go live on nuget.org from a plain
-`master` push** — do not merge a JwtBearer change with a half-prepared version number, and remember that a
-`README.md`-only edit under that folder still publishes the package.
+There used to be a **second** publish workflow (`nuget-publish-jwtbearer.yml`) that pushed JwtBearer on any `master`
+push touching `src/SafeWebCore.JwtBearer/**`. In the `v1.8.1` release it won the race against the tag run and published
+1.0.1 at 04:49:09Z, ~13 s before the tag push, which then reported "already exists". Both workflows were consolidated
+into `publish-nuget.yml` on 2026-11-15, because trusted publishing matches one workflow file name: a second file needs a
+second nuget.org policy, and two racing publishers is not worth that. JwtBearer now publishes with the release tag or a
+manual run, and the workflow carries a `concurrency` group so two publishes queue instead of racing. The old hazard is
+gone: **no package version can go live from a plain `master` push any more.**
 
 Verified 2026-09-29 against the NuGet flat-container API before tagging: none of the five versions in the `v1.8.1` batch — `SafeWebCore` **1.8.1**, `SafeWebCore.FraudDetection` **1.1.1**, `SafeWebCore.JwtBearer` **1.0.1**, `SafeWebCore.Analyzers` and `SafeWebCore.Testing` **1.0.0-preview.2** — existed on nuget.org, so all five are genuinely new and `--skip-duplicate` has nothing to skip. This also settles the JwtBearer `README.md` item left over from the `v1.8.0` run: 1.0.0 was code-equal to HEAD and only its packaged README differed, by five badge lines, so nuget.org kept the badge-less README until a higher version existed. **1.0.1 is that version.**
 
@@ -477,11 +558,11 @@ Roadmap mapping reminder:
 | v1.5 Tooling | Analyzers, Testing, recipes | New preview packages |
 | v1.6 Observability | Metrics, fraud sinks/risk | Core + FraudDetection |
 
-If shipping **all** current work in one go, a single **SafeWebCore 1.8.1** is the honest number for what changed since 1.8.0 (internal refactors, docs and dependency maintenance), and the changelog says exactly that. Never reuse 1.8.0 or any version listed in Quick status for later work.
+If shipping **all** current work in one go, a single **SafeWebCore 1.9.0** is the honest number for what changed since 1.8.1 (a new target-framework asset plus internal tooling), and the changelog says exactly that. Never reuse a version listed in Quick status for later work.
 
 ### Train C — Fraud-only release
 
-Publish **FraudDetection 1.1.1** alone (no core bump). Valid because packages are independent — `1.1.0` is already live, so `1.1.1` is the next number. Note that `nuget-publish.yml` pushes everything it packs, so a fraud-only release needs a trimmed pack step or a manual `dotnet nuget push`.
+Publish **FraudDetection 1.1.1** alone (no core bump). Valid because packages are independent — `1.1.0` is already live, so `1.1.1` is the next number. Note that `publish-nuget.yml` pushes everything it packs, so a fraud-only release needs a trimmed pack step or a manual `dotnet nuget push`.
 
 ---
 
@@ -514,12 +595,12 @@ dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj -c Release -o
 dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj -c Release -o artifacts/nupkg
 dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj -c Release -o artifacts/nupkg
 
-dotnet nuget push artifacts/nupkg/SafeWebCore.<version>.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/nupkg/SafeWebCore.<version>.snupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/nupkg/SafeWebCore.FraudDetection.1.1.1.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.1.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/nupkg/SafeWebCore.Analyzers.1.0.0-preview.2.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/nupkg/SafeWebCore.Testing.1.0.0-preview.2.nupkg --api-key %NUGET_API_KEY% --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.<version>.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.<version>.snupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.FraudDetection.1.1.1.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.JwtBearer.1.0.1.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.Analyzers.1.0.0-preview.2.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
+dotnet nuget push artifacts/nupkg/SafeWebCore.Testing.1.0.0-preview.3.nupkg --api-key "<scoped key from nuget.org>" --source https://api.nuget.org/v3/index.json
 ```
 
 ---

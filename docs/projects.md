@@ -4,7 +4,8 @@ Complete inventory of every project in this repository: purpose, target framewor
 
 **Last audited:** 2026-07-25  
 **Solution file:** `SafeWebCore.slnx`  
-**SDK:** .NET 10 (`10.0.302` verified locally)
+**SDK:** .NET 11 (`11.0.100` verified locally)  
+**Target frameworks:** `net10.0` + `net11.0` for every runtime library, test suite and example; `netstandard2.0` for `SafeWebCore.Analyzers` (Roslyn analyzer convention)
 
 ---
 
@@ -81,8 +82,8 @@ Coding standards are further enforced by `.editorconfig`.
 |-----------|--------|
 | **Path** | `src/SafeWebCore/` |
 | **PackageId** | `SafeWebCore` |
-| **Version (csproj)** | `1.3.5` |
-| **TFM** | `net10.0` |
+| **Version (csproj)** | `1.9.0` |
+| **TFM** | `net10.0` + `net11.0` |
 | **IsPackable** | Yes (default) |
 | **Published on nuget.org** | Yes — `1.0.0` … `1.3.5` |
 | **Symbols** | Yes (`snupkg`) |
@@ -151,8 +152,8 @@ The **published** package identity is **1.7.0**. The workspace carries **1.8.0**
 |-----------|--------|
 | **Path** | `src/SafeWebCore.FraudDetection/` |
 | **PackageId** | `SafeWebCore.FraudDetection` |
-| **Version (csproj)** | `1.0.0` |
-| **TFM** | `net10.0` |
+| **Version (csproj)** | `1.2.0` |
+| **TFM** | `net10.0` + `net11.0` |
 | **IsPackable** | Yes |
 | **Published on nuget.org** | **No** (404 as of audit) |
 | **Symbols** | Not configured (`IncludeSymbols` not set) |
@@ -219,7 +220,7 @@ Optional advanced fraud-detection module. Analyzes client fingerprints for geo-c
 |-----------|--------|
 | **Path** | `src/SafeWebCore.Analyzers/` |
 | **PackageId** | `SafeWebCore.Analyzers` |
-| **Version (csproj)** | `1.0.0-preview.1` |
+| **Version (csproj)** | `1.0.0-preview.2` |
 | **TFM** | `netstandard2.0` (Roslyn analyzer convention) |
 | **IsPackable** | Yes (`IncludeBuildOutput=false`, analyzer DLL under `analyzers/dotnet/cs`) |
 | **Published on nuget.org** | **No** |
@@ -272,8 +273,8 @@ Custom target `AddAnalyzerToPackage` places the analyzer assembly at `analyzers/
 |-----------|--------|
 | **Path** | `src/SafeWebCore.Testing/` |
 | **PackageId** | `SafeWebCore.Testing` |
-| **Version (csproj)** | `1.0.0-preview.1` |
-| **TFM** | `net10.0` |
+| **Version (csproj)** | `1.0.0-preview.3` |
+| **TFM** | `net10.0` + `net11.0` |
 | **IsPackable** | Yes |
 | **Published on nuget.org** | **No** |
 | **Package readme** | `src/SafeWebCore.Testing/README.md` |
@@ -321,7 +322,7 @@ Consumer-facing test helpers for asserting security headers, CSP mode, and nonce
 | Attribute | Value |
 |-----------|--------|
 | **Path** | `tests/SafeWebCore.Tests/` |
-| **TFM** | `net10.0` |
+| **TFM** | `net10.0` + `net11.0` |
 | **IsPackable** | `false` |
 | **In solution** | Yes |
 | **Framework** | xUnit v3 (`xunit.v3` 3.2.2) |
@@ -356,7 +357,7 @@ Primary quality gate for the core package. Must stay green for any SafeWebCore N
 | Attribute | Value |
 |-----------|--------|
 | **Path** | `tests/SafeWebCore.FraudDetection.Tests/` |
-| **TFM** | `net10.0` |
+| **TFM** | `net10.0` + `net11.0` |
 | **IsPackable** | `false` |
 | **In solution** | **No** (gap) |
 | **Framework** | xUnit v3 3.2.2 |
@@ -386,7 +387,7 @@ Quality gate for `SafeWebCore.FraudDetection` first publish. Should be added to 
 
 All examples:
 
-- Target `net10.0`
+- Target `net10.0` and `net11.0`
 - Reference local `src/SafeWebCore` (not NuGet)
 - Are **not** packable product artifacts
 - Built successfully in Release during audit (0 warnings)
@@ -429,7 +430,7 @@ All examples:
 | Attribute | Value |
 |-----------|--------|
 | **Path** | `benchmarks/SafeWebCore.Benchmarks/` |
-| **TFM** | `net10.0` |
+| **TFM** | `net10.0` — BenchmarkDotNet `0.15.8` has no `Net11_0` runtime moniker, so the host stays on net10.0 while the library it references ships both targets |
 | **OutputType** | `Exe` |
 | **IsPackable** | No (tooling) |
 | **In solution** | No |
@@ -496,11 +497,11 @@ SafeWebCore.JwtBearer  (standalone; depends on Microsoft.AspNetCore.Authenticati
 
 | Project | Maturity | Ship as NuGet? | Recommended version policy |
 |---------|----------|----------------|----------------------------|
-| SafeWebCore | Production (published) | **Yes** (already) | SemVer stable. Latest: **1.8.1** (2026-09-29). Maintenance-only cycle → `1.8.x`; additive public API → `1.9.0` |
-| SafeWebCore.FraudDetection | Production (published) | **Yes** (already) | Independent identity. Latest: **1.1.1** (2026-09-29) |
-| SafeWebCore.JwtBearer | Production (published) | **Yes** (already) | Independent identity. Latest: **1.0.1** (2026-09-29), which also closed the symbols/SourceLink parity gap left by 1.0.0 |
-| SafeWebCore.Analyzers | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N` until the rules are proven. Latest: **1.0.0-preview.2** |
-| SafeWebCore.Testing | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N`; pin deps before stable. Latest: **1.0.0-preview.2** |
+| SafeWebCore | Production (published) | **Yes** (already) | SemVer stable. Latest: **1.9.0** (prepared 2026-11-15, awaiting the tag; 1.8.1 was the previous release). Maintenance-only cycle → `1.9.x`; additive public API → `1.10.0` |
+| SafeWebCore.FraudDetection | Production (published) | **Yes** (already) | Independent identity. Latest: **1.2.0** (prepared 2026-11-15; 1.1.1 was the previous release) |
+| SafeWebCore.JwtBearer | Production (published) | **Yes** (already) | Independent identity. Latest: **1.1.0** (prepared 2026-11-15; 1.0.1 was the previous release, which closed the symbols/SourceLink parity gap left by 1.0.0) |
+| SafeWebCore.Analyzers | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N` until the rules are proven. Latest: **1.0.0-preview.2** (unchanged by 1.9.0 — no source change) |
+| SafeWebCore.Testing | Preview tooling (published) | **Yes (preview only)** | Keep `*-preview.N`; pin deps before stable. Latest: **1.0.0-preview.3** (prepared 2026-11-15) |
 | *.Tests | Internal | No | — |
 | examples/* | Samples | No | — |
 | Benchmarks | Internal tooling | No | — |

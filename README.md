@@ -2,15 +2,15 @@
 
 [![NuGet](https://img.shields.io/nuget/v/SafeWebCore.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/SafeWebCore.svg?logo=nuget)](https://www.nuget.org/packages/SafeWebCore)
-[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
+[![.NET 10 & 11](https://img.shields.io/badge/.NET-10%20%7C%2011-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![securityheaders.com](https://img.shields.io/badge/securityheaders.com-A%2B-brightgreen)](https://securityheaders.com)
 [![CSP](https://img.shields.io/badge/CSP-Level%203%20%2B%20Level%204-blue?logo=w3c)](https://www.w3.org/TR/CSP3/)
 [![Sponsor](https://img.shields.io/badge/Sponsor-❤-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/MPCoreDeveloper)
 
-**SafeWebCore** is a lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
+**SafeWebCore** is a lightweight, high-performance **.NET 10 and .NET 11** middleware library that adds security headers to your ASP.NET Core applications. It targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box — zero configuration required.
 
-**Current version:** 1.8.1
+**Current version:** 1.9.0
 
 ---
 
@@ -100,16 +100,16 @@ builder.Services.AddNetSecureHeaders(opts =>
 
 ---
 
-## 🆕 What's New in v1.8.1
+## 🆕 What's New in v1.9.0
 
-v1.8.1 is a **maintenance** release — 100% backwards compatible with v1.8.0 and earlier: no public API, default, preset or configuration change, and no behavior change.
+v1.9.0 adds a **.NET 11 build** — 100% backwards compatible with v1.8.1 and earlier: no public API, default, preset or configuration change, and no behavior change.
 
 | Improvement | Detail |
 |-------------|--------|
-| **Internal deduplication** | The pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in both fraud detectors and in the middleware/diagnostics pair; they now live once in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers, so a score, a throttle rule or a policy-resolution rule can only change in one place |
-| **Allocation cleanup** | The path-policy lookup walks the list by index instead of allocating an enumerator per request, and the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file — every emitted header value, directive and policy-resolution outcome is identical |
-| **Dependency maintenance** | Development-only packages (test SDK, xunit, coverlet, `PublicApiAnalyzers`) refreshed to their latest stable releases; `SafeWebCore.JwtBearer` moves its `Microsoft.AspNetCore.Authentication.JwtBearer` floor to 10.0.12 |
-| **Docs** | New [SonarCloud triage](docs/development/sonarcloud-triage.md) page records how the analysis is scoped and the ten findings that are deliberately accepted |
+| **Multi-targeting** | The package now ships `lib/net10.0` **and** `lib/net11.0`. A .NET 11 application resolves the build compiled against .NET 11 (C# 15, .NET 11 JIT) instead of falling back to the `net10.0` asset; .NET 10 applications keep the unchanged `net10.0` build |
+| **C# 15 collection expressions** | `[with(capacity: …)]` and `[with(comparer: …)]` where the capacity or comparer is known, so the diagnostics preview no longer grows its header map. Every emitted header, directive and configuration outcome is identical |
+| **Keyless publishing** | Releases publish through nuget.org trusted publishing (GitHub OIDC exchanged for a one-hour key) instead of a stored API key |
+| **Mutation testing** | [Stryker.NET](docs/development/mutation-testing.md) records what the test suite actually catches, per package, with the baseline scores and the surviving-mutant backlog |
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
 

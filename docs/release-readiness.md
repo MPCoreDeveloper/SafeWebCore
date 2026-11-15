@@ -8,8 +8,14 @@
 > [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
 > SemVer form.
 >
+> **1.9.0 prepared on 2026-11-15:** the multi-targeting release is versioned, changelogged and packed
+> locally (`SafeWebCore` 1.9.0, `SafeWebCore.FraudDetection` 1.2.0, `SafeWebCore.JwtBearer` 1.1.0,
+> `SafeWebCore.Testing` 1.0.0-preview.3, `SafeWebCore.Analyzers` unchanged at 1.0.0-preview.2). It is
+> **not tagged or published yet** — the release-state section below lists what is verified and the two
+> steps that remain.
+>
 > **1.8.1 shipped on 2026-09-29:** a maintenance patch, tagged `v1.8.1` and published to nuget.org by
-> `nuget-publish.yml`, together with `SafeWebCore.FraudDetection` 1.1.1, `SafeWebCore.JwtBearer` 1.0.1
+> `nuget-publish.yml` (consolidated into `publish-nuget.yml` on 2026-11-15), together with `SafeWebCore.FraudDetection` 1.1.1, `SafeWebCore.JwtBearer` 1.0.1
 > and both `1.0.0-preview.2` packages. All five versions were verified absent from the flat container
 > before tagging, so nothing was skipped as a duplicate — including the JwtBearer package, whose
 > badge-corrected `README.md` had been stranded at 1.0.0 since the `v1.8.0` run.
@@ -18,6 +24,30 @@
 > `nuget-publish.yml` (run `36374600399`), together with `SafeWebCore.FraudDetection` 1.1.0 and both
 > `.snupkg` symbol packages. Everything below the release state sections is the frozen 2026-07-25 audit
 > and does **not** describe 1.8.0 or 1.8.1.
+
+---
+
+## Release state for 1.9.0 (prepared 2026-11-15 — awaiting the tag)
+
+The gate for the next release: the multi-targeting work. Everything except the tag push and the post-publish check is
+done and verified locally.
+
+| Item | State |
+|------|-------|
+| Scope | ✅ **Minor and additive.** Every runtime package gains a `lib/net11.0` asset next to an unchanged `lib/net10.0`; no public API, default, preset or configuration path changes. `PublicAPI.Shipped.txt` untouched, and nothing needs promoting out of `PublicAPI.Unshipped.txt` |
+| Build | ✅ `dotnet build SafeWebCore.slnx -c Release` — **0 warnings, 0 errors** on both targets (`TreatWarningsAsErrors=true`) |
+| Tests | ✅ **380 passed, 0 failed** — each suite runs on `net10.0` and `net11.0` (125 + 27 + 38 per target). Stability: 5 consecutive full-suite runs green after fixing a `FraudMetricsTests` listener that observed a parallel test's counters (`Expected: 2, Actual: 3`) |
+| Versions | ✅ Core **1.9.0**, FraudDetection **1.2.0**, JwtBearer **1.1.0**, Testing **1.0.0-preview.3**; Analyzers deliberately still **1.0.0-preview.2** because its source did not change |
+| CHANGELOG | ✅ `[Unreleased]` promoted to `[1.9.0] — 2026-11-15` with `Added`, `Changed`, `Companion packages` and `Compatibility` sections |
+| Package docs | ✅ `README.md`, `PACKAGE.md`, `docs/getting-started.md`, `docs/projects.md` and `docs/nuget-packages.md` all state the new versions |
+| Pack | ✅ Five packages built from `Release` into `artifacts/nupkg-1.9.0/`; every nuspec inspected — version, embedded release notes, and **both** `lib/net10.0` and `lib/net11.0` present in each runtime package (the analyzer stays `analyzers/dotnet/cs`) |
+| Static analysis | ✅ SonarCloud gate `OK` with 0 open issues (2026-11-15); the local SonarC# pre-check reports only the eight accepted `Won't fix` findings |
+| Mutation baseline | ✅ Recorded 2026-11-15 — core 53.53 %, JwtBearer 57.43 %, FraudDetection 20.68 %; `break: 0`, so a mutation run can never fail a build by itself |
+| Publish path | ✅ `.github/workflows/publish-nuget.yml` with nuget.org trusted publishing; prerequisites are the `NUGET_USER` secret and a policy naming `publish-nuget.yml` |
+| **Tag + push** | ⬜ **Outstanding** — `v1.9.0` publishes all five with `--skip-duplicate` (Analyzers skipped as a duplicate) |
+| **Post-publish verification** | ⬜ **Outstanding** — confirm the four versions on the flat-container API and that the published core package carries `lib/net11.0` |
+
+Nothing in the code blocks the release; the two unchecked rows are the release itself.
 
 ---
 
@@ -44,11 +74,12 @@ snapshot.
 | Publication verified | ✅ All five downloaded back from the flat container and their nuspecs inspected: `<version>` correct, `releaseNotes` embedded, `icon.png` + readme present, and `repository commit = 0ae2f24908933ea7695a0cc76e71aa37916f1c75` (the release commit). Dependencies confirmed: `SafeWebCore.JwtBearer` → `Microsoft.AspNetCore.Authentication.JwtBearer` `10.0.12`; `SafeWebCore.Testing` → `SafeWebCore` `1.8.1`, `Microsoft.AspNetCore.Mvc.Testing` `10.0.12`, `xunit.v3.assert` `4.0.1` |
 | Git | ✅ `5db999a` (test dependency bumps) and `0ae2f24` (release prep) on `master`, tagged **`v1.8.1`** |
 
-> ⚠️ **Action needed before the next release: the nuget.org API key expires.** Both publish runs logged
-> `warn : Your API key expires in 6 days. Visit https://www.nuget.org/account/apikeys to regenerate your API key.`
-> Regenerate it and refresh the `NUGET_API_KEY` repository secret, or the next release's push step fails with a 401.
-> Note that a *missing* secret is worse than a failing one: the workflows branch on an empty variable, print a
-> warning and `exit 0`, so the job goes green while nothing is published.
+> ✅ **Resolved 2026-11-15 — the API key is gone.** Both publish runs warned that the stored `NUGET_API_KEY` expired
+> within days, and it did. Publishing now uses nuget.org **trusted publishing**: the two publish workflows were
+> consolidated into `.github/workflows/publish-nuget.yml`, which exchanges a GitHub OIDC token for a one-hour API key,
+> so no long-lived key is stored anywhere. The only configuration left is the `NUGET_USER` repository secret, and a
+> missing value now fails the job with an explicit error instead of the old warn-and-`exit 0` that made a green job look
+> like a publish. See [NuGet Packages § Publishing](nuget-packages.md#publishing-nugetorg-trusted-publishing).
 
 ### Deliberately still open after 1.8.1
 
@@ -82,9 +113,8 @@ snapshot.
 Still genuinely open from the original audit — none of it blocks 1.8.0: a CI performance gate, analyzer
 unit tests, symbol/SourceLink parity for `SafeWebCore.JwtBearer` (it needs a higher JwtBearer version to
 reach nuget.org), and the optional flip of `RS0016`/`RS0017` from warning to error now that the baseline
-is clean. The publish also carried one action item: CI warned that the `NUGET_API_KEY` GitHub secret
-expires within days of 2026-09-28, so renew it before the next release (a missing or expired key makes the
-push step warn and exit successfully, which looks identical to a successful publish).
+is clean. The publish's one action item — the expiring `NUGET_API_KEY` secret — is closed: publishing moved to nuget.org
+trusted publishing on 2026-11-15 (see [NuGet Packages § Publishing](nuget-packages.md#publishing-nugetorg-trusted-publishing)).
 
 
 **Audit date:** 2026-07-25  

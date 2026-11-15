@@ -46,6 +46,9 @@ coverage*.json
 TestResults/
 coveragereport/
 
+# Mutation testing (Stryker.NET) — reports land in artifacts/stryker, this covers the default folder
+StrykerOutput/
+
 # OS files
 Thumbs.db
 ehthumbs.db

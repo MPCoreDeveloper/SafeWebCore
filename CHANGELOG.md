@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.9.0] — 2026-11-15
+
+### Added
+- **Multi-targeting `net10.0` and `net11.0`** — `SafeWebCore`, `SafeWebCore.FraudDetection`, `SafeWebCore.JwtBearer` and `SafeWebCore.Testing` now pack a `lib/net10.0` **and** a `lib/net11.0` asset, so a .NET 11 application resolves the .NET 11 build (C# 15 compiler, .NET 11 JIT) instead of the net10.0 one. `SafeWebCore.Analyzers` stays `netstandard2.0`, because Roslyn loads it into the compiler host and that host is not always the .NET 11 runtime.
+- Per-target dependencies, so no target inherits a package built for another runtime: `SafeWebCore.JwtBearer` references `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.12 on `net10.0` and 11.0.0 on `net11.0`; `SafeWebCore.Testing` floats `Microsoft.AspNetCore.Mvc.Testing` `10.0.*` on `net10.0` and `11.0.*` on `net11.0`. The net10.0 dependency floors are unchanged.
+- Mutation testing with **Stryker.NET 5.1.0**, pinned as a local tool in `.config/dotnet-tools.json`: one `stryker-config.json` per test project (Microsoft.Testing.Platform runner, the `net10.0` build of the multi-targeted sources, `break: 0` so a run never fails a build). The baseline is recorded in [Mutation Testing](docs/development/mutation-testing.md) — `SafeWebCore` 53.53 %, `SafeWebCore.JwtBearer` 57.43 %, `SafeWebCore.FraudDetection` 20.68 % — with what each surviving mutant means. Runs are explicit, never part of `dotnet test` or CI.
+
+### Changed
+- Tests, examples and CI cover both targets: `dotnet test` runs 380 test runs (190 per target framework), and CI installs the .NET 11 SDK (builds every target) plus the .NET 10 runtime (runs the net10.0 leg).
+- C# 15 collection-expression arguments replace the equivalent constructor calls where the capacity or comparer is known: `[with(capacity: …)]` and `[with(comparer: …)]` in the options validator and the diagnostics preview, which removes the growth reallocations of the headers map and the warnings list. Union types and closed hierarchies are deliberately not adopted — they require .NET 11 runtime attributes (`UnionAttribute`, `IsClosedTypeAttribute`) and would fork the net10.0 build with `#if` for no runtime gain.
+- The benchmark host stays on `net10.0`: the pinned BenchmarkDotNet `0.15.8` does not recognise `net11.0` (`GetRuntimeVersion not implemented for NotRecognized`); the suite is documented so the target can be added with the first stable BenchmarkDotNet that supports it.
+- Publishing is keyless. `.github/workflows/publish-nuget.yml` replaces `nuget-publish.yml` and `nuget-publish-jwtbearer.yml` and uses nuget.org **trusted publishing**: GitHub issues an OIDC token, nuget.org exchanges it for a one-hour API key, and the push uses that key. The `NUGET_API_KEY` secret — the one that expired — is no longer used or needed; the only remaining configuration is the `NUGET_USER` repository secret, and the nuget.org policy must name `publish-nuget.yml`. A manual `workflow_dispatch` can publish without a tag through the `publish` input, the JwtBearer package now publishes with the release instead of on every `master` push, and a `concurrency` group keeps two publishes from racing.
+- Sonar-driven cleanup with no behavior change: `LoggingConfigurationManager` now guards its rate-limit state with `System.Threading.Lock` instead of `object` (the compiler emits `EnterScope`/`ExitScope`, cheaper than `Monitor`), two JwtBearer start-up tests assert the absence of an exception instead of only awaiting, and an unused local in the metrics test is gone. `Directory.Build.props` also gained an opt-in `SonarProbe` property that references `SonarAnalyzer.CSharp` 10.36.0.15337 for a local pre-check (`-p:SonarProbe=true`), so the next analysis arrives without findings the dashboard has not seen; it is off by default and changes nothing in a normal build.
+- Flaky-test fix, no product change: `FraudMetricsTests` listened to the metrics by meter *name*, so a dispatcher test incrementing its own `SafeWebCoreFraudMetrics` instance in parallel made `FraudAnalysesCounterIncrements` fail intermittently (`Expected: 2, Actual: 3` — roughly one full-suite run in four). The listener now enables the exact instrument instance; 10 consecutive fraud-suite runs and 5 consecutive full-suite runs are green.
+
+### Companion packages
+- `SafeWebCore.FraudDetection` **1.2.0** — multi-targets `net10.0` and `net11.0`; no code, public API or behavior change.
+- `SafeWebCore.JwtBearer` **1.1.0** — multi-targets `net10.0` and `net11.0`, with `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.12 on `net10.0` (unchanged floor) and 11.0.0 on `net11.0`; the metadata rate-limit guard moves from `object` to `System.Threading.Lock`.
+- `SafeWebCore.Testing` **1.0.0-preview.3** — multi-targets `net10.0` and `net11.0`, with `Microsoft.AspNetCore.Mvc.Testing` `10.0.*` / `11.0.*` per target. Stays preview.
+- `SafeWebCore.Analyzers` **1.0.0-preview.2** — unchanged, no source change; the tag push skips it because nuget.org already carries that version.
+
+### Compatibility
+- ✅ **100% backwards compatible** — the public API surface, `PublicAPI.Shipped.txt` baselines, defaults, presets and configuration paths are unchanged on both targets. The net10.0 asset behaves exactly like 1.8.1, and `SafeWebCore.Analyzers` (still `netstandard2.0`, still `1.0.0-preview.2`) is untouched.
 
 ---
 

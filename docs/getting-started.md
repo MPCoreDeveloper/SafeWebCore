@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download) or later
+- [.NET 10 or .NET 11 SDK](https://dotnet.microsoft.com/download) — the packages multi-target `net10.0` and `net11.0`
 - Visual Studio 2026+ / VS Code with C# Dev Kit / JetBrains Rider
 
 ## Installation
@@ -14,7 +14,7 @@ dotnet add package SafeWebCore
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="SafeWebCore" Version="1.8.1" />
+<PackageReference Include="SafeWebCore" Version="1.9.0" />
 ```
 
 ## Minimal Setup (A+ in 3 lines)

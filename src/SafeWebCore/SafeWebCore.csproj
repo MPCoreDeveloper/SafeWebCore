@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Multi-targeting: net10.0 keeps the shipped baseline, net11.0 ships the same public API
+         built against the .NET 11 runtime, so a net11.0 consumer gets the net11.0 asset (C# 15
+         language version and the .NET 11 JIT) instead of falling back to the net10.0 one. -->
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -10,7 +13,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore</PackageId>
-    <Version>1.8.1</Version>
+    <Version>1.9.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore</Product>
@@ -23,15 +26,14 @@
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
         <PackageReleaseNotes>
-## v1.8.1 — Internal cleanup, no behavior change
+## v1.9.0 — Multi-targeting .NET 10 and .NET 11
 
-Maintenance patch on the 1.8.0 line. **100% backwards compatible** — the public API surface, defaults, presets and configuration paths are untouched.
+**100% backwards compatible** — the public API surface, defaults, presets and configuration paths are unchanged. The package now ships a `net11.0` asset next to the existing `net10.0` one, so a .NET 11 application resolves the build made for its runtime instead of falling back to `net10.0`.
 
-**Changes:**
-- Internal deduplication: the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution existed as byte-identical copies in `GeoCulturalConsistencyDetector` / `WesternImpersonationDetector` and in `NetSecureHeadersMiddleware` / `NetSecureHeadersDiagnosticsService`. They now live once, in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers that both call sites use, so a score, a throttle rule or a policy-resolution rule can only change in one place
-- Internal code-quality cleanup with no behavior change: the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file, and the path-policy lookup walks the list by index instead of allocating an enumerator per request. Every emitted header value, directive and policy-resolution outcome is identical
-- Docs: a new SonarCloud triage page records how the analysis is scoped and the ten findings that are deliberately accepted
-- Development-only dependencies refreshed to their latest stable releases
+**What's new:**
+- `lib/net11.0` — the same public API, compiled against .NET 11 (C# 15 and the .NET 11 JIT). `lib/net10.0` is unchanged and stays the target for .NET 10 applications.
+- C# 15 collection-expression arguments (`[with(capacity: ...)]`, `[with(comparer: ...)]`) where the capacity or comparer is known, so the diagnostics preview no longer grows its header map and the options validator passes its comparer inside the collection expression. No behavior change.
+- Repository: publishing is keyless through nuget.org trusted publishing, and mutation testing with Stryker.NET records the test-suite baseline in `docs/development/mutation-testing.md`.
 
 See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>

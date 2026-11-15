@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Multi-targeting: net10.0 keeps the shipped baseline, net11.0 the same API on .NET 11. -->
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -11,7 +12,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>SafeWebCore.FraudDetection</PackageId>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Authors>MPCoreDeveloper</Authors>
     <Company>Posseth Software</Company>
     <Product>SafeWebCore.FraudDetection</Product>
@@ -29,13 +30,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-## v1.1.1 — Internal cleanup, no behavior change
+## v1.2.0 — Multi-targeting .NET 10 and .NET 11
 
-Maintenance patch on the 1.1.0 line. **100% backwards compatible** — the public API surface, defaults and behavior are untouched.
-
-- Internal deduplication: the pen-test signal scoring and the verdict-to-action mapping now live once in the shared internal helpers that both detectors call, so a score or a mapping can only change in one place
-- Internal code-quality cleanup with no behavior change
-- Development-only dependencies refreshed to their latest stable releases
+**100% backwards compatible** — no public API, default, preset or behavior change. The package adds a `lib/net11.0` asset next to `lib/net10.0`, so a .NET 11 application resolves the build made for its runtime.
 
 See CHANGELOG.md and docs/ for full details.
     </PackageReleaseNotes>

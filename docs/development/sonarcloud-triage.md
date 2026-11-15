@@ -11,12 +11,29 @@ The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/i
 | Project | `MPCoreDeveloper_SafeWebCore` |
 | Mode | SonarCloud Automatic Analysis (GitHub App) — there is no CI-based scan step |
 | Configuration | [`sonar-project.properties`](../../sonar-project.properties) |
-| Out of scope | `.agents/**`, `_bmad/**`, `_bmad-output/**`, `docs/**`, `artifacts/**`, `**/bin/**`, `**/obj/**` |
+| Out of scope | `.specify/**`, `.clinerules/**`, `specs/**`, `docs/**`, `artifacts/**`, `**/bin/**`, `**/obj/**` |
 | Quality gate | ratings A on new code, new duplicated lines < 3 %, security hotspots reviewed |
 
-Only product code belongs in the scope. The BMad tooling and the artifacts it renders were analysed as sources at first and produced 325 of 327 issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the gate on 58.5 % duplicated lines. Documentation is excluded as well, which is why this page is not part of the analysis.
+Only product code belongs in the scope. The Spec Kit tooling and the artifacts it renders were analysed as sources at first and produced 325 of 327 issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the gate on 58.5 % duplicated lines. Documentation is excluded as well, which is why this page is not part of the analysis.
 
 Verified state — analysis of 2026-09-28 over 5,798 lines of product code (the pass this page was written for): `OPEN 0`, `code_smells 0`, `duplicated_lines_density 0.0`, `sqale_rating` / `reliability_rating` / `security_rating` `1.0` (A), gate `OK`. Run the three queries below to check the revision you are looking at.
+
+Re-verified **2026-11-15** through the public API: gate `OK` on all five conditions, `resolved=false` → **0 open issues**, 363 issues resolved in total. The cloud analysis runs on `master`, so a local pre-check (below) is what keeps new code from arriving with findings the dashboard has not seen yet.
+
+## Local pre-check before pushing
+
+SonarCloud only sees what is on `master`, and the analysis lags a push. The C# rules it applies can be run locally against the working tree, because the analyzer package is wired into `Directory.Build.props` behind an opt-in property:
+
+```powershell
+dotnet build SafeWebCore.slnx -p:SonarProbe=true -p:TreatWarningsAsErrors=false
+```
+
+- `SonarProbe=true` adds `SonarAnalyzer.CSharp` (`10.36.0.15337`) as a private analyzer; without the property the package is not referenced at all, so normal builds stay fast and unchanged.
+- `TreatWarningsAsErrors=false` is required: every Sonar finding arrives as a warning, and the repository build normally promotes warnings to errors.
+- Expect each finding **twice** — once per target framework — and ignore the `[project]` suffix. Add `| Select-String 'warning S\d+:'` to see only Sonar's diagnostics.
+- This is a pre-check, not the source of truth: the dashboard still owns the resolutions, and a rule can be newer than the analyzer version pinned here.
+
+The probe run of **2026-11-15** reported exactly the eight `Won't fix` findings in the table below and nothing else. The two `S3251` false positives do not appear because the code already carries `// NOSONAR` on the `[LoggerMessage]` declarations and call sites.
 
 ---
 
@@ -48,6 +65,17 @@ Ten findings are accepted as-is: eight `Won't fix` and two `False positive`. The
 | `S3251` | `LoggingSecurityEventSink.cs` — call site | False positive | Same generated implementation, so the call is not elided |
 
 Each of these carries the matching comment in SonarCloud itself, including the evidence for the two false positives.
+
+### Fixed by the local pre-check (2026-11-15)
+
+The pre-check surfaced four findings that were in the working tree but not yet on the dashboard. All four were fixed in code rather than marked, because none of them needed a public-surface change:
+
+| Rule | Location | Fix |
+|------|----------|-----|
+| `S9422` | `LoggingConfigurationManager.cs` — `_sync` | Guarded with `System.Threading.Lock` instead of `object`; the compiler emits `EnterScope`/`ExitScope` for it, which is cheaper than `Monitor` and marks the field's purpose. Internal field, no API change. |
+| `S2699` | `JwtAuthorityValidationGuardTests.cs` — `StartAsyncPermanentFailureWithoutFailFastCompletes` | The test now captures the exception and asserts `Assert.Null(exception)`: "completes without throwing" is an assertion, not a missing one. |
+| `S2699` | `JwtAuthorityValidationGuardTests.cs` — `StartAsyncSuccessCompletes` | Same pattern. |
+| `S1481` | `NetSecureHeadersMiddlewareTests.cs` — unused local `metrics` | Removed; the metric is observed through a `MeterListener`, and the middleware constructs its own `SafeWebCoreMetrics`, so resolving it changed nothing. |
 
 ---
 

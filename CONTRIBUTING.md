@@ -14,7 +14,7 @@ Thank you for your interest in contributing!
 
 ### Prerequisites
 
-- .NET 10 SDK
+- .NET 11 SDK (the .NET 10 runtime is also required, because `dotnet test` runs the net10.0 and net11.0 targets)
 - Visual Studio 2026 or later / VS Code with C# Dev Kit
 
 ### Build
@@ -29,20 +29,29 @@ dotnet build
 dotnet test
 ```
 
-### AI-assisted development (BMad)
+### AI-assisted development (Spec Kit)
 
-This repository is set up for the [BMad Method](https://docs.bmad-method.org): the skills live in
-`.agents/skills` (used by Cline and GitHub Copilot) and the project runtime lives in `_bmad/`.
+This repository is set up for [GitHub Spec Kit](https://github.com/github/spec-kit) (spec-driven development), so the
+specification, the plan, the tasks and the verification of a change live in version control next to the code instead of
+in chat history. The project scaffolding is in `.specify/`, the commands are generated for Cline into
+`.clinerules/workflows/`, and feature artifacts are written to `specs/`.
 
-- Install or update: `npx skills update`, then ask your coding agent to run `bmad setup`.
-- Ask for a skill by name, for example `bmad-build` for a change that fits one session, `bmad-review` to review a
-  diff or PR, `bmad-qa-generate-e2e-tests` for missing end-to-end coverage, or `bmad` for help and status.
-- See [docs/development/bmad-workflow.md](docs/development/bmad-workflow.md) for the full workflow, commands and
-  guardrails. BMad does not override this file or the backward compatibility policy below.
+- Install or update the tool: `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`
+  (or `specify self upgrade` for an existing install), then `specify init --here --force` to refresh the shared
+  scripts and templates.
+- Work in order: `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`; `/speckit-clarify`,
+  `/speckit-checklist` and `/speckit-analyze` are optional quality gates, `/speckit-converge` reconciles a spec with
+  existing code.
+- GitHub Copilot instead of Cline: `specify integration switch copilot` replaces the generated commands with
+  `.github/skills/speckit-*/`; `specify integration switch cline` switches back.
+- The [constitution](.specify/memory/constitution.md) is authoritative for what a specification may promise. It does
+  not override this file or the backward compatibility policy below; when the two disagree, the stricter rule wins.
+- See [docs/development/spec-kit-workflow.md](docs/development/spec-kit-workflow.md) for the full workflow, commands and
+  guardrails.
 
 ## Coding Standards
 
-- Target .NET 10 / C# 14
+- Target .NET 10 and .NET 11 (multi-targeted), C# 15 (the repo builds with the .NET 11 SDK and `LangVersion=preview`)
 - Use modern C# features (primary constructors, collection expressions, Lock class)
 - Follow the conventions in `.editorconfig`
 - Async methods must end with `Async` suffix

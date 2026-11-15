@@ -23,7 +23,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
+          # 11.0.x builds every target framework; 10.0.x installs the runtime that `dotnet test`
+          # needs for the net10.0 leg of each multi-targeted suite.
           dotnet-version: |
+            11.0.x
             10.0.x
 
       - name: Restore

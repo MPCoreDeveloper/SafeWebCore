@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Benchmarks stay on net10.0 on purpose. BenchmarkDotNet 0.15.8 (latest stable) has no
+         `Net11_0` runtime moniker: running this project on net11.0 fails with
+         `NotImplementedException: GetRuntimeVersion not implemented for NotRecognized`. Add net11.0
+         to this list once a stable BenchmarkDotNet recognises it, then run with `-f net11.0`. -->
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

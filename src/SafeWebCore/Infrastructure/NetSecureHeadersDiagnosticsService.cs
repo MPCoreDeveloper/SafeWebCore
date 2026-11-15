@@ -42,7 +42,9 @@ internal sealed class NetSecureHeadersDiagnosticsService(IOptions<NetSecureHeade
         string? reportingEndpointsValue,
         CspEndpointMode? endpointCspMode)
     {
-        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // C# 15 collection-expression arguments: 13 standard headers plus NEL, Reporting-Endpoints
+        // and CSP fit in the initial bucket, so the preview never grows (and re-hashes) the map.
+        Dictionary<string, string> headers = [with(capacity: 16, comparer: StringComparer.OrdinalIgnoreCase)];
 
         AddStandardHeader(headers, options.EnableHsts, HeaderNames.StrictTransportSecurity, options.HstsValue);
         AddStandardHeader(headers, options.EnableXFrameOptions, HeaderNames.XFrameOptions, options.XFrameOptionsValue);
@@ -103,7 +105,8 @@ internal sealed class NetSecureHeadersDiagnosticsService(IOptions<NetSecureHeade
 
     private static string[] BuildWarnings(NetSecureHeadersOptions options, string? matchedPathPolicy, CspEndpointMode? endpointCspMode)
     {
-        var warnings = new List<string>(4);
+        // C# 15 collection-expression arguments: capacity 4 is the exact upper bound of the warnings below.
+        List<string> warnings = [with(capacity: 4)];
 
         if (!string.IsNullOrWhiteSpace(matchedPathPolicy))
         {

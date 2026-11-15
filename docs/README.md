@@ -1,6 +1,6 @@
 # SafeWebCore Documentation
 
-Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware library that adds security headers to ASP.NET Core applications, targeting an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
+Welcome to the SafeWebCore documentation. SafeWebCore is a **.NET 10 and .NET 11** middleware library that adds security headers to ASP.NET Core applications, targeting an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
 ---
 
@@ -27,8 +27,10 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 - **[Recipes](recipes/README.md)** — Practical guides for common scenarios (MVC+CDN, Swagger, Blazor, Report-Only, Reverse Proxy, etc.)
 - **[Roadmap](roadmap.md)** — Planned work for `v1.4` through `v1.6`, focused on DX, diagnostics, tooling, and observability
 - **[Backward Compatibility Policy](development/backward-compatibility-policy.md)** — Rules for additive-only changes, stable defaults, and supported upgrade paths
-- **[BMad Workflow](development/bmad-workflow.md)** — AI-assisted development setup (BMad Method skills, `_bmad/` runtime, update/status commands, guardrails)
+- **[Spec Kit Workflow](development/spec-kit-workflow.md)** — AI-assisted, spec-driven development setup (Spec Kit constitution, `.specify/` scaffolding, slash commands, guardrails)
+- **[Architecture Spine](development/architecture/ARCHITECTURE-SPINE.md)** — The design paradigm, the adopted architecture decisions (AD-1 to AD-19) and what they prevent
 - **[SonarCloud Triage](development/sonarcloud-triage.md)** — Analysis scope, triage rules, and the accepted findings that keep the SonarCloud issue list at zero
+- **[Mutation Testing](development/mutation-testing.md)** — Stryker.NET setup, how to run a suite, the baseline scores per package and what the surviving mutants mean
 
 ### Repository, packages & release
 
@@ -64,7 +66,8 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a .NET 10 middleware li
 | **Understand planned roadmap work** | [Roadmap](roadmap.md) |
 | **Review compatibility rules before contributing** | [Backward Compatibility Policy](development/backward-compatibility-policy.md) |
 | **Triage a SonarCloud finding (or check the accepted ones)** | [SonarCloud Triage](development/sonarcloud-triage.md) |
-| **Set up or use AI agents (BMad Method)** | [BMad Workflow](development/bmad-workflow.md) |
+| **Measure how much the tests actually catch** | [Mutation Testing](development/mutation-testing.md) |
+| **Set up or use AI agents (Spec Kit)** | [Spec Kit Workflow](development/spec-kit-workflow.md) |
 | **See all projects in the repo** | [Project Catalog](projects.md) |
 | **Understand NuGet candidates** | [NuGet Packages & Candidates](nuget-packages.md) |
 | **Check if ready to release** | [Release Readiness](release-readiness.md) |

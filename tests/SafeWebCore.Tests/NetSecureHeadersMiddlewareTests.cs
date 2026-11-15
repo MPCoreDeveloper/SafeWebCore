@@ -658,7 +658,6 @@ public sealed class NetSecureHeadersMiddlewareTests : IAsyncDisposable
             })
             .StartAsync(TestContext.Current.CancellationToken);
 
-        var metrics = host.Services.GetRequiredService<SafeWebCoreMetrics>();
         long headersApplied = 0;
 
         using var listener = new MeterListener();

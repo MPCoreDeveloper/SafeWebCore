@@ -6,4 +6,11 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
   </PropertyGroup>
+
+  <!-- Opt-in local pre-check of the rules SonarCloud applies to C# (see docs/development/sonarcloud-triage.md):
+       dotnet build SafeWebCore.slnx -p:SonarProbe=true -p:TreatWarningsAsErrors=false
+       Off by default so the normal build stays fast and the cloud analysis stays the single source of truth. -->
+  <ItemGroup Condition="'$(SonarProbe)' == 'true'">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.36.0.15337" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

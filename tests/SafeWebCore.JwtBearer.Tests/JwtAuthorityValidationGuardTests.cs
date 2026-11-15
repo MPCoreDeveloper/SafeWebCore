@@ -53,7 +53,10 @@ public sealed class JwtAuthorityValidationGuardTests
     {
         var guard = CreateGuard(PermanentFailureManager(), failFast: false);
 
-        await guard.StartAsync(CancellationToken.None);
+        // Without fail-fast a permanent metadata failure must be logged, not thrown.
+        var exception = await Record.ExceptionAsync(() => guard.StartAsync(CancellationToken.None));
+
+        Assert.Null(exception);
     }
 
     [Fact]
@@ -61,7 +64,9 @@ public sealed class JwtAuthorityValidationGuardTests
     {
         var guard = CreateGuard(SuccessfulManager(), failFast: true);
 
-        await guard.StartAsync(CancellationToken.None);
+        var exception = await Record.ExceptionAsync(() => guard.StartAsync(CancellationToken.None));
+
+        Assert.Null(exception);
     }
 
     [Fact]

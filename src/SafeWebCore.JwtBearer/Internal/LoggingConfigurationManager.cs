@@ -16,7 +16,10 @@ internal sealed partial class LoggingConfigurationManager : BaseConfigurationMan
 {
     private readonly BaseConfigurationManager _inner;
     private readonly ILogger _logger;
-    private readonly object _sync = new();
+
+    // System.Threading.Lock (.NET 9+) instead of object: the C# compiler emits EnterScope/ExitScope
+    // for it, which is cheaper than Monitor.Enter/Exit and cannot be confused with a data field.
+    private readonly Lock _sync = new();
     private DateTimeOffset _lastFailureLogged = DateTimeOffset.MinValue;
 
     /// <summary>

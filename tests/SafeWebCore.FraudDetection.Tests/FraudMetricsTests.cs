@@ -16,7 +16,7 @@ public sealed class FraudMetricsTests
         long observed = 0;
 
         using var listener = new MeterListener();
-        ConfigureListener(listener, SafeWebCoreFraudMetrics.MeterName, "safewebcore.fraud_analyses_total", (m, _) => observed += m);
+        ConfigureListener(listener, metrics.FraudAnalyses, (m, _) => observed += m);
         listener.Start();
 
         metrics.FraudAnalyses.Add(1);
@@ -32,7 +32,7 @@ public sealed class FraudMetricsTests
         long critical = 0;
 
         using var listener = new MeterListener();
-        ConfigureListener(listener, SafeWebCoreFraudMetrics.MeterName, "safewebcore.fraud_events_by_risk_total", (m, tags) =>
+        ConfigureListener(listener, metrics.FraudEventsByRisk, (m, tags) =>
         {
             if (tags.TryGetValue("risk_level", out var level) && level?.ToString() == RiskLevel.Critical.ToString())
                 critical += m;
@@ -52,7 +52,7 @@ public sealed class FraudMetricsTests
         long regionImp = 0;
 
         using var listener = new MeterListener();
-        ConfigureListener(listener, SafeWebCoreFraudMetrics.MeterName, "safewebcore.fraud_events_by_verdict_total", (m, tags) =>
+        ConfigureListener(listener, metrics.FraudEventsByVerdict, (m, tags) =>
         {
             if (tags.TryGetValue("verdict", out var v) && v?.ToString() == FraudVerdict.RegionImpersonation.ToString())
                 regionImp += m;
@@ -64,25 +64,34 @@ public sealed class FraudMetricsTests
         Assert.Equal(1, regionImp);
     }
 
-    private static void ConfigureListener(MeterListener listener, string meterName, string instrumentName, Action<long, IReadOnlyDictionary<string, object?>> onMeasurement)
+    /// <summary>
+    /// Enables measurement events for exactly one instrument instance.
+    /// </summary>
+    /// <remarks>
+    /// Filtering by meter name is not enough: every <see cref="SafeWebCoreFraudMetrics"/> instance creates a meter
+    /// with the same name, and xUnit runs test classes in parallel, so a name filter also observes the counters of a
+    /// detector or dispatcher test that increments its own metrics at the same time — which made this suite fail
+    /// intermittently with "Expected: 2, Actual: 3". Enabling the instance keeps every assertion about this test's
+    /// own increments.
+    /// </remarks>
+    private static void ConfigureListener(
+        MeterListener listener,
+        Instrument instrument,
+        Action<long, IReadOnlyDictionary<string, object?>> onMeasurement)
     {
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.SetMeasurementEventCallback<long>((observed, measurement, tags, state) =>
         {
-            if (instrument.Meter.Name == meterName && instrument.Name == instrumentName)
+            if (!ReferenceEquals(observed, instrument))
             {
-                meterListener.EnableMeasurementEvents(instrument);
+                return;
             }
-        };
 
-        listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
-        {
-            if (instrument.Name == instrumentName)
-            {
-                var dict = new Dictionary<string, object?>();
-                foreach (var t in tags)
-                    dict[t.Key] = t.Value;
-                onMeasurement(measurement, dict);
-            }
+            var dict = new Dictionary<string, object?>();
+            foreach (var t in tags)
+                dict[t.Key] = t.Value;
+            onMeasurement(measurement, dict);
         });
+
+        listener.EnableMeasurementEvents(instrument);
     }
 }

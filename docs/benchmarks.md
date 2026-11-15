@@ -13,6 +13,13 @@ SafeWebCore ships a [BenchmarkDotNet](https://benchmarkdotnet.org/) project (`be
 | `MiddlewarePipelineBenchmarks` | End-to-end `NetSecureHeadersMiddleware.InvokeAsync` overhead across four scenarios |
 | `CspReportParseBenchmarks` | CSP report JSON parsing pipeline: minimal, full, and invalid-payload paths |
 
+## Runtime
+
+The benchmark host targets `net10.0`, even though the library ships `net10.0` and `net11.0` assets. The pinned
+BenchmarkDotNet `0.15.8` has no `Net11_0` runtime moniker, so adding `net11.0` to the benchmark project makes every run
+fail with `NotImplementedException: GetRuntimeVersion not implemented for NotRecognized`. Add `net11.0` to
+`SafeWebCore.Benchmarks.csproj` once a stable BenchmarkDotNet release recognises the runtime.
+
 ## Running benchmarks
 
 BenchmarkDotNet **requires a Release build** to produce meaningful results. Debug builds are rejected with an error message.

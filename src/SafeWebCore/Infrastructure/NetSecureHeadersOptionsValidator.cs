@@ -41,7 +41,9 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
         List<string> failures = [];
         ValidatePolicy(options, "Global policy", failures);
 
-        var seenPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // C# 15 collection-expression arguments: the comparer is passed to the HashSet constructor
+        // inside the expression, matching the `List<string> failures = []` style used above.
+        HashSet<string> seenPrefixes = [with(comparer: StringComparer.OrdinalIgnoreCase)];
 
         foreach (var pathPolicy in options.PathPolicies)
         {
@@ -102,7 +104,7 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
 
     private static void ValidateAdditionalHeaders(NetSecureHeadersOptions options, string scope, List<string> failures)
     {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> seen = [with(comparer: StringComparer.OrdinalIgnoreCase)];
 
         foreach (var header in options.AdditionalHeaders)
         {
@@ -131,7 +133,7 @@ internal sealed class NetSecureHeadersOptionsValidator : IValidateOptions<NetSec
 
     private static void ValidateReportingEndpoints(NetSecureHeadersOptions options, string scope, List<string> failures)
     {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> seen = [with(comparer: StringComparer.OrdinalIgnoreCase)];
 
         foreach (var endpoint in options.ReportingEndpoints)
         {

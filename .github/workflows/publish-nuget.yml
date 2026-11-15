@@ -1,0 +1,139 @@
+name: Publish NuGet packages
+
+# Keyless publishing through nuget.org trusted publishing. This workflow asks GitHub for a
+# short-lived OIDC token, exchanges it at https://www.nuget.org/api/v2/token for an API key that is
+# valid for one hour, and pushes with that key. There is no NUGET_API_KEY secret any more: a stored
+# key is exactly what trusted publishing removes.
+#
+# The nuget.org policy must match this run (case-insensitive):
+#   Repository Owner: MPCoreDeveloper
+#   Repository:       SafeWebCore
+#   Workflow File:    publish-nuget.yml   <- the file name only, no .github/workflows/ prefix
+#   Environment:      leave empty on nuget.org unless you also add `environment: <name>` to the
+#                     publish job below; a policy that pins an environment only matches a run that
+#                     declares it.
+# Renaming or moving this file breaks publishing until the policy is updated, so treat the file
+# name as part of the release contract.
+#
+# Secret used: NUGET_USER — the nuget.org account that owns the trusted publishing policy.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Push the packed packages to nuget.org (false = build, test and pack only)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Only one publish may run at a time. The retired JwtBearer-on-master workflow once raced the tag
+# run and produced "already exists" pushes; queuing instead of cancelling keeps a release intact.
+concurrency:
+  group: nuget-publish
+  cancel-in-progress: false
+
+jobs:
+  build-test-pack:
+    name: Build, test and pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          # 11.0.x builds both target frameworks; 10.0.x installs the runtime that the net10.0 leg
+          # of each multi-targeted test suite needs.
+          dotnet-version: |
+            11.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore SafeWebCore.slnx
+
+      - name: Build
+        run: dotnet build SafeWebCore.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test SafeWebCore.slnx --configuration Release --no-build
+
+      - name: Pack core package
+        run: dotnet pack src/SafeWebCore/SafeWebCore.csproj --configuration Release --no-build --output artifacts/nuget
+
+      - name: Pack companion packages
+        run: |
+          dotnet pack src/SafeWebCore.Analyzers/SafeWebCore.Analyzers.csproj --configuration Release --no-build --output artifacts/nuget
+          dotnet pack src/SafeWebCore.Testing/SafeWebCore.Testing.csproj --configuration Release --no-build --output artifacts/nuget
+          dotnet pack src/SafeWebCore.FraudDetection/SafeWebCore.FraudDetection.csproj --configuration Release --no-build --output artifacts/nuget
+          dotnet pack src/SafeWebCore.JwtBearer/SafeWebCore.JwtBearer.csproj --configuration Release --no-build --output artifacts/nuget
+
+      - name: Upload NuGet artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/nuget/*.nupkg
+            artifacts/nuget/*.snupkg
+
+  publish:
+    name: Publish to nuget.org
+    needs: build-test-pack
+    runs-on: ubuntu-latest
+    # A version tag publishes; a manual run publishes only when asked to, so a dispatch without the
+    # checkbox still gives a verified pack artifact.
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+    permissions:
+      contents: read
+      id-token: write # REQUIRED: lets NuGet/login@v1 request the GitHub OIDC token
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-packages
+          path: artifacts/nuget
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Check the nuget.org user is configured
+        env:
+          NUGET_USER: ${{ secrets.NUGET_USER }}
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::Set the NUGET_USER repository secret to the nuget.org account that owns the trusted publishing policy."
+            exit 1
+          fi
+
+      # The key is valid for one hour and one OIDC token yields exactly one key, so log in
+      # immediately before the push rather than in an earlier job.
+      - name: NuGet login (OIDC -> short-lived API key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push packages
+        # The key travels through the environment, not through an inline expression: GitHub expands
+        # `${{ }}` inside `run:` before printing the script, so an inline key would be echoed into the
+        # job log unless the action also registered it as a mask.
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          # A single glob pushes every package file, symbol packages included: 'dotnet nuget push'
+          # also matches '*.snupkg' with the '*.nupkg' pattern (verified on run 36374600399,
+          # 2026-09-28), so a separate symbols-only push would only report "already exists"
+          # conflicts. Keep the glob, not two pushes.
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate

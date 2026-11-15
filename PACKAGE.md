@@ -1,15 +1,14 @@
 # 🛡️ SafeWebCore
 
-A lightweight, high-performance .NET 10 middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
+A lightweight, high-performance **.NET 10 and .NET 11** middleware library that adds security headers to your ASP.NET Core applications. Targets an **A+ rating** on [securityheaders.com](https://securityheaders.com) out of the box.
 
-**Current version:** 1.8.1
+**Current version:** 1.9.0
 
-New in 1.8.1 (maintenance patch — no public API, default, preset or behavior change):
-- **Internal deduplication** — the pen-test signal scoring, the authorization-check notification flow and the path-policy resolution were byte-identical copies in the two fraud detectors and in the middleware/diagnostics pair; they now live once in the internal `PenTestSignalAnalyzer` and `PathPolicyResolver` helpers, so a rule can only change in one place.
-- **Allocation cleanup** — the path-policy lookup walks the list by index instead of allocating an enumerator per request, and the repeated CSP source literals in `SecurePresets`, `CspOptions` and `CrossOriginPolicyBuilder` now name one private constant per file. Every emitted header value and policy-resolution outcome is identical.
-- **Dependency maintenance** — development-only packages (test SDK, xunit, coverlet, `PublicApiAnalyzers`) refreshed to their latest stable releases.
-- **Docs** — a new SonarCloud triage page records how the analysis is scoped and the ten findings that are deliberately accepted.
-- `SafeWebCore.FraudDetection` moves to `1.1.1`, `SafeWebCore.JwtBearer` to `1.0.1` (its `Microsoft.AspNetCore.Authentication.JwtBearer` floor is now 10.0.12), and the two preview packages to `1.0.0-preview.2`.
+New in 1.9.0 (multi-targeting release — no public API, default, preset or configuration change):
+- **`lib/net11.0` next to `lib/net10.0`** — a .NET 11 application now resolves a build compiled against .NET 11 (C# 15 and the .NET 11 JIT) instead of falling back to the `net10.0` asset. The `net10.0` build is unchanged.
+- **C# 15 collection-expression arguments** — `[with(capacity: …)]` / `[with(comparer: …)]` where the capacity or comparer is known, so the diagnostics preview no longer grows its header map. Every emitted header value is identical.
+- **Companion packages** — `SafeWebCore.FraudDetection` moves to `1.2.0`, `SafeWebCore.JwtBearer` to `1.1.0` (its `Microsoft.AspNetCore.Authentication.JwtBearer` dependency is now per target: 10.0.12 on `net10.0`, 11.0.0 on `net11.0`), and `SafeWebCore.Testing` to `1.0.0-preview.3`.
+- **Repository** — keyless publishing through nuget.org trusted publishing, and a [mutation-testing baseline](docs/development/mutation-testing.md) that records what the test suite actually catches.
 
 ## Backward Compatibility Goal
 

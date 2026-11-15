@@ -5,7 +5,7 @@ This roadmap defines the next development phases for `SafeWebCore` and `SafeWebC
 It is based on the following hard requirements:
 
 - **100% backward compatibility**
-- Target framework remains **.NET 10**
+- Target frameworks: **.NET 10** and **.NET 11** (multi-targeted; every change must build and pass on both)
 - Tests use **xUnit v3**
 - New features must be **additive**
 - Existing public APIs, configuration paths, and presets must remain supported

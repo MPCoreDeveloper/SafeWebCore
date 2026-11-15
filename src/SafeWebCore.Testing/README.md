@@ -2,7 +2,7 @@
 
 Consumer-facing testing helpers for SafeWebCore.
 
-**Current version:** 1.0.0-preview.2
+**Current version:** 1.0.0-preview.3
 
 ## Features
 

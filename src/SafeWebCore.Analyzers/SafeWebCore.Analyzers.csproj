@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Roslyn analyzers load into the compiler host (which also runs on .NET Framework), so the
+         analyzer assembly stays on netstandard2.0. Deliberately not multi-targeted: a net10.0 or
+         net11.0 analyzer cannot be loaded by every compiler host that consumes the package. -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>

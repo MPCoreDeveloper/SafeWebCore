@@ -6,7 +6,7 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)](https://dotnet.microsoft.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MPCoreDeveloper/SafeWebCore/blob/master/LICENSE)
 
-**Current version:** 1.0.1
+**Current version:** 1.1.0
 
 Optional companion module for **SafeWebCore** that makes a misconfigured or unreachable
 **JWT authority fail loud before your users ever see a 401** — and optionally hardens
