@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The manual builder.
+
+    It is a plain console app on purpose: the manual is a build artefact, and the tool that produces it has to be
+    runnable without a package feed, a Python environment or a design-time host. It is not packed and not referenced
+    by anything.
+
+    Three stages, in this order: Markdown to HTML (MarkdownConverter, SyntaxHighlighter, ManualHtml), HTML to pages
+    (Chrome or Edge, headless, print-to-pdf), check (the printed file starts with a PDF header and is not empty).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

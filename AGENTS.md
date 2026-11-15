@@ -31,6 +31,11 @@ feature specs `specs/`, guide `docs/development/spec-kit-workflow.md`.
 
 ## Where things are
 
+- The **manual** is the book-length documentation: chapters in `docs/manual/src`, print stylesheet `docs/manual/manual.css`,
+  build tool `tools/SafeWebCore.Manual`, and the released PDF `docs/SafeWebCore-Manual-<version>.pdf`. Rebuild it with
+  `dotnet run --project .\tools\SafeWebCore.Manual` (needs Chrome or Edge) and update the chapter list in
+  `docs/README.md` when a chapter is added. A user-visible behaviour change that the manual describes belongs in the same
+  pull request.
 - Feature docs to keep in step with code changes: `docs/getting-started.md`, `docs/security-headers.md`,
   `docs/csp-configuration.md`, `docs/presets.md`, `docs/advanced-configuration.md`, `docs/projects.md`.
 - Package and publish facts: `docs/nuget-packages.md`; release gate: `docs/release-readiness.md`.

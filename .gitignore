@@ -49,6 +49,9 @@ coveragereport/
 # Mutation testing (Stryker.NET) — reports land in artifacts/stryker, this covers the default folder
 StrykerOutput/
 
+# Manual build intermediate (the HTML the browser prints); the PDF in docs/ is the artefact
+docs/manual/build/
+
 # OS files
 Thumbs.db
 ehthumbs.db

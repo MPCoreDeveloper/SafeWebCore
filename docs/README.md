@@ -4,6 +4,44 @@ Welcome to the SafeWebCore documentation. SafeWebCore is a **.NET 10 and .NET 11
 
 ---
 
+## 📘 The manual
+
+The manual is the book-length documentation: 22 chapters that go from the first A+ response to the architecture, the
+companion packages and a cookbook.
+
+- **[Read or download the manual as a PDF](SafeWebCore-Manual-1.9.0.pdf)** — 59 pages, A4, with a cover and a contents page.
+- **Read the chapters as Markdown** in [`manual/src`](manual/src). Each file is one chapter, in reading order, and it is
+  the source of both the GitHub documentation and the PDF.
+- **Build it yourself:** `dotnet run --project .\tools\SafeWebCore.Manual`. Chrome or Edge is the only prerequisite beyond
+  the .NET SDK; Chapter 20 of the manual describes the pipeline.
+
+| Chapter | What it covers |
+|---------|----------------|
+| [Preface](manual/src/00-preface.md) | Who the manual is for, how it is organised, and the conventions every chapter uses |
+| [1. What SafeWebCore Is](manual/src/01-what-it-is.md) | The six questions the library answers, one middleware, and the nonce as the hinge |
+| [2. What SafeWebCore Is Not](manual/src/02-what-it-is-not.md) | The deliberate boundary: not a WAF, no HTML rewriting, no report storage |
+| [3. Installation and the First A+ Response](manual/src/03-installation.md) | Install, two calls, read the headers back, and a first test |
+| [4. Presets](manual/src/04-presets.md) | Every preset, what each emphasises, and preset-as-path-policy |
+| [5. The Options Model](manual/src/05-the-options-model.md) | The whole options shape, the defaults, and startup validation |
+| [6. Content Security Policy](manual/src/06-content-security-policy.md) | The directive record, `{nonce}`, the builder, Trusted Types, reporting |
+| [7. Nonces and Tag Helpers](manual/src/07-nonces-and-tag-helpers.md) | Generation, `GetCspNonce()`, the Razor helpers, and `'strict-dynamic'` |
+| [8. Path Policies](manual/src/08-path-policies.md) | Longest-prefix matching, normalisation, and why duplicates fail |
+| [9. Endpoint Overrides](manual/src/09-endpoint-overrides.md) | `SkipNetSecureHeaders`, `WithCspMode`, and the precedence order |
+| [10. Report-Only Rollout and Reporting](manual/src/10-report-only-and-reporting.md) | Report-only, `/csp-report`, sinks, NEL, and a rollout that survives review |
+| [11. The Diagnostics Endpoint](manual/src/11-diagnostics.md) | Every field of the preview, and how to protect it |
+| [12. Telemetry: Events and Metrics](manual/src/12-telemetry.md) | `SecurityEvent`, sinks, the four counters, and what to alert on |
+| [13. Custom Policies, Additional Headers and Validation](manual/src/13-custom-policies-and-validation.md) | `IHeaderPolicy`, the header order, the typed builders, the validator |
+| [14. Configuration Binding](manual/src/14-configuration-binding.md) | `AddNetSecureHeadersFromConfiguration`, a full `appsettings` example |
+| [15. SafeWebCore.FraudDetection](manual/src/15-fraud-detection.md) | Signals, the report, pen-test authorisation, injectable notifications |
+| [16. SafeWebCore.JwtBearer](manual/src/16-jwt-bearer.md) | The authority guard, token hardening, and what the package refuses to be |
+| [17. Analyzers and the Testing Package](manual/src/17-analyzers-and-testing.md) | `SWC001`–`SWC004`, the header assertions, the test host |
+| [18. Architecture and Compatibility](manual/src/18-architecture-and-compatibility.md) | Layers, one resolver, state, the compatibility promise and how it is proven |
+| [19. Cookbook](manual/src/19-cookbook.md) | Complete recipes: SPA + API, Blazor, CDN, Swagger, health, tests |
+| [20. How This Manual Is Built](manual/src/20-how-this-manual-is-built.md) | The three stages, the Markdown subset, and what the build does not do |
+| [21. Option Reference](manual/src/21-option-reference.md) | Every option, its default, and where it is explained |
+
+---
+
 ## 📖 Table of Contents
 
 ### Getting Started
