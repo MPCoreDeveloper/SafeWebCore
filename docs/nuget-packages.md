@@ -2,7 +2,7 @@
 
 This document describes every packable project: identity, contents, publish status, readiness, and recommended release sequencing.
 
-**Last audited:** 2026-11-15 (the **1.9.0** multi-targeting release was prepared: versions bumped, all five packages packed locally and every nuspec inspected; **not yet tagged or published** — the tag push is the last box on the release checklist below)
+**Last audited:** 2026-11-15 (the **1.9.0** multi-targeting release was prepared, packed, tagged `v1.9.0` and published the same day by `publish-nuget.yml` run [43732434990](https://github.com/MPCoreDeveloper/SafeWebCore/actions/runs/43732434990); every package was then downloaded back from nuget.org and its nuspec and `lib/` folders inspected)
 **Local pack output (verified):** `artifacts/nupkg-1.9.0/`
 
 > **Canonical version form:** `<Version>` is three-part SemVer — `1.2.3`, optionally with a `-preview.N`
@@ -13,23 +13,23 @@ This document describes every packable project: identity, contents, publish stat
 
 ## Quick status
 
-| PackageId | csproj version | nuget.org already has (verified 2026-09-29) | Local pack (2026-11-15) | Recommendation for 1.9.0 |
-|-----------|----------------|--------------------------------------------|-------------------------|--------------------------|
-| **SafeWebCore** | `1.9.0` | `1.0.0` … `1.7.0`, `1.8.0`, `1.8.1` | `SafeWebCore.1.9.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0`; `lib/net10.0` unchanged |
-| **SafeWebCore.FraudDetection** | `1.2.0` | `1.0.0`, `1.1.0`, `1.1.1` | `SafeWebCore.FraudDetection.1.2.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0`; no code change |
-| **SafeWebCore.JwtBearer** | `1.1.0` | `1.0.0`, `1.0.1` | `SafeWebCore.JwtBearer.1.1.0.nupkg` + `.snupkg` | **Publish** — adds `lib/net11.0` and the per-target `JwtBearer` dependency |
-| **SafeWebCore.Analyzers** | `1.0.0-preview.2` | `1.0.0-preview.1`, `1.0.0-preview.2` | `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` | **Unchanged** — `--skip-duplicate` skips it; bump only when its source changes |
-| **SafeWebCore.Testing** | `1.0.0-preview.3` | `1.0.0-preview.1`, `1.0.0-preview.2` | `SafeWebCore.Testing.1.0.0-preview.3.nupkg` | **Publish** (preview) — adds `lib/net11.0` and the per-target `Mvc.Testing` dependency |
+| PackageId | csproj version | nuget.org (verified 2026-11-15) | Local pack (2026-11-15) | State |
+|-----------|----------------|---------------------------------|-------------------------|-------|
+| **SafeWebCore** | `1.9.0` | `1.0.0` … `1.7.0`, `1.8.0`, `1.8.1`, **`1.9.0`** (2026-11-15) | `SafeWebCore.1.9.0.nupkg` + `.snupkg` | **Released** — adds `lib/net11.0`; `lib/net10.0` unchanged |
+| **SafeWebCore.FraudDetection** | `1.2.0` | `1.0.0`, `1.1.0`, `1.1.1`, **`1.2.0`** (2026-11-15) | `SafeWebCore.FraudDetection.1.2.0.nupkg` + `.snupkg` | **Released** — adds `lib/net11.0`; no code change |
+| **SafeWebCore.JwtBearer** | `1.1.0` | `1.0.0`, `1.0.1`, **`1.1.0`** (2026-11-15) | `SafeWebCore.JwtBearer.1.1.0.nupkg` + `.snupkg` | **Released** — adds `lib/net11.0` and the per-target `JwtBearer` dependency |
+| **SafeWebCore.Analyzers** | `1.0.0-preview.2` | `1.0.0-preview.1`, `1.0.0-preview.2` | `SafeWebCore.Analyzers.1.0.0-preview.2.nupkg` | **Unchanged** — `--skip-duplicate` reported "already exists"; bump only when its source changes |
+| **SafeWebCore.Testing** | `1.0.0-preview.3` | `1.0.0-preview.1`, `1.0.0-preview.2`, **`1.0.0-preview.3`** (2026-11-15) | `SafeWebCore.Testing.1.0.0-preview.3.nupkg` | **Released** (preview) — adds `lib/net11.0` and the per-target `Mvc.Testing` dependency |
 
 Non-packable (not NuGet candidates): test projects, examples, benchmarks.
 
 ---
 
-## Release 1.9.0 — prepared 2026-11-15 (not yet tagged)
+## Release 1.9.0 — published 2026-11-15
 
-The next release ships the **multi-targeting** work: every runtime package gains a `lib/net11.0` asset next to the
-unchanged `lib/net10.0` one. Adding a target framework is additive, so SemVer says **minor**: core moves 1.8.1 →
-**1.9.0**, not a patch. No public API, default, preset or configuration path changes on either target.
+The 1.9.0 release shipped the **multi-targeting** work: every runtime package gained a `lib/net11.0` asset next to the
+unchanged `lib/net10.0` one. Adding a target framework is additive, so SemVer said **minor**: core moved 1.8.1 →
+**1.9.0**, not a patch. No public API, default, preset or configuration path changed on either target.
 
 | Order | Package | Version | Pack (verified locally) | What changed |
 |-------|---------|---------|-------------------------|--------------|
@@ -56,12 +56,15 @@ because the packages now carry two builds of the same assembly — and because t
 - [x] Packaged readmes state the new version — `PACKAGE.md` inside the core package, `README.md` inside the three companions (packed **after** the readme edits)
 - [x] Public API unchanged on both targets — no `PublicAPI.Unshipped.txt` → `Shipped.txt` promotion needed
 - [x] SonarC# pre-check reports only the eight accepted `Won't fix` findings
-- [ ] **Tag `v1.9.0` and push** (`publish-nuget.yml` packs, exchanges the OIDC token, pushes all five with `--skip-duplicate`). Prerequisites: the `NUGET_USER` secret and a nuget.org trusted-publishing policy naming `publish-nuget.yml` — see [Publishing](#publishing-nugetorg-trusted-publishing)
-- [ ] After the push: confirm the four new versions on the flat-container API and that the published core package carries `lib/net11.0`
+- [x] **Tagged and pushed** — annotated `v1.9.0` on release commit `a5b35eb`; `publish-nuget.yml` run [43732434990](https://github.com/MPCoreDeveloper/SafeWebCore/actions/runs/43732434990) logged in through the OIDC exchange and pushed at 15:55Z. The analyzer package reported "already exists" and was skipped, as intended
+- [x] **Post-publish verification** — all four new versions are live on the flat container; `SafeWebCore.1.9.0` was downloaded back and carries `lib/net10.0` **and** `lib/net11.0` with `repository commit = a5b35eb`, `SafeWebCore.JwtBearer` `1.1.0` carries the per-target dependency (`10.0.12` / `11.0.0`), and `SafeWebCore.Testing` `1.0.0-preview.3` depends on core `1.9.0` with `Mvc.Testing` `10.0.15` / `11.0.0`
 
-Before tagging, re-check that none of the four versions already exists. Verified against the flat-container API on
-**2026-11-15**: the newest published versions are `1.8.1` (core), `1.1.1` (FraudDetection), `1.0.1` (JwtBearer) and
-`1.0.0-preview.2` (Testing), so `1.9.0`, `1.2.0`, `1.1.0` and `1.0.0-preview.3` are all free:
+Before tagging, the four versions were re-checked against the flat-container API on **2026-11-15**: the newest published
+versions were `1.8.1` (core), `1.1.1` (FraudDetection), `1.0.1` (JwtBearer) and `1.0.0-preview.2` (Testing), so `1.9.0`,
+`1.2.0`, `1.1.0` and `1.0.0-preview.3` were all free. The flat container indexed core and JwtBearer within a minute of
+the push and FraudDetection/Testing about four minutes later — expect that lag when verifying a release.
+
+The check to run before any future tag:
 
 ```powershell
 foreach ($id in 'safewebcore','safewebcore.frauddetection','safewebcore.jwtbearer','safewebcore.testing') {

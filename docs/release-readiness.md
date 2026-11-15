@@ -8,11 +8,11 @@
 > [nuget-packages.md](nuget-packages.md) for the current version facts and the canonical three-part
 > SemVer form.
 >
-> **1.9.0 prepared on 2026-11-15:** the multi-targeting release is versioned, changelogged and packed
-> locally (`SafeWebCore` 1.9.0, `SafeWebCore.FraudDetection` 1.2.0, `SafeWebCore.JwtBearer` 1.1.0,
-> `SafeWebCore.Testing` 1.0.0-preview.3, `SafeWebCore.Analyzers` unchanged at 1.0.0-preview.2). It is
-> **not tagged or published yet** — the release-state section below lists what is verified and the two
-> steps that remain.
+> **1.9.0 shipped on 2026-11-15:** the multi-targeting release went out from annotated tag `v1.9.0`
+> (release commit `a5b35eb`) through `publish-nuget.yml` run `43732434990`. `SafeWebCore` 1.9.0,
+> `SafeWebCore.FraudDetection` 1.2.0, `SafeWebCore.JwtBearer` 1.1.0 and `SafeWebCore.Testing`
+> 1.0.0-preview.3 are live on nuget.org; `SafeWebCore.Analyzers` stayed at 1.0.0-preview.2 and was
+> skipped as a duplicate. Every package was downloaded back from nuget.org and inspected.
 >
 > **1.8.1 shipped on 2026-09-29:** a maintenance patch, tagged `v1.8.1` and published to nuget.org by
 > `nuget-publish.yml` (consolidated into `publish-nuget.yml` on 2026-11-15), together with `SafeWebCore.FraudDetection` 1.1.1, `SafeWebCore.JwtBearer` 1.0.1
@@ -27,10 +27,10 @@
 
 ---
 
-## Release state for 1.9.0 (prepared 2026-11-15 — awaiting the tag)
+## Release state for 1.9.0 (published 2026-11-15)
 
-The gate for the next release: the multi-targeting work. Everything except the tag push and the post-publish check is
-done and verified locally.
+The gate for the multi-targeting release, as it went out. Everything below was verified before the tag and re-verified
+after the push against nuget.org.
 
 | Item | State |
 |------|-------|
@@ -43,11 +43,11 @@ done and verified locally.
 | Pack | ✅ Five packages built from `Release` into `artifacts/nupkg-1.9.0/`; every nuspec inspected — version, embedded release notes, and **both** `lib/net10.0` and `lib/net11.0` present in each runtime package (the analyzer stays `analyzers/dotnet/cs`) |
 | Static analysis | ✅ SonarCloud gate `OK` with 0 open issues (2026-11-15); the local SonarC# pre-check reports only the eight accepted `Won't fix` findings |
 | Mutation baseline | ✅ Recorded 2026-11-15 — core 53.53 %, JwtBearer 57.43 %, FraudDetection 20.68 %; `break: 0`, so a mutation run can never fail a build by itself |
-| Publish path | ✅ `.github/workflows/publish-nuget.yml` with nuget.org trusted publishing; prerequisites are the `NUGET_USER` secret and a policy naming `publish-nuget.yml` |
-| **Tag + push** | ⬜ **Outstanding** — `v1.9.0` publishes all five with `--skip-duplicate` (Analyzers skipped as a duplicate) |
-| **Post-publish verification** | ⬜ **Outstanding** — confirm the four versions on the flat-container API and that the published core package carries `lib/net11.0` |
+| Publish path | ✅ `.github/workflows/publish-nuget.yml` with nuget.org trusted publishing. `NUGET_USER` was missing before this release (only the expired `NUGET_API_KEY` existed) and was set to `MPCoreDeveloper`, the nuget.org owner shown on the package page; the policy names `publish-nuget.yml` |
+| Tag + push | ✅ Annotated tag `v1.9.0` on release commit `a5b35eb`, pushed to `master`. `publish-nuget.yml` run [43732434990](https://github.com/MPCoreDeveloper/SafeWebCore/actions/runs/43732434990): `NuGet login (OIDC -> short-lived API key)` and `Push packages` both succeeded at 15:55Z; `SafeWebCore.Analyzers.1.0.0-preview.2` reported "already exists" and was skipped |
+| Publication verified | ✅ All four new versions are live on the flat container. `SafeWebCore.1.9.0` was downloaded back and carries `lib/net10.0` **and** `lib/net11.0` with `repository commit = a5b35eb`; `SafeWebCore.JwtBearer` `1.1.0` carries the per-target dependency (`10.0.12` on `net10.0`, `11.0.0` on `net11.0`); `SafeWebCore.Testing` `1.0.0-preview.3` depends on core `1.9.0` with `Mvc.Testing` `10.0.15` / `11.0.0`; `SafeWebCore.FraudDetection` `1.2.0` carries both targets and no dependencies |
 
-Nothing in the code blocks the release; the two unchecked rows are the release itself.
+Nothing is outstanding: the release is published and verified.
 
 ---
 
