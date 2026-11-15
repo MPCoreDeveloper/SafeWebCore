@@ -66,7 +66,8 @@ internal static class Program
         File.WriteAllText(htmlPath, html);
 
         var headings = chapters.Sum(static chapter => chapter.Headings.Count);
-        Console.WriteLine(FormattableString.Invariant(
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
             $"  chapters {chapters.Count}, headings {headings}, html {html.Length / 1024} KB"));
 
         if (options.NoPrint)
@@ -78,7 +79,9 @@ internal static class Program
         var result = ChromiumPrinter.Print(htmlPath, pdfPath);
 
         Console.WriteLine("  browser  " + result.Browser);
-        Console.WriteLine(FormattableString.Invariant($"  pdf      {result.Path} ({result.Bytes / 1024} KB)"));
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"  pdf      {result.Path} ({result.Bytes / 1024} KB)"));
         Console.WriteLine("  check    " + (result.IsUsable ? "ok" : "FAILED: the printed file is not a usable PDF"));
 
         if (!options.KeepHtml && result.IsUsable)

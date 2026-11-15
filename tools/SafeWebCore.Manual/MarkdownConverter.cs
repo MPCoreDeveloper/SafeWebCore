@@ -27,65 +27,81 @@ internal static class MarkdownConverter
 
         while (index < lines.Length)
         {
+            if (TryAppendBlock(html, headings, usedAnchors, lines, ref index))
+            {
+                FlushParagraph(html, paragraph);
+                continue;
+            }
+
             var line = lines[index];
-
-            if (line.StartsWith("```", StringComparison.Ordinal))
-            {
-                FlushParagraph(html, paragraph);
-                index = AppendCode(html, lines, index);
-                continue;
-            }
-
-            if (line.StartsWith('#'))
-            {
-                FlushParagraph(html, paragraph);
-                AppendHeading(html, headings, usedAnchors, line);
-                index++;
-                continue;
-            }
-
-            if (line.StartsWith('|'))
-            {
-                FlushParagraph(html, paragraph);
-                index = AppendTable(html, lines, index);
-                continue;
-            }
-
-            if (line.StartsWith("> ", StringComparison.Ordinal) || line == ">")
-            {
-                FlushParagraph(html, paragraph);
-                index = AppendQuote(html, lines, index);
-                continue;
-            }
-
-            if (line is "---" or "***" or "___")
-            {
-                FlushParagraph(html, paragraph);
-                html.Append("<hr />\n");
-                index++;
-                continue;
-            }
-
-            if (IsListItem(line))
-            {
-                FlushParagraph(html, paragraph);
-                index = AppendList(html, lines, index);
-                continue;
-            }
-
             if (string.IsNullOrWhiteSpace(line))
             {
                 FlushParagraph(html, paragraph);
-                index++;
-                continue;
+            }
+            else
+            {
+                paragraph.Add(line.TrimEnd());
             }
 
-            paragraph.Add(line.TrimEnd());
             index++;
         }
 
         FlushParagraph(html, paragraph);
         return new Chapter(html.ToString(), headings);
+    }
+
+    /// <summary>
+    /// Appends the block that starts at <paramref name="index"/>, when it is one that owns its own lines: a fence, a
+    /// heading, a table, a quote, a rule or a list. Returns false when the line is ordinary text.
+    /// </summary>
+    private static bool TryAppendBlock(
+        StringBuilder html,
+        List<Heading> headings,
+        ISet<string> usedAnchors,
+        string[] lines,
+        ref int index)
+    {
+        var line = lines[index];
+
+        if (line.StartsWith("```", StringComparison.Ordinal))
+        {
+            index = AppendCode(html, lines, index);
+            return true;
+        }
+
+        if (line.StartsWith('#'))
+        {
+            AppendHeading(html, headings, usedAnchors, line);
+            index++;
+            return true;
+        }
+
+        if (line.StartsWith('|'))
+        {
+            index = AppendTable(html, lines, index);
+            return true;
+        }
+
+        if (line.StartsWith("> ", StringComparison.Ordinal) || line == ">")
+        {
+            index = AppendQuote(html, lines, index);
+            return true;
+        }
+
+        if (line is "---" or "***" or "___")
+        {
+            html.Append("<hr />\n");
+            index++;
+            return true;
+        }
+
+        if (IsListItem(line))
+        {
+            index = AppendList(html, lines, index);
+            return true;
+        }
+
+        return false;
     }
 
     private static void AppendHeading(StringBuilder html, List<Heading> headings, ISet<string> usedAnchors, string line)

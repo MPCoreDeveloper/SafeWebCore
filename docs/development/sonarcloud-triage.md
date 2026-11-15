@@ -11,7 +11,7 @@ The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/i
 | Project | `MPCoreDeveloper_SafeWebCore` |
 | Mode | SonarCloud Automatic Analysis (GitHub App) — there is no CI-based scan step |
 | **Effective scope** | The project's **Exclusions** setting on the server (set 2026-11-15): `.specify/**`, `.clinerules/**`, `specs/**`, `docs/**`, `artifacts/**`, `**/bin/**`, `**/obj/**` |
-| In scope | `src/**`, `tests/**`, `examples/**`, `benchmarks/**` and `.github/**` |
+| In scope | `src/**`, `tests/**`, `examples/**`, `benchmarks/**`, `tools/**` and `.github/**` |
 | Mirrored in | [`sonar-project.properties`](../../sonar-project.properties) and [`.sonarcloud.properties`](../../.sonarcloud.properties) — for the record and for a future CI-based scan |
 | Quality gate | ratings A on new code, new duplicated lines < 3 %, security hotspots reviewed |
 | **Release gate** | **all four overall ratings `1.0` (A) and 0 open issues** — a security library does not ship below A |
@@ -32,9 +32,10 @@ issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the
 `.github/**` stays **in** scope on purpose: `githubactions:S7637` reports an unpinned third-party action as a
 vulnerability, and that check is what keeps every non-GitHub action pinned to a full commit SHA.
 
-`tools/**` (the manual builder of Chapter 20) is maintenance tooling that is neither packed nor referenced by the
-product, so it stays **out** of the analysis scope. It is still covered by the repository's .NET analyzers and by
-`TreatWarningsAsErrors`, because it is compiled with the solution on every push.
+`tools/**` (the manual builder of Chapter 20) is analysed too: `sonar.sources` from a repository file is not honoured by
+Automatic Analysis, so the effective scope is the whole repository minus the exclusions above. That first analysis raised
+sixteen maintainability findings in the tool, and all sixteen were fixed there rather than excluded — it is our code, and
+the rule is to fix before marking.
 
 ### Verified state — 2026-11-15, all four ratings A
 

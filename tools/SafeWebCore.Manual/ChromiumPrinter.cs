@@ -21,6 +21,7 @@ internal sealed record PrintResult(string Browser, string Path, long Bytes, bool
 internal static class ChromiumPrinter
 {
     private const string BrowserOverride = "SAFEWEBCORE_CHROME";
+    private const string ApplicationFolder = "Application";
 
     /// <summary>Prints <paramref name="htmlPath"/> to <paramref name="pdfPath"/>.</summary>
     /// <param name="htmlPath">The HTML document to print.</param>
@@ -108,27 +109,20 @@ internal static class ChromiumPrinter
 
         string[] candidates =
         [
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Google", "Chrome", "Application", "chrome.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", "Application", "chrome.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft", "Edge", "Application", "msedge.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", ApplicationFolder, "chrome.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Google", "Chrome", ApplicationFolder, "chrome.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", ApplicationFolder, "chrome.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", ApplicationFolder, "msedge.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft", "Edge", ApplicationFolder, "msedge.exe"),
             "/usr/bin/google-chrome",
             "/usr/bin/chromium",
             "/usr/bin/chromium-browser",
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         ];
 
-        foreach (var candidate in candidates)
-        {
-            if (!string.IsNullOrEmpty(candidate) && File.Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        throw new FileNotFoundException(
-            "No Chrome or Edge installation was found. Install one, or set " + BrowserOverride + " to the executable.");
+        return Array.Find(candidates, File.Exists)
+            ?? throw new FileNotFoundException(
+                "No Chrome or Edge installation was found. Install one, or set " + BrowserOverride + " to the executable.");
     }
 
     private static string Quote(string value) => "\"" + value + "\"";
@@ -148,6 +142,7 @@ internal static class ChromiumPrinter
         }
         catch (UnauthorizedAccessException)
         {
+            // Same reasoning: a profile that cannot be removed now is left for the operating system.
         }
     }
 }
