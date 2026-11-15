@@ -109,7 +109,7 @@ would otherwise enter the automated code metrics next to a few thousand lines of
 | File | Effect |
 |------|--------|
 | `.gitattributes` | Marks `.specify/**` and `.clinerules/**` as `linguist-vendored` and `specs/**` plus `docs/**` as `linguist-documentation`, so GitHub's language bar reports the product (C#) instead of the tooling. The files stay in the tree and in the repository. |
-| `sonar-project.properties` | `sonar.exclusions` for `.specify/**`, `.clinerules/**`, `specs/**`, `docs/**` and build output, so the SonarQube Cloud quality gate (Automatic Analysis, GitHub App) only judges SafeWebCore's own code. See [SonarCloud Triage](sonarcloud-triage.md). |
+| `sonar-project.properties`, `.sonarcloud.properties` | Declare the product-only scope (`sonar.sources` / `sonar.exclusions`) for the record and for a future CI-based scan. The scope Automatic Analysis actually applies is the project's **Exclusions** setting on the server — see [SonarCloud Triage](sonarcloud-triage.md). |
 
 Adding another integration, or switching to Copilot, brings generated files with it (`.github/skills/**` for Copilot);
 extend both entries so the metrics keep measuring the product.

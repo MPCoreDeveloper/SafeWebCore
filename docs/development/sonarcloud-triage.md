@@ -10,15 +10,41 @@ The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/i
 |------|-------|
 | Project | `MPCoreDeveloper_SafeWebCore` |
 | Mode | SonarCloud Automatic Analysis (GitHub App) — there is no CI-based scan step |
-| Configuration | [`sonar-project.properties`](../../sonar-project.properties) |
-| Out of scope | `.specify/**`, `.clinerules/**`, `specs/**`, `docs/**`, `artifacts/**`, `**/bin/**`, `**/obj/**` |
+| **Effective scope** | The project's **Exclusions** setting on the server (set 2026-11-15): `.specify/**`, `.clinerules/**`, `specs/**`, `docs/**`, `artifacts/**`, `**/bin/**`, `**/obj/**` |
+| In scope | `src/**`, `tests/**`, `examples/**`, `benchmarks/**` and `.github/**` |
+| Mirrored in | [`sonar-project.properties`](../../sonar-project.properties) and [`.sonarcloud.properties`](../../.sonarcloud.properties) — for the record and for a future CI-based scan |
 | Quality gate | ratings A on new code, new duplicated lines < 3 %, security hotspots reviewed |
 
-Only product code belongs in the scope. The Spec Kit tooling and the artifacts it renders were analysed as sources at first and produced 325 of 327 issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the gate on 58.5 % duplicated lines. Documentation is excluded as well, which is why this page is not part of the analysis.
+**The server-side setting is what counts, and that is where this page used to be wrong.** Automatic Analysis reads
+`.sonarcloud.properties` from the repository root and ignores `sonar-project.properties` (that is the scanner's file), but
+the project's own **Exclusions** setting takes precedence over both. Until 2026-11-15 that setting was an
+organisation-level inheritance still listing the deleted BMad directories (`.agents/**`, `_bmad/**`, `_bmad-output/**`)
+plus `docs/**`, so every repo-file exclusion this page described had never removed anything: the analyses of commit
+`1b7198e` kept reporting seven findings in `.specify/scripts/powershell/common.ps1` while `.specify/**` sat in both
+properties files. The project-level override now carries the real list.
 
-Verified state — analysis of 2026-09-28 over 5,798 lines of product code (the pass this page was written for): `OPEN 0`, `code_smells 0`, `duplicated_lines_density 0.0`, `sqale_rating` / `reliability_rating` / `security_rating` `1.0` (A), gate `OK`. Run the three queries below to check the revision you are looking at.
+Only product code belongs in scope. The Spec Kit tooling (the `.specify` PowerShell scripts and templates, the
+`.clinerules` command files) and the specs it renders are vendored or generated: analysing them once produced 325 of 327
+issues, all six vulnerabilities and the 99 % copy-paste blocks, which failed the gate on 58.5 % duplicated lines.
+`docs/**` is excluded for the same reason, which is why this page is not part of the analysis.
 
-Re-verified **2026-11-15** through the public API: gate `OK` on all five conditions, `resolved=false` → **0 open issues**, 363 issues resolved in total. The cloud analysis runs on `master`, so a local pre-check (below) is what keeps new code from arriving with findings the dashboard has not seen yet.
+`.github/**` stays **in** scope on purpose: `githubactions:S7637` reports an unpinned third-party action as a
+vulnerability, and that check is what keeps every non-GitHub action pinned to a full commit SHA.
+
+### Verified state — 2026-11-15, all four ratings A
+
+| Metric | Value |
+|--------|-------|
+| `reliability_rating` | **1.0 (A)** |
+| `security_rating` | **1.0 (A)** — was `3.0` (C) until `NuGet/login` was pinned to a commit SHA |
+| `sqale_rating` (maintainability) | **1.0 (A)** |
+| `security_review_rating` (security hotspots) | **1.0 (A)** — 0 hotspots |
+| `bugs` / `vulnerabilities` / `duplicated_lines_density` | `0` / `0` / `0.7 %` |
+
+The step from C to A on security was **one** finding: `githubactions:S7637` on `.github/workflows/publish-nuget.yml` for
+`uses: NuGet/login@v1`. GitHub-owned `actions/*` references are exempt from that rule, third-party actions are not, and a
+single vulnerability is enough to hold the entire rating at C. It now reads
+`uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1`.
 
 ## Local pre-check before pushing
 
@@ -76,6 +102,21 @@ The pre-check surfaced four findings that were in the working tree but not yet o
 | `S2699` | `JwtAuthorityValidationGuardTests.cs` — `StartAsyncPermanentFailureWithoutFailFastCompletes` | The test now captures the exception and asserts `Assert.Null(exception)`: "completes without throwing" is an assertion, not a missing one. |
 | `S2699` | `JwtAuthorityValidationGuardTests.cs` — `StartAsyncSuccessCompletes` | Same pattern. |
 | `S1481` | `NetSecureHeadersMiddlewareTests.cs` — unused local `metrics` | Removed; the metric is observed through a `MeterListener`, and the middleware constructs its own `SafeWebCoreMetrics`, so resolving it changed nothing. |
+
+### Fixed from the dashboard (2026-11-15)
+
+The dashboard's analyzers are newer than the pinned `SonarAnalyzer.CSharp` (`10.36.0.15337`), so four findings existed
+only there. All four were fixed in code:
+
+| Rule | Location | Fix |
+|------|----------|-----|
+| `githubactions:S7637` **(vulnerability)** | `.github/workflows/publish-nuget.yml` — `NuGet/login@v1` | Pinned to the commit of the `v1` tag (`8d196754…`, tag kept in a trailing comment). This single finding held `security_rating` at **C**; `actions/*` references are exempt, third-party actions are not. |
+| `csharpsquid:S1125` | `JwtBearerHardeningApplication.cs` — `context.Result?.Succeeded == false` | Replaced with the property pattern `context.Result is { Succeeded: false }`: same semantics (a `null` result still falls through) without the boolean literal. |
+| `csharpsquid:S8969` ×3 | `JwtBearerHardeningTests.cs` | Dropped three null-forgiving operators the compiler does not need. |
+
+The lesson for the local pre-check: it covers the C# rules but not YAML/GitHub Actions, and a rule added after the pinned
+analyzer version will only show up on the dashboard. Pin **every** third-party action to a commit SHA, not just the ones
+a scan happens to flag.
 
 ---
 
