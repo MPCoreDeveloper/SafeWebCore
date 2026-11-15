@@ -116,9 +116,13 @@ jobs:
 
       # The key is valid for one hour and one OIDC token yields exactly one key, so log in
       # immediately before the push rather than in an earlier job.
+      # Pinned to the commit of the `v1` tag (8d196754b4036150537f80ac539e15c2f1028841) because
+      # SonarCloud's githubactions:S7637 requires third-party actions to reference a full commit SHA
+      # rather than a mutable tag; a moved tag would otherwise silently change what this workflow runs.
+      # Bump the SHA and the trailing tag comment together.
       - name: NuGet login (OIDC -> short-lived API key)
         id: nuget-login
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         with:
           user: ${{ secrets.NUGET_USER }}
 

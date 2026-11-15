@@ -48,9 +48,9 @@ public sealed class JwtBearerHardeningTests
 
         Assert.True(options.TokenValidationParameters.ValidateAudience);
         Assert.True(options.TokenValidationParameters.RequireAudience);
-        Assert.Contains("api", options.TokenValidationParameters.ValidAudiences!);
-        Assert.Contains("spa", options.TokenValidationParameters.ValidAudiences!);
-        Assert.Equal("RS256", Assert.Single(options.TokenValidationParameters.ValidAlgorithms!));
+        Assert.Contains("api", options.TokenValidationParameters.ValidAudiences);
+        Assert.Contains("spa", options.TokenValidationParameters.ValidAudiences);
+        Assert.Equal("RS256", Assert.Single(options.TokenValidationParameters.ValidAlgorithms));
     }
 
     [Fact]

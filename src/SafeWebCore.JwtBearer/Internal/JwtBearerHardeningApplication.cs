@@ -117,7 +117,7 @@ internal static class JwtBearerHardeningApplication
         if (existing is not null)
         {
             await existing(context);
-            if (context.Result?.Succeeded == false)
+            if (context.Result is { Succeeded: false })
             {
                 return;
             }
