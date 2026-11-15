@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Quality gate made explicit**: SafeWebCore is a security library, so it ships only with **SonarCloud all-A** — `reliability_rating`, `security_rating`, `sqale_rating` and `security_review_rating` at `1.0` with zero open issues. The rule now lives in the constitution (principle VII, v1.2.0), `AGENTS.md`, `CONTRIBUTING.md`, the pull-request checklist and the Copilot instructions, and the gate reads the **overall** ratings rather than only the new-code conditions. See [SonarCloud Triage](docs/development/sonarcloud-triage.md) for the queries and the scope rules.
+
 ## [1.9.0] — 2026-11-15
 
 ### Added

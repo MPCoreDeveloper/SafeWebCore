@@ -23,6 +23,11 @@ feature specs `specs/`, guide `docs/development/spec-kit-workflow.md`.
 - Publishing is keyless: `.github/workflows/publish-nuget.yml` uses nuget.org **trusted publishing** (GitHub OIDC
   exchanged for a one-hour API key) on a `v*` tag or a manual dispatch with the `publish` input. There is no API-key
   secret; only `NUGET_USER` is configured, and the nuget.org policy must name `publish-nuget.yml` exactly.
+- **SonarCloud must stay all-A before anything ships.** This is a security library, so `reliability_rating`,
+  `security_rating`, `sqale_rating` (maintainability) and `security_review_rating` (security hotspots) are all `1.0` with
+  **0 open issues** — one vulnerability drops security to C, and an unpinned third-party GitHub Action counts as one.
+  The release gate reads the overall ratings, not only the new-code conditions; the verification queries and the scope
+  rules are in `docs/development/sonarcloud-triage.md` (constitution, principle VII).
 
 ## Where things are
 

@@ -57,6 +57,10 @@ in chat history. The project scaffolding is in `.specify/`, the commands are gen
 - Async methods must end with `Async` suffix
 - All public APIs must have XML documentation
 - All roadmap work must preserve 100% backward compatibility unless an explicit exception is approved
+- **SonarCloud must stay all-A**: reliability, security, maintainability and security-hotspot ratings at `1.0` with zero
+  open issues, because a security library graded below A undermines the claim it makes. Fix a finding; mark one
+  `Won't fix` only when it is shipped API, generated code or vendored tooling, and record it in
+  [docs/development/sonarcloud-triage.md](docs/development/sonarcloud-triage.md) (constitution, principle VII).
 
 ## Backward Compatibility Policy
 

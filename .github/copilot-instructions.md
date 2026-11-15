@@ -14,3 +14,9 @@
 - `.specify/memory/constitution.md` bepaalt wat een spec mag beloven (achterwaartse compatibiliteit, additive API, tests, documentatie).
 - Deze repository gebruikt de Cline-integratie. Voor Copilot: `specify integration switch copilot` en daarna terug met `specify integration switch cline`.
 - Zie `docs/development/spec-kit-workflow.md` voor de volledige workflow en de guardrails.
+
+## Quality gate
+- SonarCloud moet op alle vier ratings **A** blijven (reliability, security, maintainability, security hotspots) met **0 open issues**: dit is een security-bibliotheek, dus een lagere rating blokkeert een release (constitution, principe VII).
+- Eén kwetsbaarheid zet security op C; pin daarom elke third-party GitHub Action op een volledige commit-SHA.
+- Fix een finding; markeer er alleen één als `Won't fix` wanneer het geleverde API, gegenereerde code of vendor-tooling is, en leg het vast in `docs/development/sonarcloud-triage.md`.
+

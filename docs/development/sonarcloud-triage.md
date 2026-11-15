@@ -1,6 +1,6 @@
 # SonarCloud Triage
 
-The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/issues?id=MPCoreDeveloper_SafeWebCore) at **zero open issues** with a green quality gate. This page records how the analysis is scoped, how a new finding is triaged, and which findings are **deliberately accepted**, so nobody has to re-investigate them.
+The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/issues?id=MPCoreDeveloper_SafeWebCore) at **zero open issues** with a green quality gate, and — because this is a security library — **all four ratings at A**. That is a release gate, not housekeeping: see principle VII of the [constitution](../../.specify/memory/constitution.md), `AGENTS.md`, and the release checklist in [nuget-packages.md](../nuget-packages.md). This page records how the analysis is scoped, how a new finding is triaged, and which findings are **deliberately accepted**, so nobody has to re-investigate them.
 
 ---
 
@@ -14,6 +14,7 @@ The repository keeps its [SonarCloud issue list](https://sonarcloud.io/project/i
 | In scope | `src/**`, `tests/**`, `examples/**`, `benchmarks/**` and `.github/**` |
 | Mirrored in | [`sonar-project.properties`](../../sonar-project.properties) and [`.sonarcloud.properties`](../../.sonarcloud.properties) — for the record and for a future CI-based scan |
 | Quality gate | ratings A on new code, new duplicated lines < 3 %, security hotspots reviewed |
+| **Release gate** | **all four overall ratings `1.0` (A) and 0 open issues** — a security library does not ship below A |
 
 **The server-side setting is what counts, and that is where this page used to be wrong.** Automatic Analysis reads
 `.sonarcloud.properties` from the repository root and ignores `sonar-project.properties` (that is the scanner's file), but

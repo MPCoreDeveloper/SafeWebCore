@@ -98,6 +98,29 @@ Browser-oriented headers are not decoration to spread across every endpoint.
 **Rationale:** a header on the wrong route is a false sense of security or a broken client, and a hard-coded
 notification channel takes an integration decision away from the consumer.
 
+### VII. A Security Library Ships Clean (NON-NEGOTIABLE)
+
+A library whose purpose is to make an application safer is not released while a static analysis grades it below the top
+mark.
+
+- Every release ships with **SonarCloud all-A on `MPCoreDeveloper_SafeWebCore`**: `reliability_rating`, `security_rating`,
+  `sqale_rating` (maintainability) and `security_review_rating` (security hotspots) all `1.0`, **zero open issues**, and
+  a green quality gate. Any other rating blocks a release exactly like a red test.
+- The gate reads the **overall** ratings, not only the quality gate's new-code conditions: a release train can pass on new
+  code while the project itself sits at C.
+- One vulnerability is enough to drop `security_rating` to C, so a single finding is never "just a warning": fix it, or
+  record an explicit, justified `Won't fix` / `False positive` with a comment in SonarCloud and a row on the triage page.
+- Fix before marking. Marking is reserved for shipped API that cannot change (`[Obsolete]` members kept for
+  compatibility), generated code and vendored tooling.
+- Third-party GitHub Actions are pinned to a full commit SHA — `githubactions:S7637` is a vulnerability — which is why
+  `.github/**` stays inside the analysis scope.
+- The numbers, the scope rules and the verification queries live in
+  [docs/development/sonarcloud-triage.md](../../docs/development/sonarcloud-triage.md); a release is only described as
+  "A-rated" after those queries return `1.0` for all four.
+
+**Rationale:** consumers install this package to be told they are secure. Shipping it with a C security grade is a claim
+nobody can defend, and it is the one quality signal an outsider can check in thirty seconds.
+
 ## Additional Constraints
 
 - **Toolchain comes from the projects, not the shell**: .NET 11 SDK, C# 15 (`LangVersion=preview`), `Nullable` and
@@ -112,9 +135,10 @@ notification channel takes an integration decision away from the consumer.
   `docs(README): ...`.
 - **Contributions** land on `master` through a pull request; CI (`.github/workflows/ci.yml`) restores, builds and tests
   in Release and then packs all five packages.
-- **Repository tooling is not product code**: `.specify/**`, `.clinerules/**`, `docs/**` and `specs/**` are excluded from
-  the SonarCloud analysis scope and from GitHub's language statistics; product code lives in `src/`, `tests/`,
-  `examples/` and `benchmarks/`.
+- **Repository tooling is not product code**: `.specify/**`, `.clinerules/**`, `docs/**` and `specs/**` are outside the
+  SonarCloud analysis scope and outside GitHub's language statistics; product code lives in `src/`, `tests/`,
+  `examples/` and `benchmarks/`. The scope that Automatic Analysis applies is the project's own Exclusions setting on
+  the SonarCloud server — the `.sonarcloud.properties` / `sonar-project.properties` files mirror it, they do not set it.
 
 ## Development Workflow
 
@@ -159,4 +183,4 @@ Rules for the workflow:
 - Runtime development guidance lives in [`AGENTS.md`](../../AGENTS.md); feature workflow guidance lives in
   [docs/development/spec-kit-workflow.md](../../docs/development/spec-kit-workflow.md).
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.2.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
